@@ -31,18 +31,20 @@ typedef struct _Array {
 void print(ArrayObject *array)
 {
 	size_t size = array->size;
-	int i = 0;
+	size_t i = 0;
 	for (i = 0; i < size; i++) {
 		Object *o = array->list[i];
 		switch (o->type) {
 		case Int:
-			fprintf(stdout, "%ld", o->v.ivalue);
+			printf("%ld", o->v.ivalue);
 			break;
 		case Double:
-			fprintf(stdout, "%lf", o->v.dvalue);
+			printf("%lf", o->v.dvalue);
+			//fprintf(stdout, "%lf", o->v.dvalue);
 			break;
 		case String:
-			fprintf(stdout, "%s", o->v.svalue);
+			//fprintf(stdout, "%s", o->v.svalue);
+			printf("%s", o->v.svalue);
 			break;
 		default:
 			break;
@@ -53,5 +55,6 @@ void print(ArrayObject *array)
 void say(ArrayObject *array)
 {
 	print(array);
-	fprintf(stdout, "\n");
+	//fprintf(stdout, "\n");
+	printf("\n");
 }

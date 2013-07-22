@@ -22,6 +22,6 @@ if (DEBUG) {
     makemaker_args->{CCFLAGS} = "-g3 $llvm_cflags " . makemaker_args->{CCFLAGS};
     chomp(my $llvm_ldflags = `llvm-config --ldflags`);
     chomp(my $llvm_libs = `llvm-config --libs`);
-    makemaker_args->{LDLOADLIBS} = "$llvm_ldflags $llvm_libs";
+    makemaker_args->{LDLOADLIBS} = "$llvm_ldflags $llvm_libs -lLLVMIRReader";
 }
 WriteAll(check_nmake => 0);

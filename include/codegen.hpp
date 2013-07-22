@@ -1,7 +1,14 @@
 #define LLVM_ATTRIBUTE_READONLY
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
+
+#include "llvm/IRBuilder.h"
+#include "llvm/Module.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/ValueSymbolTable.h"
+//#include "llvm/IR/IRBuilder.h"
+//#include "llvm/IR/LLVMContext.h"
+//#include "llvm/IR/Module.h"
+//#include "llvm/IR/ValueSymbolTable.h"
+
 #include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/SourceMgr.h"
@@ -11,7 +18,6 @@
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Support/TargetSelect.h"
 
 namespace Enum {

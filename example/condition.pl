@@ -11,7 +11,10 @@ my $parser = Compiler::Parser->new();
 my $ast = $parser->parse($tokens);
 Compiler::Parser::AST::Renderer->new->render($ast);
 my $generator = Compiler::CodeGenerator::LLVM->new();
-#my $llvm_ir = $generator->generate($ast);
+my $llvm_ir = $generator->generate($ast);
+#open my $fh, '>', 'condition.ll';
+#print $fh $llvm_ir;
+#close $fh;
 $generator->debug_run($ast);
 
 __DATA__

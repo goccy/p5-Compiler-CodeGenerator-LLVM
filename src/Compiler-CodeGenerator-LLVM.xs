@@ -46,7 +46,7 @@ CODE:
 {
 	AST *ast = sv_to_ast(aTHX_ ast_); 
 	const char *llvm_ir = self->gen(ast);
-	RETVAL = new_String(llvm_ir, strlen(llvm_ir));
+	RETVAL = set(new_String(llvm_ir, strlen(llvm_ir)));
 }
 OUTPUT:
     RETVAL

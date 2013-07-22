@@ -79,7 +79,7 @@ bool LLVM::linkModule(llvm::Module *dest, string file_name)
 	llvm::Module *link_mod = ParseIRFile(file_name, err, getGlobalContext());
 	if (!link_mod) return false;
 	if (Linker::LinkModules(dest, link_mod, Linker::DestroySource, &err_msg)) {
-		cout << err_msg << endl;
+		//cout << err_msg << endl;
 		return false;
 	}
 	return true;
@@ -228,16 +228,16 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 	case Mod:
 		break;
 	case EqualEqual:
-		SET_COMPARE_OPCODE(builder->CreateICmpEQ, builder->CreateFCmpOEQ, "==", ret);
+		SET_COMPARE_OPCODE(builder->CreateICmpEQ, builder->CreateFCmpOEQ, "eq", ret);
 		break;
 	case NotEqual:
-		SET_COMPARE_OPCODE(builder->CreateICmpNE, builder->CreateFCmpONE, "!=", ret);
+		SET_COMPARE_OPCODE(builder->CreateICmpNE, builder->CreateFCmpONE, "ne", ret);
 		break;
 	case Greater:
-		SET_COMPARE_OPCODE(builder->CreateICmpSGT, builder->CreateFCmpOGT, ">", ret);
+		SET_COMPARE_OPCODE(builder->CreateICmpSGT, builder->CreateFCmpOGT, "gt", ret);
 		break;
 	case Less:
-		SET_COMPARE_OPCODE(builder->CreateICmpSLT, builder->CreateFCmpOLT, "<", ret);
+		SET_COMPARE_OPCODE(builder->CreateICmpSLT, builder->CreateFCmpOLT, "lt", ret);
 		break;
 	default:
 		break;
