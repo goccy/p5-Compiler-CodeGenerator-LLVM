@@ -1,0 +1,12 @@
+*.o
+*~
+\#*
+*.bak
+blib
+pm_to_blib
+ppport.h
+MYMETA.json
+MYMETA.yml
+Makefile
+Makefile.old
+src/Compiler-CodeGenerator-LLVM.cpp

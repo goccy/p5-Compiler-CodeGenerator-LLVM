@@ -1,0 +1,87 @@
+; ModuleID = 'gen/runtime_api.c'
+target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
+target triple = "x86_64-apple-darwin10.0.0"
+
+%struct._Array = type { i32, %struct._Object**, i64 }
+%struct._Object = type { i32, %struct._Value }
+%struct._Value = type { i64, double, i8*, i8* }
+%struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
+%struct.__sFILEX = type opaque
+%struct.__sbuf = type { i8*, i32 }
+
+@__stdoutp = external global %struct.__sFILE*
+@.str = private constant [4 x i8] c"%ld\00"
+@.str1 = private constant [4 x i8] c"%lf\00"
+
+define void @print(%struct._Array* nocapture %array) nounwind ssp {
+  %1 = getelementptr inbounds %struct._Array* %array, i64 0, i32 2
+  %2 = load i64* %1, align 8, !tbaa !0
+  %3 = icmp eq i64 %2, 0
+  br i1 %3, label %._crit_edge, label %bb.nph
+
+bb.nph:                                           ; preds = %0
+  %4 = getelementptr inbounds %struct._Array* %array, i64 0, i32 1
+  br label %._crit_edge2
+
+._crit_edge2:                                     ; preds = %23, %bb.nph
+  %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %23 ]
+  %5 = load %struct._Object*** %4, align 8, !tbaa !3
+  %scevgep = getelementptr %struct._Object** %5, i64 %indvar
+  %6 = load %struct._Object** %scevgep, align 8, !tbaa !3
+  %7 = getelementptr inbounds %struct._Object* %6, i64 0, i32 0
+  %8 = load i32* %7, align 4, !tbaa !4
+  switch i32 %8, label %23 [
+    i32 0, label %9
+    i32 1, label %14
+    i32 2, label %19
+  ]
+
+; <label>:9                                       ; preds = %._crit_edge2
+  %10 = load %struct.__sFILE** @__stdoutp, align 8, !tbaa !3
+  %11 = getelementptr inbounds %struct._Object* %6, i64 0, i32 1, i32 0
+  %12 = load i64* %11, align 8, !tbaa !0
+  %13 = tail call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %10, i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i64 %12) nounwind
+  br label %23
+
+; <label>:14                                      ; preds = %._crit_edge2
+  %15 = load %struct.__sFILE** @__stdoutp, align 8, !tbaa !3
+  %16 = getelementptr inbounds %struct._Object* %6, i64 0, i32 1, i32 1
+  %17 = load double* %16, align 8, !tbaa !5
+  %18 = tail call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %15, i8* getelementptr inbounds ([4 x i8]* @.str1, i64 0, i64 0), double %17) nounwind
+  br label %23
+
+; <label>:19                                      ; preds = %._crit_edge2
+  %20 = load %struct.__sFILE** @__stdoutp, align 8, !tbaa !3
+  %21 = getelementptr inbounds %struct._Object* %6, i64 0, i32 1, i32 2
+  %22 = load i8** %21, align 8, !tbaa !3
+  %fputs = tail call i32 @fputs(i8* %22, %struct.__sFILE* %20)
+  br label %23
+
+; <label>:23                                      ; preds = %9, %14, %19, %._crit_edge2
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, %2
+  br i1 %exitcond, label %._crit_edge, label %._crit_edge2
+
+._crit_edge:                                      ; preds = %23, %0
+  ret void
+}
+
+declare i32 @fprintf(%struct.__sFILE* nocapture, i8* nocapture, ...) nounwind
+
+define void @say(%struct._Array* nocapture %array) nounwind ssp {
+  tail call void @print(%struct._Array* %array)
+  %1 = load %struct.__sFILE** @__stdoutp, align 8, !tbaa !3
+  %fputc = tail call i32 @fputc(i32 10, %struct.__sFILE* %1)
+  ret void
+}
+
+declare i32 @fputs(i8* nocapture, %struct.__sFILE* nocapture) nounwind
+
+declare i32 @fputc(i32, %struct.__sFILE* nocapture) nounwind
+
+!0 = metadata !{metadata !"long", metadata !1}
+!1 = metadata !{metadata !"omnipotent char", metadata !2}
+!2 = metadata !{metadata !"Simple C/C++ TBAA", null}
+!3 = metadata !{metadata !"any pointer", metadata !1}
+!4 = metadata !{metadata !"int", metadata !1}
+!5 = metadata !{metadata !"double", metadata !1}
