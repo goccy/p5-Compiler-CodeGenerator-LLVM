@@ -12,20 +12,12 @@ my $ast = $parser->parse($tokens);
 Compiler::Parser::AST::Renderer->new->render($ast);
 my $generator = Compiler::CodeGenerator::LLVM->new();
 my $llvm_ir = $generator->generate($ast);
-#open my $fh, '>', 'condition.ll';
-#print $fh $llvm_ir;
-#close $fh;
+open my $fh, '>', 'loop.ll';
+print $fh $llvm_ir;
+close $fh;
 $generator->debug_run($ast);
 
 __DATA__
-my $a = 1 + 1;
-$a = $a + 1;
-say $a;
-say $a == 2;
-if ($a != 2) {
-    say "true";
-} elsif ($a == 2) {
-    say "elsif";
-} else {
-    say "else";
+for (my $i = 0; $i < 10; $i = $i + 1) {
+    say $i;
 }

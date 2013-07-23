@@ -149,6 +149,8 @@ void LLVM::generateCode(IRBuilder<> *builder, Node *node)
 		generateIfStmtCode(builder, dynamic_cast<IfStmtNode *>(node));
 	} else if (TYPE_match(node, ElseStmtNode)) {
 		generateElseStmtCode(builder, dynamic_cast<ElseStmtNode *>(node));
+	} else if (TYPE_match(node, ForStmtNode)) {
+		generateForStmtCode(builder, dynamic_cast<ForStmtNode *>(node));
 	} else {
 		asm("int3");
 	}
@@ -184,19 +186,49 @@ void LLVM::generateElseStmtCode(IRBuilder<> *builder, ElseStmtNode *node)
 	generateCode(builder, node->stmt);
 }
 
+void LLVM::generateForStmtCode(IRBuilder<> *builder, ForStmtNode *node)
+{
+	LLVMContext &ctx = getGlobalContext();
+	generateCode(builder, node->init);
+
+	BasicBlock *loop_head = BasicBlock::Create(ctx, "loop_head", cur_func);
+	BasicBlock *true_block = BasicBlock::Create(ctx, "true_block", cur_func);
+	BasicBlock *after_block = BasicBlock::Create(ctx, "after_block", cur_func);
+	builder->CreateBr(loop_head);
+	builder->SetInsertPoint(loop_head);
+	llvm::Value *_cond = generateValueCode(builder, node->cond);
+	llvm::Value *zero = ConstantInt::get(IntegerType::get(module->getContext(), 64), 0);
+	llvm::Value *cond = builder->CreateICmpNE(_cond, zero);
+	builder->CreateCondBr(cond, true_block, after_block);
+
+	builder->SetInsertPoint(true_block);
+	Node *true_stmt = node->true_stmt;
+	for (; true_stmt != NULL; true_stmt = true_stmt->next) {
+		generateCode(builder, true_stmt);
+	}
+	generateCode(builder, node->progress);
+	builder->CreateBr(loop_head);
+
+	builder->SetInsertPoint(after_block);
+}
+
 llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 {
 	llvm::Value *value = generateValueCode(builder, node->right);
-	llvm::Value *tmp = builder->CreateAlloca(object_type, 0, node->left->tk->data.c_str());
-	//Value *var = builder->CreateAlloca(object_type, 0, node->left->tk->data.c_str());
-	llvm::Value *o = setLLVMValue(builder, tmp, cur_type, value);
 	Token *tk = node->left->tk;
-	CodeGenerator::Value *v = (CodeGenerator::Value *)malloc(sizeof(CodeGenerator::Value));
-	v->type = cur_type;
-	v->value = o;
-	vmgr.setVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent, v);
+	CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
+	if (!v) {
+		llvm::Value *tmp = builder->CreateAlloca(object_type, 0, node->left->tk->data.c_str());
+		llvm::Value *o = setLLVMValue(builder, tmp, cur_type, value);
+		v = (CodeGenerator::Value *)malloc(sizeof(CodeGenerator::Value));
+		v->type = cur_type;
+		v->value = o;
+		vmgr.setVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent, v);
+	} else {
+		setLLVMValue(builder, v->value, cur_type, value);
+	}
 	//builder->CreateStore(o, var);
-	return tmp;
+	return v->value;
 	//return var;
 }
 

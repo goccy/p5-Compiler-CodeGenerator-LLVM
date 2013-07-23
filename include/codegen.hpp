@@ -111,6 +111,7 @@ public:
 	llvm::BasicBlock *generateBlockCode(llvm::IRBuilder<> *builder, llvm::BasicBlock *block, llvm::BasicBlock *merge_block, Node *node);
 	void generateIfStmtCode(llvm::IRBuilder<> *builder, IfStmtNode *node);
 	void generateElseStmtCode(llvm::IRBuilder<> *builder, ElseStmtNode *node);
+	void generateForStmtCode(llvm::IRBuilder<> *builder, ForStmtNode *node);
 	llvm::Value *generateAssignCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateOperatorCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateValueCode(llvm::IRBuilder<> *builder, Node *node);

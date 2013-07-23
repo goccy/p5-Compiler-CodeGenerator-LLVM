@@ -35,11 +35,11 @@ void VariableManager::setVariable(const char *func_name, const char *var_name, s
 CodeGenerator::Value *VariableManager::getVariable(const char *func_name, const char *var_name, size_t indent)
 {
 	FunctionMap::iterator fmap_it = fmap.find(string(func_name));
-	if (fmap_it == fmap.end()) assert(0 && "ERROR!: variable is not defined");
+	if (fmap_it == fmap.end()) return NULL;
 	ValueMapArray *vmap_list = fmap_it->second;
 	if (indent >= MAX_VARIABLE_DEFINITION_NUM) assert(0 && "ERROR!: indent size is too large");
 	CodeGenerator::ValueMap *vmap = vmap_list->list[indent];
 	CodeGenerator::ValueMap::iterator vmap_it = vmap->find(string(var_name));
-	if (vmap_it == vmap->end()) assert(0 && "ERROR!: variable is not defined");
+	if (vmap_it == vmap->end()) return NULL;
 	return vmap_it->second;
 }
