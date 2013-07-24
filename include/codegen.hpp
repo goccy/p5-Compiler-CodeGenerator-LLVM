@@ -65,6 +65,7 @@ namespace CodeGenerator {
 typedef struct _Value {
 	Enum::Runtime::Type type;
 	llvm::Value *value;
+	Token *tk;
 } Value;
 
 typedef std::map<std::string, Value*> ValueMap;
@@ -114,8 +115,10 @@ public:
 	void generateForStmtCode(llvm::IRBuilder<> *builder, ForStmtNode *node);
 	void generateWhileStmtCode(llvm::IRBuilder<> *builder, WhileStmtNode *node);
 	void generateSingleTermOperatorCode(llvm::IRBuilder<> *builder, SingleTermOperatorNode *node);
+    void generateCommaCode(llvm::IRBuilder<> *builder, BranchNode *node, std::vector<CodeGenerator::Value *> *list);
 	llvm::Value *generateAssignCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateOperatorCode(llvm::IRBuilder<> *builder, BranchNode *node);
+	llvm::Value *generateListCode(llvm::IRBuilder<> *builder, ListNode *node);
 	llvm::Value *generateValueCode(llvm::IRBuilder<> *builder, Node *node);
 	void generateFunctionCallCode(llvm::IRBuilder<> *builder, FunctionCallNode *node);
 	llvm::Constant *getBuiltinFunction(llvm::IRBuilder<> *builder, std::string function_name);

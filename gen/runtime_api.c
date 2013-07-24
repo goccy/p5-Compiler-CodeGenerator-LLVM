@@ -46,6 +46,11 @@ void print(ArrayObject *array)
 			//fprintf(stdout, "%s", o->v.svalue);
 			printf("%s", o->v.svalue);
 			break;
+		case Array: {
+			ArrayObject *array = (ArrayObject *)o->v.ovalue;
+			print(array);
+			break;
+		}
 		default:
 			break;
 		}

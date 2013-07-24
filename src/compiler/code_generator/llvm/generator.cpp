@@ -345,6 +345,64 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 	return ret;
 }
 
+llvm::Value *LLVM::generateListCode(IRBuilder<> *builder, ListNode *node)
+{
+	Node *data = node->data;
+	vector<CodeGenerator::Value *> list;
+	if (data->tk->info.type == TokenType::Comma) {
+		generateCommaCode(builder, dynamic_cast<BranchNode *>(data), &list);
+	} else {
+		CodeGenerator::Value *v = new CodeGenerator::Value();
+		v->value = generateValueCode(builder, data);
+		v->type = cur_type;
+		v->tk = data->tk;
+		list.push_back(v);
+	}
+	size_t size = list.size();
+	llvm::Value *elems = builder->CreateAlloca(object_ptr_type, ConstantInt::get(IntegerType::get(module->getContext(), 64), size), "elems");
+	for (size_t i = 0; i < size; i++) {
+		CodeGenerator::Value *v = list.at(i);
+		llvm::Value *value = v->value;
+		Enum::Runtime::Type type = v->type;
+		llvm::Value *elem = builder->CreateAlloca(object_type, 0, "elem");
+		llvm::Value *idx = ConstantInt::get(IntegerType::get(module->getContext(), 64), i);
+		if (type == Enum::Runtime::Object) {
+			Token *tk = v->tk;
+			builder->CreateStore(vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent)->value, builder->CreateGEP(elems, idx));
+		} else {
+			builder->CreateStore(setLLVMValue(builder, elem, type, value), builder->CreateGEP(elems, idx));
+		}
+	}
+	cur_type = Enum::Runtime::Array;
+	return makeArgumentArray(builder, elems, size);
+}
+
+void LLVM::generateCommaCode(IRBuilder<> *builder, BranchNode *node, vector<CodeGenerator::Value *> *list)
+{
+	BranchNode *branch = dynamic_cast<BranchNode *>(node);
+	Node *left = branch->left;
+	if (left->tk->info.type == TokenType::Comma) {
+		generateCommaCode(builder, dynamic_cast<BranchNode *>(branch->left), list);
+	} else {
+		CodeGenerator::Value *value = new CodeGenerator::Value();
+		value->value = generateValueCode(builder, branch->left);
+		value->type = cur_type;
+		value->tk = branch->left->tk;
+		list->push_back(value);
+	}
+	if (!branch->right) return;
+	Node *right = branch->right;
+	if (right->tk->info.type == TokenType::Comma) {
+		generateCommaCode(builder, dynamic_cast<BranchNode *>(branch->right), list);
+	} else {
+		CodeGenerator::Value *value = new CodeGenerator::Value();
+		value->value = generateValueCode(builder, branch->right);
+		value->type = cur_type;
+		value->tk = branch->right->tk;
+		list->push_back(value);
+	}
+}
+
 llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 {
 	using namespace TokenType;
@@ -356,6 +414,9 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 		break;
 	default:
 		break;
+	}
+	if (TYPE_match(node, ListNode)) {
+		ret = generateListCode(builder, dynamic_cast<ListNode *>(node));
 	}
 	if (ret) return ret;
 	switch (tk->info.type) {
@@ -439,7 +500,7 @@ void LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNode *node
 			//fprintf(stderr, "type = [%d]\n", type);
 			llvm::Value *arg = builder->CreateAlloca(object_type, 0, "__arg__");
 			llvm::Value *idx = ConstantInt::get(IntegerType::get(module->getContext(), 64), i);
-			if (type == Enum::Runtime::Object) {
+			if (type == Enum::Runtime::Object || type == Enum::Runtime::Array) {
 				Token *tk = tokens.at(i);
 				builder->CreateStore(vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent)->value, builder->CreateGEP(__args__, idx));
 			} else {
@@ -499,9 +560,12 @@ llvm::Value *LLVM::setLLVMValue(IRBuilder<> *builder, llvm::Value *runtime_objec
 	case Enum::Runtime::String:
 		builder->CreateStore(value, builder->CreateStructGEP(obj_value, 2));
 		break;
-	default:
-		builder->CreateStore(value, builder->CreateStructGEP(obj_value, 3));
+	default: {
+		Type *int_ptr_type = Type::getInt8PtrTy(ctx);
+		llvm::Value *ptr = builder->CreatePointerCast(value, int_ptr_type);
+		builder->CreateStore(ptr, builder->CreateStructGEP(obj_value, 3));
 		break;
+	}
 	}
 	builder->CreateStore(ConstantInt::get(IntegerType::get(module->getContext(), 32), (int)type), obj_type);
 	return runtime_object;

@@ -17,6 +17,7 @@ entry:
   %size = alloca i64, align 8
   %i = alloca i64, align 8
   %o = alloca %struct._Object*, align 8
+  %array9 = alloca %struct._Array*, align 8
   store %struct._Array* %array, %struct._Array** %array.addr, align 8
   %0 = load %struct._Array** %array.addr, align 8
   %size1 = getelementptr inbounds %struct._Array* %0, i32 0, i32 2
@@ -47,6 +48,7 @@ for.body:                                         ; preds = %for.cond
     i32 0, label %sw.bb
     i32 1, label %sw.bb2
     i32 2, label %sw.bb5
+    i32 3, label %sw.bb8
   ]
 
 sw.bb:                                            ; preds = %for.body
@@ -73,15 +75,26 @@ sw.bb5:                                           ; preds = %for.body
   %call7 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8]* @.str2, i32 0, i32 0), i8* %15)
   br label %sw.epilog
 
+sw.bb8:                                           ; preds = %for.body
+  %16 = load %struct._Object** %o, align 8
+  %v10 = getelementptr inbounds %struct._Object* %16, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v10, i32 0, i32 3
+  %17 = load i8** %ovalue, align 8
+  %18 = bitcast i8* %17 to %struct._Array*
+  store %struct._Array* %18, %struct._Array** %array9, align 8
+  %19 = load %struct._Array** %array9, align 8
+  call void @print(%struct._Array* %19)
+  br label %sw.epilog
+
 sw.default:                                       ; preds = %for.body
   br label %sw.epilog
 
-sw.epilog:                                        ; preds = %sw.default, %sw.bb5, %sw.bb2, %sw.bb
+sw.epilog:                                        ; preds = %sw.default, %sw.bb8, %sw.bb5, %sw.bb2, %sw.bb
   br label %for.inc
 
 for.inc:                                          ; preds = %sw.epilog
-  %16 = load i64* %i, align 8
-  %inc = add i64 %16, 1
+  %20 = load i64* %i, align 8
+  %inc = add i64 %20, 1
   store i64 %inc, i64* %i, align 8
   br label %for.cond
 
