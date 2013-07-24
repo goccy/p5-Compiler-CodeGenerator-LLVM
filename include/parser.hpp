@@ -181,6 +181,14 @@ public:
 	void dump(size_t depth);
 };
 
+class WhileStmtNode : public Node {
+public:
+	Node *expr;
+	Node *true_stmt;
+	WhileStmtNode(Token *tk);
+	void dump(size_t depth);
+};
+
 class Module {
 public:
 	const char *name;

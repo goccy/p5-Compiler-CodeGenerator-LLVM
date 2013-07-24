@@ -18,6 +18,12 @@ close $fh;
 $generator->debug_run($ast);
 
 __DATA__
-for (my $i = 0; $i < 10; $i = $i + 1) {
+for (my $i = 0; $i < 10; $i++) {
     say $i;
+}
+
+my $j = 0;
+while ($j < 10) {
+    say $j;
+    $j++;
 }

@@ -223,6 +223,15 @@ Node *hv_to_node(pTHX_ SV *from_)
 		node->true_stmt = hv_to_node(aTHX_ get_value(from, "true_stmt"));
 		node->next = hv_to_node(aTHX_ get_value(from, "next"));
 		ret = node;
+	} else if (pkg == "Compiler::Parser::Node::WhileStmt") {
+		HV *from = (HV *)cast(aTHX_ from_, "Compiler::Parser::Node::WhileStmt");
+		HV *token = (HV *)cast(aTHX_ get_value(from, "token"), "Compiler::Lexer::Token");
+		Token *tk = new_Token(aTHX_ token);
+		WhileStmtNode *node = new WhileStmtNode(tk);
+		node->expr = hv_to_node(aTHX_ get_value(from, "expr"));
+		node->true_stmt = hv_to_node(aTHX_ get_value(from, "true_stmt"));
+		node->next = hv_to_node(aTHX_ get_value(from, "next"));
+		ret = node;
 	} else if (pkg == "Compiler::Parser::Node::Module") {
 		HV *from = (HV *)cast(aTHX_ from_, "Compiler::Parser::Node::Module");
 		HV *token = (HV *)cast(aTHX_ get_value(from, "token"), "Compiler::Lexer::Token");

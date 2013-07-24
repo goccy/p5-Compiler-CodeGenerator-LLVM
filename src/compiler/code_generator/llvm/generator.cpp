@@ -151,6 +151,10 @@ void LLVM::generateCode(IRBuilder<> *builder, Node *node)
 		generateElseStmtCode(builder, dynamic_cast<ElseStmtNode *>(node));
 	} else if (TYPE_match(node, ForStmtNode)) {
 		generateForStmtCode(builder, dynamic_cast<ForStmtNode *>(node));
+	} else if (TYPE_match(node, SingleTermOperatorNode)) {
+		generateSingleTermOperatorCode(builder, dynamic_cast<SingleTermOperatorNode *>(node));
+	} else if (TYPE_match(node, WhileStmtNode)) {
+		generateWhileStmtCode(builder, dynamic_cast<WhileStmtNode *>(node));
 	} else {
 		asm("int3");
 	}
@@ -210,6 +214,70 @@ void LLVM::generateForStmtCode(IRBuilder<> *builder, ForStmtNode *node)
 	builder->CreateBr(loop_head);
 
 	builder->SetInsertPoint(after_block);
+}
+
+void LLVM::generateWhileStmtCode(IRBuilder<> *builder, WhileStmtNode *node)
+{
+	LLVMContext &ctx = getGlobalContext();
+
+	BasicBlock *loop_head = BasicBlock::Create(ctx, "loop_head", cur_func);
+	BasicBlock *true_block = BasicBlock::Create(ctx, "true_block", cur_func);
+	BasicBlock *after_block = BasicBlock::Create(ctx, "after_block", cur_func);
+	builder->CreateBr(loop_head);
+	builder->SetInsertPoint(loop_head);
+	llvm::Value *_cond = generateValueCode(builder, node->expr);
+	llvm::Value *zero = ConstantInt::get(IntegerType::get(module->getContext(), 64), 0);
+	llvm::Value *cond = builder->CreateICmpNE(_cond, zero);
+	builder->CreateCondBr(cond, true_block, after_block);
+
+	builder->SetInsertPoint(true_block);
+	Node *true_stmt = node->true_stmt;
+	for (; true_stmt != NULL; true_stmt = true_stmt->next) {
+		generateCode(builder, true_stmt);
+	}
+	builder->CreateBr(loop_head);
+
+	builder->SetInsertPoint(after_block);
+}
+
+void LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperatorNode *node)
+{
+	using namespace TokenType;
+	llvm::Value *value = generateValueCode(builder, node->expr);
+	Token *tk = node->expr->tk;
+	Enum::Runtime::Type type = cur_type;
+	switch (node->tk->info.type) {
+	case Inc:
+		if (type == Enum::Runtime::Int) {
+			CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
+			llvm::Value *one = ConstantInt::get(IntegerType::get(module->getContext(), 64), 1);
+			setLLVMValue(builder, v->value, type, builder->CreateAdd(value, one, "inc"));
+			cur_type = Enum::Runtime::Int;
+		} else {
+			llvm::Value *casted_value = builder->CreateSIToFP(value, llvm::Type::getDoubleTy(module->getContext()));
+			CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
+			llvm::Value *one = ConstantFP::get(llvm::Type::getDoubleTy(module->getContext()), 1.0);
+			setLLVMValue(builder, v->value, type, builder->CreateFAdd(casted_value, one, "inc"));
+			cur_type = Enum::Runtime::Double;
+		}
+		break;
+	case Dec:
+		if (type == Enum::Runtime::Int) {
+			CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
+			llvm::Value *one = ConstantInt::get(IntegerType::get(module->getContext(), 64), 1);
+			setLLVMValue(builder, v->value, type, builder->CreateSub(value, one, "dec"));
+			cur_type = Enum::Runtime::Int;
+		} else {
+			llvm::Value *casted_value = builder->CreateSIToFP(value, llvm::Type::getDoubleTy(module->getContext()));
+			CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
+			llvm::Value *one = ConstantFP::get(llvm::Type::getDoubleTy(module->getContext()), 1.0);
+			setLLVMValue(builder, v->value, type, builder->CreateFSub(casted_value, one, "dec"));
+			cur_type = Enum::Runtime::Double;
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)

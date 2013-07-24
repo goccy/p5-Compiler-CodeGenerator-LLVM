@@ -112,6 +112,8 @@ public:
 	void generateIfStmtCode(llvm::IRBuilder<> *builder, IfStmtNode *node);
 	void generateElseStmtCode(llvm::IRBuilder<> *builder, ElseStmtNode *node);
 	void generateForStmtCode(llvm::IRBuilder<> *builder, ForStmtNode *node);
+	void generateWhileStmtCode(llvm::IRBuilder<> *builder, WhileStmtNode *node);
+	void generateSingleTermOperatorCode(llvm::IRBuilder<> *builder, SingleTermOperatorNode *node);
 	llvm::Value *generateAssignCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateOperatorCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateValueCode(llvm::IRBuilder<> *builder, Node *node);
