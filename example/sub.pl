@@ -25,4 +25,4 @@ sub f {
     return 1;
 }
 
-f(1);
+say(f(1));

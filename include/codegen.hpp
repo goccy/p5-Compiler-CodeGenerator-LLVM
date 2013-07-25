@@ -127,7 +127,7 @@ public:
 	llvm::Value *generateOperatorCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateListCode(llvm::IRBuilder<> *builder, ListNode *node);
 	llvm::Value *generateValueCode(llvm::IRBuilder<> *builder, Node *node);
-	void generateFunctionCallCode(llvm::IRBuilder<> *builder, FunctionCallNode *node);
+	llvm::Value *generateFunctionCallCode(llvm::IRBuilder<> *builder, FunctionCallNode *node);
 	llvm::Constant *getBuiltinFunction(llvm::IRBuilder<> *builder, std::string function_name);
 };
 

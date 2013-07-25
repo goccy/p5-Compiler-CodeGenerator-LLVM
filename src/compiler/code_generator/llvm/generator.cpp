@@ -527,6 +527,8 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 	}
 	if (TYPE_match(node, ListNode)) {
 		ret = generateListCode(builder, dynamic_cast<ListNode *>(node));
+	} else if (TYPE_match(node, FunctionCallNode)) {
+		ret = generateFunctionCallCode(builder, dynamic_cast<FunctionCallNode *>(node));
 	}
 	if (ret) return ret;
 	switch (tk->info.type) {
@@ -578,7 +580,7 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 	return ret;
 }
 
-void LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNode *node)
+llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNode *node)
 {
 	vector<llvm::Value *> values;
 	vector<Enum::Runtime::Type> types;
@@ -623,17 +625,20 @@ void LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNode *node
 		}
 		vargs = makeArgumentArray(builder, __args__, args_num);
 	}
+	llvm::Value *ret = NULL;
 	if (node->tk->type == TokenType::BuiltinFunc) {
 		string name = node->tk->data;
 		Constant *func = getBuiltinFunction(builder, name);
 		//fprintf(stderr, "created function\n");
 		//builder->CreateCall(func);
 		//module->dump();
-		builder->CreateCall(func, vargs);
+		ret = builder->CreateCall(func, vargs);
 	} else {
 		//getFunction(node->tk->data.c_str());
-		builder->CreateCall(cur_func, vargs);
+		ret = builder->CreateCall(cur_func, vargs);
 	}
+	cur_type = Enum::Runtime::Int;
+	return ret;
 }
 
 Constant *LLVM::getBuiltinFunction(IRBuilder<> *builder, string name)
