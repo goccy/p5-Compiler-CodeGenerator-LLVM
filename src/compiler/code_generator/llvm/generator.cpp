@@ -102,6 +102,7 @@ const char *LLVM::gen(AST *ast)
 	cur_func_name = "main";
 	func_main->setCallingConv(CallingConv::C);
 	BasicBlock *entry = BasicBlock::Create(ctx, "entrypoint", func_main);
+	main_entry = entry;
 	builder.SetInsertPoint(entry);
 
 	traverse(&builder, ast);
@@ -157,6 +158,10 @@ void LLVM::generateCode(IRBuilder<> *builder, Node *node)
 		generateWhileStmtCode(builder, dynamic_cast<WhileStmtNode *>(node));
 	} else if (TYPE_match(node, ForeachStmtNode)) {
 		generateForeachStmtCode(builder, dynamic_cast<ForeachStmtNode *>(node));
+	} else if (TYPE_match(node, FunctionNode)) {
+		generateFunctionCode(builder, dynamic_cast<FunctionNode *>(node));
+	} else if (TYPE_match(node, ReturnNode)) {
+		generateReturnCode(builder, dynamic_cast<ReturnNode *>(node));
 	} else {
 		asm("int3");
 	}
@@ -266,6 +271,36 @@ void LLVM::generateForeachStmtCode(IRBuilder<> *builder, ForeachStmtNode *node)
 	builder->CreateBr(loop_head);
 
 	builder->SetInsertPoint(after_block);
+}
+
+void LLVM::generateFunctionCode(IRBuilder<> *builder, FunctionNode *node)
+{
+	//llvm::FunctionType *ftype = llvm::FunctionType::get(object_type, false);
+	FunctionType *ftype = llvm::FunctionType::get(IntegerType::get(module->getContext(), 64), array_ptr_type, false);
+	Function *func = Function::Create(
+		ftype,
+		GlobalValue::ExternalLinkage,
+		node->tk->data.c_str(), module
+	);
+	Function *main_func = func;
+	cur_func = func;
+	cur_func_name = node->tk->data.c_str();
+	func->setCallingConv(CallingConv::C);
+	BasicBlock *entry = BasicBlock::Create(module->getContext(), "entrypoint", func);
+	builder->SetInsertPoint(entry);
+
+	Node *body = node->body;
+	for (; body != NULL; body = body->next) {
+		generateCode(builder, body);
+	}
+	cur_func = main_func;
+	builder->SetInsertPoint(main_entry);
+}
+
+void LLVM::generateReturnCode(IRBuilder<> *builder, ReturnNode *node)
+{
+	llvm::Value *ret = generateValueCode(builder, node->body);
+	builder->CreateRet(ret);
 }
 
 void LLVM::setIteratorValue(IRBuilder<> *builder, Node *node)
@@ -595,6 +630,9 @@ void LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNode *node
 		//builder->CreateCall(func);
 		//module->dump();
 		builder->CreateCall(func, vargs);
+	} else {
+		//getFunction(node->tk->data.c_str());
+		builder->CreateCall(cur_func, vargs);
 	}
 }
 

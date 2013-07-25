@@ -148,7 +148,7 @@ Node *hv_to_node(pTHX_ SV *from_)
 		HV *from = (HV *)cast(aTHX_ from_, "Compiler::Parser::Node::Return");
 		HV *token = (HV *)cast(aTHX_ get_value(from, "token"), "Compiler::Lexer::Token");
 		Token *tk = new_Token(aTHX_ token);
-		BlockNode *node = new BlockNode(tk);
+		ReturnNode *node = new ReturnNode(tk);
 		node->body = hv_to_node(aTHX_ get_value(from, "body"));
 		node->next = hv_to_node(aTHX_ get_value(from, "next"));
 		ret = node;

@@ -98,6 +98,7 @@ public:
 	llvm::Type *array_ptr_type;
 	llvm::Function *cur_func;
 	std::string cur_func_name;
+	llvm::BasicBlock *main_entry;
 	VariableManager vmgr;
 
 	LLVM(void);
@@ -118,6 +119,8 @@ public:
 	void generateForStmtCode(llvm::IRBuilder<> *builder, ForStmtNode *node);
 	void generateForeachStmtCode(llvm::IRBuilder<> *builder, ForeachStmtNode *node);
 	void generateWhileStmtCode(llvm::IRBuilder<> *builder, WhileStmtNode *node);
+	void generateFunctionCode(llvm::IRBuilder<> *builder, FunctionNode *node);
+	void generateReturnCode(llvm::IRBuilder<> *builder, ReturnNode *node);
 	void generateSingleTermOperatorCode(llvm::IRBuilder<> *builder, SingleTermOperatorNode *node);
     void generateCommaCode(llvm::IRBuilder<> *builder, BranchNode *node, std::vector<CodeGenerator::Value *> *list);
 	llvm::Value *generateAssignCode(llvm::IRBuilder<> *builder, BranchNode *node);

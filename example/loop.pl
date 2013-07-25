@@ -23,17 +23,15 @@ for (my $i = 0; $i < 10; $i++) {
     say $i;
 }
 
-=hoge
 my $j = 0;
 while ($j < 10) {
     say $j;
     $j++;
 }
-=cut
 
 my @a = (1, 2, 3, 4);
-print @a, "\n";
-print "=============\n";
+say @a;
+say "=============";
 
 foreach my $itr (@a) {
     say $itr;
