@@ -155,6 +155,8 @@ void LLVM::generateCode(IRBuilder<> *builder, Node *node)
 		generateSingleTermOperatorCode(builder, dynamic_cast<SingleTermOperatorNode *>(node));
 	} else if (TYPE_match(node, WhileStmtNode)) {
 		generateWhileStmtCode(builder, dynamic_cast<WhileStmtNode *>(node));
+	} else if (TYPE_match(node, ForeachStmtNode)) {
+		generateForeachStmtCode(builder, dynamic_cast<ForeachStmtNode *>(node));
 	} else {
 		asm("int3");
 	}
@@ -214,6 +216,72 @@ void LLVM::generateForStmtCode(IRBuilder<> *builder, ForStmtNode *node)
 	builder->CreateBr(loop_head);
 
 	builder->SetInsertPoint(after_block);
+}
+
+void LLVM::generateForeachStmtCode(IRBuilder<> *builder, ForeachStmtNode *node)
+{
+	LLVMContext &ctx = getGlobalContext();
+	BasicBlock *loop_head = BasicBlock::Create(ctx, "loop_head", cur_func);
+	BasicBlock *true_block = BasicBlock::Create(ctx, "true_block", cur_func);
+	BasicBlock *after_block = BasicBlock::Create(ctx, "after_block", cur_func);
+
+	llvm::Value *array = generateValueCode(builder, node->cond);
+	if (object_ptr_type->getTypeID() == array->getType()->getTypeID()) {
+		//fprintf(stderr, "array wrapped by Object\n");
+		llvm::Value *body = builder->CreateStructGEP(array, 1);
+		llvm::Value *ovalue = builder->CreateLoad(builder->CreateStructGEP(body, 3));
+		array = builder->CreatePointerCast(ovalue, array_ptr_type);
+	}
+	llvm::Value *array_size = builder->CreateLoad(builder->CreateStructGEP(array, 2));
+	setIteratorValue(builder, node->itr);
+	llvm::Value *itr_value = vmgr.getVariable(cur_func_name.c_str(), node->itr->tk->data.c_str(), node->itr->tk->finfo.indent)->value;
+	llvm::Value *hidden_idx = builder->CreateAlloca(IntegerType::get(module->getContext(), 64), 0, "__hidden_idx__");
+	llvm::Value *zero = ConstantInt::get(IntegerType::get(module->getContext(), 64), 0);
+	llvm::Value *five = ConstantInt::get(IntegerType::get(module->getContext(), 64), 5);
+	builder->CreateStore(zero, hidden_idx);
+
+	builder->CreateBr(loop_head);
+	builder->SetInsertPoint(loop_head);
+	array_size = builder->CreatePtrToInt(array_size, IntegerType::get(module->getContext(), 64));
+	llvm::Value *load_v = builder->CreateLoad(hidden_idx);
+	llvm::Value *_cond = builder->CreateZExt(builder->CreateICmpSLT(load_v, array_size), llvm::Type::getInt64Ty(module->getContext()));
+	llvm::Value *cond = builder->CreateICmpNE(_cond, zero);
+	builder->CreateCondBr(cond, true_block, after_block);
+
+	builder->SetInsertPoint(true_block);
+	llvm::Value *elem = getArrayElement(builder, array, load_v);
+	itr_value = elem;
+	CodeGenerator::Value *itr = vmgr.getVariable(cur_func_name.c_str(), node->itr->tk->data.c_str(), node->itr->tk->finfo.indent);
+	itr->value = elem;
+	vmgr.setVariable(cur_func_name.c_str(), node->itr->tk->data.c_str(), node->itr->tk->finfo.indent, itr);
+
+	Node *true_stmt = node->true_stmt;
+	for (; true_stmt != NULL; true_stmt = true_stmt->next) {
+		generateCode(builder, true_stmt);
+	}
+
+	llvm::Value *one = ConstantInt::get(IntegerType::get(module->getContext(), 64), 1);
+	llvm::Value *incremented_value = builder->CreateAdd(builder->CreatePtrToInt(load_v, IntegerType::get(module->getContext(), 64)), one, "inc");
+	builder->CreateStore(incremented_value, hidden_idx);
+	builder->CreateBr(loop_head);
+
+	builder->SetInsertPoint(after_block);
+}
+
+void LLVM::setIteratorValue(IRBuilder<> *builder, Node *node)
+{
+	Token *tk = node->tk;
+	llvm::Value *o = builder->CreateAlloca(object_type, 0, tk->data.c_str());
+	CodeGenerator::Value *v = (CodeGenerator::Value *)malloc(sizeof(CodeGenerator::Value));
+	v->type = cur_type;
+	v->value = o;
+	vmgr.setVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent, v);
+}
+
+llvm::Value *LLVM::getArrayElement(IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx)
+{
+	llvm::Value *list = builder->CreateLoad(builder->CreateStructGEP(array, 1));
+	return builder->CreateLoad(builder->CreateGEP(list, idx));
 }
 
 void LLVM::generateWhileStmtCode(IRBuilder<> *builder, WhileStmtNode *node)
@@ -283,6 +351,9 @@ void LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperat
 llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 {
 	llvm::Value *value = generateValueCode(builder, node->right);
+	//fprintf(stderr, "AssignSection: value type = ");
+	//value->getType()->dump();
+	//fprintf(stderr, "\n");
 	Token *tk = node->left->tk;
 	CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
 	if (!v) {
@@ -291,8 +362,12 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 		v = (CodeGenerator::Value *)malloc(sizeof(CodeGenerator::Value));
 		v->type = cur_type;
 		v->value = o;
+		//fprintf(stderr, "SET object pointer = [%p]\n", o);
 		vmgr.setVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent, v);
 	} else {
+		//fprintf(stderr, "AssignSection: v->value type = ");
+		//v->value->getType()->dump();
+		//fprintf(stderr, "\n");
 		setLLVMValue(builder, v->value, cur_type, value);
 	}
 	//builder->CreateStore(o, var);
@@ -436,9 +511,10 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 		ret = ConstantFP::get(llvm::Type::getDoubleTy(module->getContext()), atof(tk->data.c_str()));
 		cur_type = Enum::Runtime::Double;
 		break;
-	case Var: {
+	case ArrayVar: case Var: {
 		ValueSymbolTable &vs_table = cur_func->getValueSymbolTable();
 		CodeGenerator::Value *var = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
+		fprintf(stderr, "GET object pointer = [%p]\n", var->value);
 		llvm::Value *value = builder->CreateStructGEP(var->value, 1);
 		cur_type = var->type;
 		switch (var->type) {
@@ -453,6 +529,9 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 			break;
 		default:
 			ret = var->value;
+			//fprintf(stderr, "ValueSection: var->value->type = ");
+			//var->value->getType()->dump();
+			//fprintf(stderr, "\n");
 			cur_type = Enum::Runtime::Object;
 			break;
 		}

@@ -1,24 +1,25 @@
 #define LLVM_ATTRIBUTE_READONLY
 
-#include "llvm/IRBuilder.h"
-#include "llvm/Module.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/ValueSymbolTable.h"
-//#include "llvm/IR/IRBuilder.h"
-//#include "llvm/IR/LLVMContext.h"
-//#include "llvm/IR/Module.h"
-//#include "llvm/IR/ValueSymbolTable.h"
+//#include "llvm/IRBuilder.h"
+//#include "llvm/Module.h"
+//#include "llvm/LLVMContext.h"
+//#include "llvm/ValueSymbolTable.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/ValueSymbolTable.h"
 
-#include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Linker.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/Support/TargetSelect.h"
+
 
 namespace Enum {
 namespace Runtime {
@@ -106,6 +107,8 @@ public:
 	const char *gen(AST *ast);
 	llvm::Value *setLLVMValue(llvm::IRBuilder<> *builder, llvm::Value *runtime_object, Enum::Runtime::Type type, llvm::Value *value);
 	llvm::Value *makeArgumentArray(llvm::IRBuilder<> *builder, llvm::Value *list, size_t size);
+	void setIteratorValue(llvm::IRBuilder<> *builder, Node *node);
+	llvm::Value *getArrayElement(llvm::IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx);
 	void traverse(llvm::IRBuilder<> *builder, AST *ast);
 	bool linkModule(llvm::Module *dest, std::string filename);
 	void generateCode(llvm::IRBuilder<> *builder, Node *node);
@@ -113,6 +116,7 @@ public:
 	void generateIfStmtCode(llvm::IRBuilder<> *builder, IfStmtNode *node);
 	void generateElseStmtCode(llvm::IRBuilder<> *builder, ElseStmtNode *node);
 	void generateForStmtCode(llvm::IRBuilder<> *builder, ForStmtNode *node);
+	void generateForeachStmtCode(llvm::IRBuilder<> *builder, ForeachStmtNode *node);
 	void generateWhileStmtCode(llvm::IRBuilder<> *builder, WhileStmtNode *node);
 	void generateSingleTermOperatorCode(llvm::IRBuilder<> *builder, SingleTermOperatorNode *node);
     void generateCommaCode(llvm::IRBuilder<> *builder, BranchNode *node, std::vector<CodeGenerator::Value *> *list);
