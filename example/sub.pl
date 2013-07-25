@@ -15,14 +15,17 @@ my $llvm_ir = $generator->generate($ast);
 open my $fh, '>', 'sub.ll';
 print $fh $llvm_ir;
 close $fh;
-$generator = Compiler::CodeGenerator::LLVM->new();
+print "generated\n";
 $generator->debug_run($ast);
 
 __DATA__
 
 sub f {
-    say "hello";
-    return 1;
+    my $a = $_[0];
+    my $b = $_[1];
+    say $a;
+    say $b;
+    return 3;
 }
 
-say(f(1));
+say(f(1, 2));

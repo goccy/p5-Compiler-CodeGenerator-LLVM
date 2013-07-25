@@ -97,6 +97,7 @@ public:
 	llvm::Type *array_type;
 	llvm::Type *array_ptr_type;
 	llvm::Function *cur_func;
+	llvm::Value *cur_args;
 	std::string cur_func_name;
 	llvm::BasicBlock *main_entry;
 	VariableManager vmgr;
@@ -128,6 +129,7 @@ public:
 	llvm::Value *generateListCode(llvm::IRBuilder<> *builder, ListNode *node);
 	llvm::Value *generateValueCode(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *generateFunctionCallCode(llvm::IRBuilder<> *builder, FunctionCallNode *node);
+	llvm::Value *generateArrayAccessCode(llvm::IRBuilder<> *builder, ArrayNode *node);
 	llvm::Constant *getBuiltinFunction(llvm::IRBuilder<> *builder, std::string function_name);
 };
 

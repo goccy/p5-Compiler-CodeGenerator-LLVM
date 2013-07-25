@@ -39,6 +39,7 @@ LLVM::LLVM(void)
 	LLVMContext &ctx = getGlobalContext();
 	module = new llvm::Module("LLVMIR", ctx);
 	createRuntimeTypes();
+	cur_args = NULL;
 }
 
 void LLVM::createRuntimeTypes(void)
@@ -513,6 +514,20 @@ void LLVM::generateCommaCode(IRBuilder<> *builder, BranchNode *node, vector<Code
 	}
 }
 
+llvm::Value *LLVM::generateArrayAccessCode(IRBuilder<> *builder, ArrayNode *node)
+{
+	llvm::Value *ret = NULL;
+	llvm::Value *idx = generateValueCode(builder, node->idx);
+	if (node->tk->type == TokenType::SpecificValue) {
+		Function::ArgumentListType &args = cur_func->getArgumentList();
+		Function::ArgumentListType::iterator it = args.begin();
+		Argument *arg = &*it;
+		ret = getArrayElement(builder, arg, idx);
+	}
+	cur_type = Enum::Runtime::Object;
+	return ret;
+}
+
 llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 {
 	using namespace TokenType;
@@ -529,6 +544,8 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 		ret = generateListCode(builder, dynamic_cast<ListNode *>(node));
 	} else if (TYPE_match(node, FunctionCallNode)) {
 		ret = generateFunctionCallCode(builder, dynamic_cast<FunctionCallNode *>(node));
+	} else if (TYPE_match(node, ArrayNode)) {
+		ret = generateArrayAccessCode(builder, dynamic_cast<ArrayNode *>(node));
 	}
 	if (ret) return ret;
 	switch (tk->info.type) {
@@ -551,7 +568,7 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 	case ArrayVar: case Var: {
 		ValueSymbolTable &vs_table = cur_func->getValueSymbolTable();
 		CodeGenerator::Value *var = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
-		fprintf(stderr, "GET object pointer = [%p]\n", var->value);
+		//fprintf(stderr, "GET object pointer = [%p]\n", var->value);
 		llvm::Value *value = builder->CreateStructGEP(var->value, 1);
 		cur_type = var->type;
 		switch (var->type) {
@@ -626,6 +643,7 @@ llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNo
 		vargs = makeArgumentArray(builder, __args__, args_num);
 	}
 	llvm::Value *ret = NULL;
+	cur_args = vargs;
 	if (node->tk->type == TokenType::BuiltinFunc) {
 		string name = node->tk->data;
 		Constant *func = getBuiltinFunction(builder, name);
