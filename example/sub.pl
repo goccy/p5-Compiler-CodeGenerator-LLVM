@@ -25,6 +25,31 @@ sub f {
     my $b = $_[1];
     say $a;
     say $b;
+
+    say $a + $b;
+    say $a + 2;
+    say 2 + $b;
+    say $a + 2.1;
+    say 2.1 + $b;
+
+    say $a - $b;
+    say $b - 1;
+    say 1 - $b;
+    say $b - 1.2;
+    say 1.2 - $b;
+
+    say $a * $b;
+    say $b * 2;
+    say 2 * $b;
+    say $b * 1.2;
+    say 1.2 * $b;
+
+    say $a / $b;
+    say $b / 1;
+    say 1 / $b;
+    say $b / 1.2;
+    say 1.2 / $b;
+
     return 3;
 }
 

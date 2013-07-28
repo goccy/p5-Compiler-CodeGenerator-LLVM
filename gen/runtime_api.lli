@@ -1,7 +1,10 @@
 ; ModuleID = 'gen/runtime_api.c'
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
-target triple = "x86_64-apple-macosx10.7.0"
+target triple = "x86_64-apple-macosx10.6.0"
 
+%struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
+%struct.__sbuf = type { i8*, i32 }
+%struct.__sFILEX = type opaque
 %struct._Object = type { i32, %struct._Value }
 %struct._Value = type { i64, double, i8*, i8* }
 %struct._Array = type { i32, %struct._Object**, i64 }
@@ -10,9 +13,14 @@ target triple = "x86_64-apple-macosx10.7.0"
 @.str1 = private unnamed_addr constant [4 x i8] c"%lf\00", align 1
 @.str2 = private unnamed_addr constant [3 x i8] c"%s\00", align 1
 @.str3 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
+@__stderrp = external global %struct.__sFILE*
+@.str4 = private unnamed_addr constant [46 x i8] c"Type Error!: must be array at shift argument\0A\00", align 1
+@.str5 = private unnamed_addr constant [30 x i8] c"fetch from function argument\0A\00", align 1
+@.str6 = private unnamed_addr constant [27 x i8] c"Type Error!: near by push\0A\00", align 1
+@.str7 = private unnamed_addr constant [47 x i8] c"Type Error!: must be array at push 1 argument\0A\00", align 1
+@.str8 = private unnamed_addr constant [34 x i8] c"ERROR!!: cannot allocated memory\0A\00", align 1
 
-; Function Attrs: nounwind ssp uwtable
-define void @print_object(%struct._Object* %o) #0 {
+define void @print_object(%struct._Object* %o) nounwind uwtable ssp {
 entry:
   %o.addr = alloca %struct._Object*, align 8
   %array = alloca %struct._Array*, align 8
@@ -79,10 +87,9 @@ sw.epilog:                                        ; preds = %sw.default, %sw.bb9
   ret void
 }
 
-declare i32 @printf(i8*, ...) #1
+declare i32 @printf(i8*, ...)
 
-; Function Attrs: nounwind ssp uwtable
-define void @print(%struct._Array* %array) #0 {
+define void @print(%struct._Array* %array) nounwind uwtable ssp {
 entry:
   %array.addr = alloca %struct._Array*, align 8
   %size = alloca i64, align 8
@@ -125,8 +132,7 @@ for.end:                                          ; preds = %for.cond
   ret void
 }
 
-; Function Attrs: nounwind ssp uwtable
-define void @say(%struct._Array* %array) #0 {
+define void @say(%struct._Array* %array) nounwind uwtable ssp {
 entry:
   %array.addr = alloca %struct._Array*, align 8
   store %struct._Array* %array, %struct._Array** %array.addr, align 8
@@ -136,5 +142,1968 @@ entry:
   ret void
 }
 
-attributes #0 = { nounwind ssp uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
+define %struct._Object* @shift(%struct._Array* %args) nounwind uwtable ssp {
+entry:
+  %retval = alloca %struct._Object*, align 8
+  %args.addr = alloca %struct._Array*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %size = alloca i64, align 8
+  %o = alloca %struct._Object*, align 8
+  %array = alloca %struct._Array*, align 8
+  store %struct._Array* %args, %struct._Array** %args.addr, align 8
+  store %struct._Object* null, %struct._Object** %ret, align 8
+  %0 = load %struct._Array** %args.addr, align 8
+  %size1 = getelementptr inbounds %struct._Array* %0, i32 0, i32 2
+  %1 = load i64* %size1, align 8
+  store i64 %1, i64* %size, align 8
+  %2 = load i64* %size, align 8
+  %cmp = icmp ugt i64 %2, 1
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  store %struct._Object* null, %struct._Object** %retval
+  br label %return
+
+if.end:                                           ; preds = %entry
+  %3 = load i64* %size, align 8
+  %cmp2 = icmp eq i64 %3, 1
+  br i1 %cmp2, label %if.then3, label %if.else
+
+if.then3:                                         ; preds = %if.end
+  %4 = load %struct._Array** %args.addr, align 8
+  %list = getelementptr inbounds %struct._Array* %4, i32 0, i32 1
+  %5 = load %struct._Object*** %list, align 8
+  %arrayidx = getelementptr inbounds %struct._Object** %5, i64 0
+  %6 = load %struct._Object** %arrayidx, align 8
+  store %struct._Object* %6, %struct._Object** %o, align 8
+  %7 = load %struct._Object** %o, align 8
+  %type = getelementptr inbounds %struct._Object* %7, i32 0, i32 0
+  %8 = load i32* %type, align 4
+  %cmp4 = icmp ne i32 %8, 3
+  br i1 %cmp4, label %if.then5, label %if.end6
+
+if.then5:                                         ; preds = %if.then3
+  %9 = load %struct.__sFILE** @__stderrp, align 8
+  %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %9, i8* getelementptr inbounds ([46 x i8]* @.str4, i32 0, i32 0))
+  store %struct._Object* null, %struct._Object** %retval
+  br label %return
+
+if.end6:                                          ; preds = %if.then3
+  %10 = load %struct._Object** %o, align 8
+  %v = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %11 = load i8** %ovalue, align 8
+  %12 = bitcast i8* %11 to %struct._Array*
+  store %struct._Array* %12, %struct._Array** %array, align 8
+  %13 = load %struct._Array** %array, align 8
+  %list7 = getelementptr inbounds %struct._Array* %13, i32 0, i32 1
+  %14 = load %struct._Object*** %list7, align 8
+  %arrayidx8 = getelementptr inbounds %struct._Object** %14, i64 0
+  %15 = load %struct._Object** %arrayidx8, align 8
+  store %struct._Object* %15, %struct._Object** %ret, align 8
+  %16 = load %struct._Array** %array, align 8
+  %size9 = getelementptr inbounds %struct._Array* %16, i32 0, i32 2
+  %17 = load i64* %size9, align 8
+  %dec = add i64 %17, -1
+  store i64 %dec, i64* %size9, align 8
+  %18 = load %struct._Array** %array, align 8
+  %list10 = getelementptr inbounds %struct._Array* %18, i32 0, i32 1
+  %19 = load %struct._Object*** %list10, align 8
+  %20 = bitcast %struct._Object** %19 to i8*
+  %21 = call i64 @llvm.objectsize.i64(i8* %20, i1 false)
+  %cmp11 = icmp ne i64 %21, -1
+  br i1 %cmp11, label %cond.true, label %cond.false
+
+cond.true:                                        ; preds = %if.end6
+  %22 = load %struct._Array** %array, align 8
+  %list12 = getelementptr inbounds %struct._Array* %22, i32 0, i32 1
+  %23 = load %struct._Object*** %list12, align 8
+  %24 = bitcast %struct._Object** %23 to i8*
+  %25 = load %struct._Array** %array, align 8
+  %list13 = getelementptr inbounds %struct._Array* %25, i32 0, i32 1
+  %26 = load %struct._Object*** %list13, align 8
+  %add.ptr = getelementptr inbounds %struct._Object** %26, i64 1
+  %27 = bitcast %struct._Object** %add.ptr to i8*
+  %28 = load %struct._Array** %array, align 8
+  %size14 = getelementptr inbounds %struct._Array* %28, i32 0, i32 2
+  %29 = load i64* %size14, align 8
+  %mul = mul i64 %29, 8
+  %30 = load %struct._Array** %array, align 8
+  %list15 = getelementptr inbounds %struct._Array* %30, i32 0, i32 1
+  %31 = load %struct._Object*** %list15, align 8
+  %32 = bitcast %struct._Object** %31 to i8*
+  %33 = call i64 @llvm.objectsize.i64(i8* %32, i1 false)
+  %call16 = call i8* @__memmove_chk(i8* %24, i8* %27, i64 %mul, i64 %33) nounwind
+  br label %cond.end
+
+cond.false:                                       ; preds = %if.end6
+  %34 = load %struct._Array** %array, align 8
+  %list17 = getelementptr inbounds %struct._Array* %34, i32 0, i32 1
+  %35 = load %struct._Object*** %list17, align 8
+  %36 = bitcast %struct._Object** %35 to i8*
+  %37 = load %struct._Array** %array, align 8
+  %list18 = getelementptr inbounds %struct._Array* %37, i32 0, i32 1
+  %38 = load %struct._Object*** %list18, align 8
+  %add.ptr19 = getelementptr inbounds %struct._Object** %38, i64 1
+  %39 = bitcast %struct._Object** %add.ptr19 to i8*
+  %40 = load %struct._Array** %array, align 8
+  %size20 = getelementptr inbounds %struct._Array* %40, i32 0, i32 2
+  %41 = load i64* %size20, align 8
+  %mul21 = mul i64 %41, 8
+  %call22 = call i8* @__inline_memmove_chk(i8* %36, i8* %39, i64 %mul21)
+  br label %cond.end
+
+cond.end:                                         ; preds = %cond.false, %cond.true
+  %cond = phi i8* [ %call16, %cond.true ], [ %call22, %cond.false ]
+  br label %if.end24
+
+if.else:                                          ; preds = %if.end
+  %42 = load %struct.__sFILE** @__stderrp, align 8
+  %call23 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %42, i8* getelementptr inbounds ([30 x i8]* @.str5, i32 0, i32 0))
+  br label %if.end24
+
+if.end24:                                         ; preds = %if.else, %cond.end
+  %43 = load %struct._Object** %ret, align 8
+  store %struct._Object* %43, %struct._Object** %retval
+  br label %return
+
+return:                                           ; preds = %if.end24, %if.then5, %if.then
+  %44 = load %struct._Object** %retval
+  ret %struct._Object* %44
+}
+
+declare i32 @fprintf(%struct.__sFILE*, i8*, ...)
+
+declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readnone
+
+declare i8* @__memmove_chk(i8*, i8*, i64, i64) nounwind
+
+define internal i8* @__inline_memmove_chk(i8* %__dest, i8* %__src, i64 %__len) nounwind uwtable inlinehint ssp {
+entry:
+  %__dest.addr = alloca i8*, align 8
+  %__src.addr = alloca i8*, align 8
+  %__len.addr = alloca i64, align 8
+  store i8* %__dest, i8** %__dest.addr, align 8
+  store i8* %__src, i8** %__src.addr, align 8
+  store i64 %__len, i64* %__len.addr, align 8
+  %0 = load i8** %__dest.addr, align 8
+  %1 = load i8** %__src.addr, align 8
+  %2 = load i64* %__len.addr, align 8
+  %3 = load i8** %__dest.addr, align 8
+  %4 = call i64 @llvm.objectsize.i64(i8* %3, i1 false)
+  %call = call i8* @__memmove_chk(i8* %0, i8* %1, i64 %2, i64 %4) nounwind
+  ret i8* %call
+}
+
+define %struct._Object* @push(%struct._Array* %args) nounwind uwtable ssp {
+entry:
+  %args.addr = alloca %struct._Array*, align 8
+  %size = alloca i64, align 8
+  %ret = alloca %struct._Object*, align 8
+  %array = alloca %struct._Object*, align 8
+  %value = alloca %struct._Object*, align 8
+  %base = alloca %struct._Array*, align 8
+  %tmp = alloca i8*, align 8
+  store %struct._Array* %args, %struct._Array** %args.addr, align 8
+  %0 = load %struct._Array** %args.addr, align 8
+  %size1 = getelementptr inbounds %struct._Array* %0, i32 0, i32 2
+  %1 = load i64* %size1, align 8
+  store i64 %1, i64* %size, align 8
+  store %struct._Object* null, %struct._Object** %ret, align 8
+  %2 = load i64* %size, align 8
+  %cmp = icmp ne i64 %2, 2
+  br i1 %cmp, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  %3 = load %struct.__sFILE** @__stderrp, align 8
+  %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %3, i8* getelementptr inbounds ([27 x i8]* @.str6, i32 0, i32 0))
+  br label %if.end31
+
+if.else:                                          ; preds = %entry
+  %4 = load %struct._Array** %args.addr, align 8
+  %list = getelementptr inbounds %struct._Array* %4, i32 0, i32 1
+  %5 = load %struct._Object*** %list, align 8
+  %arrayidx = getelementptr inbounds %struct._Object** %5, i64 0
+  %6 = load %struct._Object** %arrayidx, align 8
+  store %struct._Object* %6, %struct._Object** %array, align 8
+  %7 = load %struct._Array** %args.addr, align 8
+  %list2 = getelementptr inbounds %struct._Array* %7, i32 0, i32 1
+  %8 = load %struct._Object*** %list2, align 8
+  %arrayidx3 = getelementptr inbounds %struct._Object** %8, i64 1
+  %9 = load %struct._Object** %arrayidx3, align 8
+  store %struct._Object* %9, %struct._Object** %value, align 8
+  %10 = load %struct._Object** %array, align 8
+  %type = getelementptr inbounds %struct._Object* %10, i32 0, i32 0
+  %11 = load i32* %type, align 4
+  %cmp4 = icmp ne i32 %11, 3
+  br i1 %cmp4, label %if.then5, label %if.end
+
+if.then5:                                         ; preds = %if.else
+  %12 = load %struct.__sFILE** @__stderrp, align 8
+  %call6 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %12, i8* getelementptr inbounds ([47 x i8]* @.str7, i32 0, i32 0))
+  br label %if.end
+
+if.end:                                           ; preds = %if.then5, %if.else
+  %13 = load %struct._Object** %array, align 8
+  %v = getelementptr inbounds %struct._Object* %13, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %14 = load i8** %ovalue, align 8
+  %15 = bitcast i8* %14 to %struct._Array*
+  store %struct._Array* %15, %struct._Array** %base, align 8
+  %16 = load %struct._Array** %base, align 8
+  %size7 = getelementptr inbounds %struct._Array* %16, i32 0, i32 2
+  %17 = load i64* %size7, align 8
+  %add = add i64 %17, 1
+  %mul = mul i64 40, %add
+  %call8 = call i8* @malloc(i64 %mul)
+  store i8* %call8, i8** %tmp, align 8
+  %tobool = icmp ne i8* %call8, null
+  br i1 %tobool, label %if.else11, label %if.then9
+
+if.then9:                                         ; preds = %if.end
+  %18 = load %struct.__sFILE** @__stderrp, align 8
+  %call10 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %18, i8* getelementptr inbounds ([34 x i8]* @.str8, i32 0, i32 0))
+  br label %if.end30
+
+if.else11:                                        ; preds = %if.end
+  %19 = load i8** %tmp, align 8
+  %20 = call i64 @llvm.objectsize.i64(i8* %19, i1 false)
+  %cmp12 = icmp ne i64 %20, -1
+  br i1 %cmp12, label %cond.true, label %cond.false
+
+cond.true:                                        ; preds = %if.else11
+  %21 = load i8** %tmp, align 8
+  %22 = load %struct._Array** %base, align 8
+  %list13 = getelementptr inbounds %struct._Array* %22, i32 0, i32 1
+  %23 = load %struct._Object*** %list13, align 8
+  %24 = bitcast %struct._Object** %23 to i8*
+  %25 = load %struct._Array** %base, align 8
+  %size14 = getelementptr inbounds %struct._Array* %25, i32 0, i32 2
+  %26 = load i64* %size14, align 8
+  %mul15 = mul i64 40, %26
+  %27 = load i8** %tmp, align 8
+  %28 = call i64 @llvm.objectsize.i64(i8* %27, i1 false)
+  %call16 = call i8* @__memcpy_chk(i8* %21, i8* %24, i64 %mul15, i64 %28) nounwind
+  br label %cond.end
+
+cond.false:                                       ; preds = %if.else11
+  %29 = load i8** %tmp, align 8
+  %30 = load %struct._Array** %base, align 8
+  %list17 = getelementptr inbounds %struct._Array* %30, i32 0, i32 1
+  %31 = load %struct._Object*** %list17, align 8
+  %32 = bitcast %struct._Object** %31 to i8*
+  %33 = load %struct._Array** %base, align 8
+  %size18 = getelementptr inbounds %struct._Array* %33, i32 0, i32 2
+  %34 = load i64* %size18, align 8
+  %mul19 = mul i64 40, %34
+  %call20 = call i8* @__inline_memcpy_chk(i8* %29, i8* %32, i64 %mul19)
+  br label %cond.end
+
+cond.end:                                         ; preds = %cond.false, %cond.true
+  %cond = phi i8* [ %call16, %cond.true ], [ %call20, %cond.false ]
+  %35 = load i8** %tmp, align 8
+  %36 = bitcast i8* %35 to %struct._Object**
+  %37 = load %struct._Array** %base, align 8
+  %list21 = getelementptr inbounds %struct._Array* %37, i32 0, i32 1
+  store %struct._Object** %36, %struct._Object*** %list21, align 8
+  %38 = load %struct._Object** %value, align 8
+  %39 = load %struct._Array** %base, align 8
+  %size22 = getelementptr inbounds %struct._Array* %39, i32 0, i32 2
+  %40 = load i64* %size22, align 8
+  %41 = load %struct._Array** %base, align 8
+  %list23 = getelementptr inbounds %struct._Array* %41, i32 0, i32 1
+  %42 = load %struct._Object*** %list23, align 8
+  %arrayidx24 = getelementptr inbounds %struct._Object** %42, i64 %40
+  store %struct._Object* %38, %struct._Object** %arrayidx24, align 8
+  %43 = load %struct._Array** %base, align 8
+  %size25 = getelementptr inbounds %struct._Array* %43, i32 0, i32 2
+  %44 = load i64* %size25, align 8
+  %inc = add i64 %44, 1
+  store i64 %inc, i64* %size25, align 8
+  %call26 = call i8* @malloc(i64 40)
+  %45 = bitcast i8* %call26 to %struct._Object*
+  store %struct._Object* %45, %struct._Object** %ret, align 8
+  %46 = load %struct._Object** %ret, align 8
+  %type27 = getelementptr inbounds %struct._Object* %46, i32 0, i32 0
+  store i32 0, i32* %type27, align 4
+  %47 = load %struct._Array** %base, align 8
+  %size28 = getelementptr inbounds %struct._Array* %47, i32 0, i32 2
+  %48 = load i64* %size28, align 8
+  %49 = load %struct._Object** %ret, align 8
+  %v29 = getelementptr inbounds %struct._Object* %49, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v29, i32 0, i32 0
+  store i64 %48, i64* %ivalue, align 8
+  br label %if.end30
+
+if.end30:                                         ; preds = %cond.end, %if.then9
+  br label %if.end31
+
+if.end31:                                         ; preds = %if.end30, %if.then
+  %50 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %50
+}
+
+declare i8* @malloc(i64)
+
+declare i8* @__memcpy_chk(i8*, i8*, i64, i64) nounwind
+
+define internal i8* @__inline_memcpy_chk(i8* %__dest, i8* %__src, i64 %__len) nounwind uwtable inlinehint ssp {
+entry:
+  %__dest.addr = alloca i8*, align 8
+  %__src.addr = alloca i8*, align 8
+  %__len.addr = alloca i64, align 8
+  store i8* %__dest, i8** %__dest.addr, align 8
+  store i8* %__src, i8** %__src.addr, align 8
+  store i64 %__len, i64* %__len.addr, align 8
+  %0 = load i8** %__dest.addr, align 8
+  %1 = load i8** %__src.addr, align 8
+  %2 = load i64* %__len.addr, align 8
+  %3 = load i8** %__dest.addr, align 8
+  %4 = call i64 @llvm.objectsize.i64(i8* %3, i1 false)
+  %call = call i8* @__memcpy_chk(i8* %0, i8* %1, i64 %2, i64 %4) nounwind
+  ret i8* %call
+}
+
+define %struct._Object* @Object_addObject(%struct._Object* %_a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %_b.addr, align 8
+  %v1 = getelementptr inbounds %struct._Object* %4, i32 0, i32 1
+  %ovalue2 = getelementptr inbounds %struct._Value* %v1, i32 0, i32 3
+  %5 = load i8** %ovalue2, align 8
+  %6 = bitcast i8* %5 to %struct._Object*
+  store %struct._Object* %6, %struct._Object** %b, align 8
+  %7 = load %struct._Object** %a, align 8
+  %type = getelementptr inbounds %struct._Object* %7, i32 0, i32 0
+  %8 = load i32* %type, align 4
+  switch i32 %8, label %sw.default43 [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb19
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %9 = load %struct._Object** %b, align 8
+  %type3 = getelementptr inbounds %struct._Object* %9, i32 0, i32 0
+  %10 = load i32* %type3, align 4
+  switch i32 %10, label %sw.default [
+    i32 0, label %sw.bb4
+    i32 1, label %sw.bb11
+  ]
+
+sw.bb4:                                           ; preds = %sw.bb
+  %11 = load %struct._Object** %ret, align 8
+  %type5 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 0, i32* %type5, align 4
+  %12 = load %struct._Object** %a, align 8
+  %v6 = getelementptr inbounds %struct._Object* %12, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v6, i32 0, i32 0
+  %13 = load i64* %ivalue, align 8
+  %14 = load %struct._Object** %b, align 8
+  %v7 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %ivalue8 = getelementptr inbounds %struct._Value* %v7, i32 0, i32 0
+  %15 = load i64* %ivalue8, align 8
+  %add = add nsw i64 %13, %15
+  %16 = load %struct._Object** %ret, align 8
+  %v9 = getelementptr inbounds %struct._Object* %16, i32 0, i32 1
+  %ivalue10 = getelementptr inbounds %struct._Value* %v9, i32 0, i32 0
+  store i64 %add, i64* %ivalue10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %sw.bb
+  %17 = load %struct._Object** %ret, align 8
+  %type12 = getelementptr inbounds %struct._Object* %17, i32 0, i32 0
+  store i32 1, i32* %type12, align 4
+  %18 = load %struct._Object** %a, align 8
+  %v13 = getelementptr inbounds %struct._Object* %18, i32 0, i32 1
+  %ivalue14 = getelementptr inbounds %struct._Value* %v13, i32 0, i32 0
+  %19 = load i64* %ivalue14, align 8
+  %conv = sitofp i64 %19 to double
+  %20 = load %struct._Object** %b, align 8
+  %v15 = getelementptr inbounds %struct._Object* %20, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v15, i32 0, i32 1
+  %21 = load double* %dvalue, align 8
+  %add16 = fadd double %conv, %21
+  %22 = load %struct._Object** %ret, align 8
+  %v17 = getelementptr inbounds %struct._Object* %22, i32 0, i32 1
+  %dvalue18 = getelementptr inbounds %struct._Value* %v17, i32 0, i32 1
+  store double %add16, double* %dvalue18, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %sw.bb
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb4
+  br label %sw.epilog44
+
+sw.bb19:                                          ; preds = %entry
+  %23 = load %struct._Object** %ret, align 8
+  %type20 = getelementptr inbounds %struct._Object* %23, i32 0, i32 0
+  store i32 1, i32* %type20, align 4
+  %24 = load %struct._Object** %b, align 8
+  %type21 = getelementptr inbounds %struct._Object* %24, i32 0, i32 0
+  %25 = load i32* %type21, align 4
+  switch i32 %25, label %sw.default41 [
+    i32 0, label %sw.bb22
+    i32 1, label %sw.bb32
+  ]
+
+sw.bb22:                                          ; preds = %sw.bb19
+  %26 = load %struct._Object** %ret, align 8
+  %type23 = getelementptr inbounds %struct._Object* %26, i32 0, i32 0
+  store i32 0, i32* %type23, align 4
+  %27 = load %struct._Object** %a, align 8
+  %v24 = getelementptr inbounds %struct._Object* %27, i32 0, i32 1
+  %dvalue25 = getelementptr inbounds %struct._Value* %v24, i32 0, i32 1
+  %28 = load double* %dvalue25, align 8
+  %29 = load %struct._Object** %b, align 8
+  %v26 = getelementptr inbounds %struct._Object* %29, i32 0, i32 1
+  %ivalue27 = getelementptr inbounds %struct._Value* %v26, i32 0, i32 0
+  %30 = load i64* %ivalue27, align 8
+  %conv28 = sitofp i64 %30 to double
+  %add29 = fadd double %28, %conv28
+  %31 = load %struct._Object** %ret, align 8
+  %v30 = getelementptr inbounds %struct._Object* %31, i32 0, i32 1
+  %dvalue31 = getelementptr inbounds %struct._Value* %v30, i32 0, i32 1
+  store double %add29, double* %dvalue31, align 8
+  br label %sw.epilog42
+
+sw.bb32:                                          ; preds = %sw.bb19
+  %32 = load %struct._Object** %ret, align 8
+  %type33 = getelementptr inbounds %struct._Object* %32, i32 0, i32 0
+  store i32 1, i32* %type33, align 4
+  %33 = load %struct._Object** %a, align 8
+  %v34 = getelementptr inbounds %struct._Object* %33, i32 0, i32 1
+  %dvalue35 = getelementptr inbounds %struct._Value* %v34, i32 0, i32 1
+  %34 = load double* %dvalue35, align 8
+  %35 = load %struct._Object** %b, align 8
+  %v36 = getelementptr inbounds %struct._Object* %35, i32 0, i32 1
+  %dvalue37 = getelementptr inbounds %struct._Value* %v36, i32 0, i32 1
+  %36 = load double* %dvalue37, align 8
+  %add38 = fadd double %34, %36
+  %37 = load %struct._Object** %ret, align 8
+  %v39 = getelementptr inbounds %struct._Object* %37, i32 0, i32 1
+  %dvalue40 = getelementptr inbounds %struct._Value* %v39, i32 0, i32 1
+  store double %add38, double* %dvalue40, align 8
+  br label %sw.epilog42
+
+sw.default41:                                     ; preds = %sw.bb19
+  br label %sw.epilog42
+
+sw.epilog42:                                      ; preds = %sw.default41, %sw.bb32, %sw.bb22
+  br label %sw.epilog44
+
+sw.default43:                                     ; preds = %entry
+  br label %sw.epilog44
+
+sw.epilog44:                                      ; preds = %sw.default43, %sw.epilog42, %sw.epilog
+  %38 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %38
+}
+
+define %struct._Object* @Object_addInt(%struct._Object* %_a, i32 %b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %a, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  %5 = load i32* %type, align 4
+  switch i32 %5, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb5
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %6 = load %struct._Object** %ret, align 8
+  %type1 = getelementptr inbounds %struct._Object* %6, i32 0, i32 0
+  store i32 0, i32* %type1, align 4
+  %7 = load %struct._Object** %a, align 8
+  %v2 = getelementptr inbounds %struct._Object* %7, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %8 = load i64* %ivalue, align 8
+  %9 = load i32* %b.addr, align 4
+  %conv = sext i32 %9 to i64
+  %add = add nsw i64 %8, %conv
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %ivalue4 = getelementptr inbounds %struct._Value* %v3, i32 0, i32 0
+  store i64 %add, i64* %ivalue4, align 8
+  br label %sw.epilog
+
+sw.bb5:                                           ; preds = %entry
+  %11 = load %struct._Object** %ret, align 8
+  %type6 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 1, i32* %type6, align 4
+  %12 = load %struct._Object** %a, align 8
+  %v7 = getelementptr inbounds %struct._Object* %12, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v7, i32 0, i32 1
+  %13 = load double* %dvalue, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv8 = sitofp i32 %14 to double
+  %add9 = fadd double %13, %conv8
+  %15 = load %struct._Object** %ret, align 8
+  %v10 = getelementptr inbounds %struct._Object* %15, i32 0, i32 1
+  %dvalue11 = getelementptr inbounds %struct._Value* %v10, i32 0, i32 1
+  store double %add9, double* %dvalue11, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb5, %sw.bb
+  %16 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %16
+}
+
+define %struct._Object* @Object_addInt2(i32 %a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %a.addr = alloca i32, align 4
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store i32 %a, i32* %a.addr, align 4
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_b.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %b, align 8
+  %4 = load %struct._Object** %b, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  %5 = load i32* %type, align 4
+  switch i32 %5, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb5
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %6 = load %struct._Object** %ret, align 8
+  %type1 = getelementptr inbounds %struct._Object* %6, i32 0, i32 0
+  store i32 0, i32* %type1, align 4
+  %7 = load i32* %a.addr, align 4
+  %conv = sext i32 %7 to i64
+  %8 = load %struct._Object** %b, align 8
+  %v2 = getelementptr inbounds %struct._Object* %8, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %9 = load i64* %ivalue, align 8
+  %add = add nsw i64 %conv, %9
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %ivalue4 = getelementptr inbounds %struct._Value* %v3, i32 0, i32 0
+  store i64 %add, i64* %ivalue4, align 8
+  br label %sw.epilog
+
+sw.bb5:                                           ; preds = %entry
+  %11 = load %struct._Object** %ret, align 8
+  %type6 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 1, i32* %type6, align 4
+  %12 = load i32* %a.addr, align 4
+  %conv7 = sitofp i32 %12 to double
+  %13 = load %struct._Object** %b, align 8
+  %v8 = getelementptr inbounds %struct._Object* %13, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  %14 = load double* %dvalue, align 8
+  %add9 = fadd double %conv7, %14
+  %15 = load %struct._Object** %ret, align 8
+  %v10 = getelementptr inbounds %struct._Object* %15, i32 0, i32 1
+  %dvalue11 = getelementptr inbounds %struct._Value* %v10, i32 0, i32 1
+  store double %add9, double* %dvalue11, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb5, %sw.bb
+  %16 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %16
+}
+
+define %struct._Object* @Object_addDouble(%struct._Object* %_a, double %b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %ret, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  store i32 1, i32* %type, align 4
+  %5 = load %struct._Object** %a, align 8
+  %type1 = getelementptr inbounds %struct._Object* %5, i32 0, i32 0
+  %6 = load i32* %type1, align 4
+  switch i32 %6, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb4
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %7 = load %struct._Object** %a, align 8
+  %v2 = getelementptr inbounds %struct._Object* %7, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %8 = load i64* %ivalue, align 8
+  %conv = sitofp i64 %8 to double
+  %9 = load double* %b.addr, align 8
+  %add = fadd double %conv, %9
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v3, i32 0, i32 1
+  store double %add, double* %dvalue, align 8
+  br label %sw.epilog
+
+sw.bb4:                                           ; preds = %entry
+  %11 = load %struct._Object** %a, align 8
+  %v5 = getelementptr inbounds %struct._Object* %11, i32 0, i32 1
+  %dvalue6 = getelementptr inbounds %struct._Value* %v5, i32 0, i32 1
+  %12 = load double* %dvalue6, align 8
+  %13 = load double* %b.addr, align 8
+  %add7 = fadd double %12, %13
+  %14 = load %struct._Object** %ret, align 8
+  %v8 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %dvalue9 = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  store double %add7, double* %dvalue9, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb4, %sw.bb
+  %15 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %15
+}
+
+define %struct._Object* @Object_addDouble2(double %a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %a.addr = alloca double, align 8
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store double %a, double* %a.addr, align 8
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_b.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %b, align 8
+  %4 = load %struct._Object** %ret, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  store i32 1, i32* %type, align 4
+  %5 = load %struct._Object** %b, align 8
+  %type1 = getelementptr inbounds %struct._Object* %5, i32 0, i32 0
+  %6 = load i32* %type1, align 4
+  switch i32 %6, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb4
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %7 = load %struct._Object** %b, align 8
+  %v2 = getelementptr inbounds %struct._Object* %7, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %8 = load i64* %ivalue, align 8
+  %conv = sitofp i64 %8 to double
+  %9 = load double* %a.addr, align 8
+  %add = fadd double %conv, %9
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v3, i32 0, i32 1
+  store double %add, double* %dvalue, align 8
+  br label %sw.epilog
+
+sw.bb4:                                           ; preds = %entry
+  %11 = load %struct._Object** %b, align 8
+  %v5 = getelementptr inbounds %struct._Object* %11, i32 0, i32 1
+  %dvalue6 = getelementptr inbounds %struct._Value* %v5, i32 0, i32 1
+  %12 = load double* %dvalue6, align 8
+  %13 = load double* %a.addr, align 8
+  %add7 = fadd double %12, %13
+  %14 = load %struct._Object** %ret, align 8
+  %v8 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %dvalue9 = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  store double %add7, double* %dvalue9, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb4, %sw.bb
+  %15 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %15
+}
+
+define %struct._Object* @Object_subObject(%struct._Object* %_a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %_b.addr, align 8
+  %v1 = getelementptr inbounds %struct._Object* %4, i32 0, i32 1
+  %ovalue2 = getelementptr inbounds %struct._Value* %v1, i32 0, i32 3
+  %5 = load i8** %ovalue2, align 8
+  %6 = bitcast i8* %5 to %struct._Object*
+  store %struct._Object* %6, %struct._Object** %b, align 8
+  %7 = load %struct._Object** %a, align 8
+  %type = getelementptr inbounds %struct._Object* %7, i32 0, i32 0
+  %8 = load i32* %type, align 4
+  switch i32 %8, label %sw.default43 [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb19
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %9 = load %struct._Object** %b, align 8
+  %type3 = getelementptr inbounds %struct._Object* %9, i32 0, i32 0
+  %10 = load i32* %type3, align 4
+  switch i32 %10, label %sw.default [
+    i32 0, label %sw.bb4
+    i32 1, label %sw.bb11
+  ]
+
+sw.bb4:                                           ; preds = %sw.bb
+  %11 = load %struct._Object** %ret, align 8
+  %type5 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 0, i32* %type5, align 4
+  %12 = load %struct._Object** %a, align 8
+  %v6 = getelementptr inbounds %struct._Object* %12, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v6, i32 0, i32 0
+  %13 = load i64* %ivalue, align 8
+  %14 = load %struct._Object** %b, align 8
+  %v7 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %ivalue8 = getelementptr inbounds %struct._Value* %v7, i32 0, i32 0
+  %15 = load i64* %ivalue8, align 8
+  %sub = sub nsw i64 %13, %15
+  %16 = load %struct._Object** %ret, align 8
+  %v9 = getelementptr inbounds %struct._Object* %16, i32 0, i32 1
+  %ivalue10 = getelementptr inbounds %struct._Value* %v9, i32 0, i32 0
+  store i64 %sub, i64* %ivalue10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %sw.bb
+  %17 = load %struct._Object** %ret, align 8
+  %type12 = getelementptr inbounds %struct._Object* %17, i32 0, i32 0
+  store i32 1, i32* %type12, align 4
+  %18 = load %struct._Object** %a, align 8
+  %v13 = getelementptr inbounds %struct._Object* %18, i32 0, i32 1
+  %ivalue14 = getelementptr inbounds %struct._Value* %v13, i32 0, i32 0
+  %19 = load i64* %ivalue14, align 8
+  %conv = sitofp i64 %19 to double
+  %20 = load %struct._Object** %b, align 8
+  %v15 = getelementptr inbounds %struct._Object* %20, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v15, i32 0, i32 1
+  %21 = load double* %dvalue, align 8
+  %sub16 = fsub double %conv, %21
+  %22 = load %struct._Object** %ret, align 8
+  %v17 = getelementptr inbounds %struct._Object* %22, i32 0, i32 1
+  %dvalue18 = getelementptr inbounds %struct._Value* %v17, i32 0, i32 1
+  store double %sub16, double* %dvalue18, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %sw.bb
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb4
+  br label %sw.epilog44
+
+sw.bb19:                                          ; preds = %entry
+  %23 = load %struct._Object** %ret, align 8
+  %type20 = getelementptr inbounds %struct._Object* %23, i32 0, i32 0
+  store i32 1, i32* %type20, align 4
+  %24 = load %struct._Object** %b, align 8
+  %type21 = getelementptr inbounds %struct._Object* %24, i32 0, i32 0
+  %25 = load i32* %type21, align 4
+  switch i32 %25, label %sw.default41 [
+    i32 0, label %sw.bb22
+    i32 1, label %sw.bb32
+  ]
+
+sw.bb22:                                          ; preds = %sw.bb19
+  %26 = load %struct._Object** %ret, align 8
+  %type23 = getelementptr inbounds %struct._Object* %26, i32 0, i32 0
+  store i32 0, i32* %type23, align 4
+  %27 = load %struct._Object** %a, align 8
+  %v24 = getelementptr inbounds %struct._Object* %27, i32 0, i32 1
+  %dvalue25 = getelementptr inbounds %struct._Value* %v24, i32 0, i32 1
+  %28 = load double* %dvalue25, align 8
+  %29 = load %struct._Object** %b, align 8
+  %v26 = getelementptr inbounds %struct._Object* %29, i32 0, i32 1
+  %ivalue27 = getelementptr inbounds %struct._Value* %v26, i32 0, i32 0
+  %30 = load i64* %ivalue27, align 8
+  %conv28 = sitofp i64 %30 to double
+  %sub29 = fsub double %28, %conv28
+  %31 = load %struct._Object** %ret, align 8
+  %v30 = getelementptr inbounds %struct._Object* %31, i32 0, i32 1
+  %dvalue31 = getelementptr inbounds %struct._Value* %v30, i32 0, i32 1
+  store double %sub29, double* %dvalue31, align 8
+  br label %sw.epilog42
+
+sw.bb32:                                          ; preds = %sw.bb19
+  %32 = load %struct._Object** %ret, align 8
+  %type33 = getelementptr inbounds %struct._Object* %32, i32 0, i32 0
+  store i32 1, i32* %type33, align 4
+  %33 = load %struct._Object** %a, align 8
+  %v34 = getelementptr inbounds %struct._Object* %33, i32 0, i32 1
+  %dvalue35 = getelementptr inbounds %struct._Value* %v34, i32 0, i32 1
+  %34 = load double* %dvalue35, align 8
+  %35 = load %struct._Object** %b, align 8
+  %v36 = getelementptr inbounds %struct._Object* %35, i32 0, i32 1
+  %dvalue37 = getelementptr inbounds %struct._Value* %v36, i32 0, i32 1
+  %36 = load double* %dvalue37, align 8
+  %sub38 = fsub double %34, %36
+  %37 = load %struct._Object** %ret, align 8
+  %v39 = getelementptr inbounds %struct._Object* %37, i32 0, i32 1
+  %dvalue40 = getelementptr inbounds %struct._Value* %v39, i32 0, i32 1
+  store double %sub38, double* %dvalue40, align 8
+  br label %sw.epilog42
+
+sw.default41:                                     ; preds = %sw.bb19
+  br label %sw.epilog42
+
+sw.epilog42:                                      ; preds = %sw.default41, %sw.bb32, %sw.bb22
+  br label %sw.epilog44
+
+sw.default43:                                     ; preds = %entry
+  br label %sw.epilog44
+
+sw.epilog44:                                      ; preds = %sw.default43, %sw.epilog42, %sw.epilog
+  %38 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %38
+}
+
+define %struct._Object* @Object_subInt(%struct._Object* %_a, i32 %b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %a, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  %5 = load i32* %type, align 4
+  switch i32 %5, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb5
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %6 = load %struct._Object** %ret, align 8
+  %type1 = getelementptr inbounds %struct._Object* %6, i32 0, i32 0
+  store i32 0, i32* %type1, align 4
+  %7 = load %struct._Object** %a, align 8
+  %v2 = getelementptr inbounds %struct._Object* %7, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %8 = load i64* %ivalue, align 8
+  %9 = load i32* %b.addr, align 4
+  %conv = sext i32 %9 to i64
+  %sub = sub nsw i64 %8, %conv
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %ivalue4 = getelementptr inbounds %struct._Value* %v3, i32 0, i32 0
+  store i64 %sub, i64* %ivalue4, align 8
+  br label %sw.epilog
+
+sw.bb5:                                           ; preds = %entry
+  %11 = load %struct._Object** %ret, align 8
+  %type6 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 1, i32* %type6, align 4
+  %12 = load %struct._Object** %a, align 8
+  %v7 = getelementptr inbounds %struct._Object* %12, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v7, i32 0, i32 1
+  %13 = load double* %dvalue, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv8 = sitofp i32 %14 to double
+  %sub9 = fsub double %13, %conv8
+  %15 = load %struct._Object** %ret, align 8
+  %v10 = getelementptr inbounds %struct._Object* %15, i32 0, i32 1
+  %dvalue11 = getelementptr inbounds %struct._Value* %v10, i32 0, i32 1
+  store double %sub9, double* %dvalue11, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb5, %sw.bb
+  %16 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %16
+}
+
+define %struct._Object* @Object_subInt2(i32 %a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %a.addr = alloca i32, align 4
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store i32 %a, i32* %a.addr, align 4
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_b.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %b, align 8
+  %4 = load %struct._Object** %b, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  %5 = load i32* %type, align 4
+  switch i32 %5, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb5
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %6 = load %struct._Object** %ret, align 8
+  %type1 = getelementptr inbounds %struct._Object* %6, i32 0, i32 0
+  store i32 0, i32* %type1, align 4
+  %7 = load i32* %a.addr, align 4
+  %conv = sext i32 %7 to i64
+  %8 = load %struct._Object** %b, align 8
+  %v2 = getelementptr inbounds %struct._Object* %8, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %9 = load i64* %ivalue, align 8
+  %sub = sub nsw i64 %conv, %9
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %ivalue4 = getelementptr inbounds %struct._Value* %v3, i32 0, i32 0
+  store i64 %sub, i64* %ivalue4, align 8
+  br label %sw.epilog
+
+sw.bb5:                                           ; preds = %entry
+  %11 = load %struct._Object** %ret, align 8
+  %type6 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 1, i32* %type6, align 4
+  %12 = load i32* %a.addr, align 4
+  %conv7 = sitofp i32 %12 to double
+  %13 = load %struct._Object** %b, align 8
+  %v8 = getelementptr inbounds %struct._Object* %13, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  %14 = load double* %dvalue, align 8
+  %sub9 = fsub double %conv7, %14
+  %15 = load %struct._Object** %ret, align 8
+  %v10 = getelementptr inbounds %struct._Object* %15, i32 0, i32 1
+  %dvalue11 = getelementptr inbounds %struct._Value* %v10, i32 0, i32 1
+  store double %sub9, double* %dvalue11, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb5, %sw.bb
+  %16 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %16
+}
+
+define %struct._Object* @Object_subDouble(%struct._Object* %_a, double %b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %ret, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  store i32 1, i32* %type, align 4
+  %5 = load %struct._Object** %a, align 8
+  %type1 = getelementptr inbounds %struct._Object* %5, i32 0, i32 0
+  %6 = load i32* %type1, align 4
+  switch i32 %6, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb4
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %7 = load %struct._Object** %a, align 8
+  %v2 = getelementptr inbounds %struct._Object* %7, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %8 = load i64* %ivalue, align 8
+  %conv = sitofp i64 %8 to double
+  %9 = load double* %b.addr, align 8
+  %sub = fsub double %conv, %9
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v3, i32 0, i32 1
+  store double %sub, double* %dvalue, align 8
+  br label %sw.epilog
+
+sw.bb4:                                           ; preds = %entry
+  %11 = load %struct._Object** %a, align 8
+  %v5 = getelementptr inbounds %struct._Object* %11, i32 0, i32 1
+  %dvalue6 = getelementptr inbounds %struct._Value* %v5, i32 0, i32 1
+  %12 = load double* %dvalue6, align 8
+  %13 = load double* %b.addr, align 8
+  %sub7 = fsub double %12, %13
+  %14 = load %struct._Object** %ret, align 8
+  %v8 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %dvalue9 = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  store double %sub7, double* %dvalue9, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb4, %sw.bb
+  %15 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %15
+}
+
+define %struct._Object* @Object_subDouble2(double %a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %a.addr = alloca double, align 8
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store double %a, double* %a.addr, align 8
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_b.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %b, align 8
+  %4 = load %struct._Object** %ret, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  store i32 1, i32* %type, align 4
+  %5 = load %struct._Object** %b, align 8
+  %type1 = getelementptr inbounds %struct._Object* %5, i32 0, i32 0
+  %6 = load i32* %type1, align 4
+  switch i32 %6, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb4
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %7 = load double* %a.addr, align 8
+  %8 = load %struct._Object** %b, align 8
+  %v2 = getelementptr inbounds %struct._Object* %8, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %9 = load i64* %ivalue, align 8
+  %conv = sitofp i64 %9 to double
+  %sub = fsub double %7, %conv
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v3, i32 0, i32 1
+  store double %sub, double* %dvalue, align 8
+  br label %sw.epilog
+
+sw.bb4:                                           ; preds = %entry
+  %11 = load double* %a.addr, align 8
+  %12 = load %struct._Object** %b, align 8
+  %v5 = getelementptr inbounds %struct._Object* %12, i32 0, i32 1
+  %dvalue6 = getelementptr inbounds %struct._Value* %v5, i32 0, i32 1
+  %13 = load double* %dvalue6, align 8
+  %sub7 = fsub double %11, %13
+  %14 = load %struct._Object** %ret, align 8
+  %v8 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %dvalue9 = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  store double %sub7, double* %dvalue9, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb4, %sw.bb
+  %15 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %15
+}
+
+define %struct._Object* @Object_mulObject(%struct._Object* %_a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %_b.addr, align 8
+  %v1 = getelementptr inbounds %struct._Object* %4, i32 0, i32 1
+  %ovalue2 = getelementptr inbounds %struct._Value* %v1, i32 0, i32 3
+  %5 = load i8** %ovalue2, align 8
+  %6 = bitcast i8* %5 to %struct._Object*
+  store %struct._Object* %6, %struct._Object** %b, align 8
+  %7 = load %struct._Object** %a, align 8
+  %type = getelementptr inbounds %struct._Object* %7, i32 0, i32 0
+  %8 = load i32* %type, align 4
+  switch i32 %8, label %sw.default43 [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb19
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %9 = load %struct._Object** %b, align 8
+  %type3 = getelementptr inbounds %struct._Object* %9, i32 0, i32 0
+  %10 = load i32* %type3, align 4
+  switch i32 %10, label %sw.default [
+    i32 0, label %sw.bb4
+    i32 1, label %sw.bb11
+  ]
+
+sw.bb4:                                           ; preds = %sw.bb
+  %11 = load %struct._Object** %ret, align 8
+  %type5 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 0, i32* %type5, align 4
+  %12 = load %struct._Object** %a, align 8
+  %v6 = getelementptr inbounds %struct._Object* %12, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v6, i32 0, i32 0
+  %13 = load i64* %ivalue, align 8
+  %14 = load %struct._Object** %b, align 8
+  %v7 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %ivalue8 = getelementptr inbounds %struct._Value* %v7, i32 0, i32 0
+  %15 = load i64* %ivalue8, align 8
+  %mul = mul nsw i64 %13, %15
+  %16 = load %struct._Object** %ret, align 8
+  %v9 = getelementptr inbounds %struct._Object* %16, i32 0, i32 1
+  %ivalue10 = getelementptr inbounds %struct._Value* %v9, i32 0, i32 0
+  store i64 %mul, i64* %ivalue10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %sw.bb
+  %17 = load %struct._Object** %ret, align 8
+  %type12 = getelementptr inbounds %struct._Object* %17, i32 0, i32 0
+  store i32 1, i32* %type12, align 4
+  %18 = load %struct._Object** %a, align 8
+  %v13 = getelementptr inbounds %struct._Object* %18, i32 0, i32 1
+  %ivalue14 = getelementptr inbounds %struct._Value* %v13, i32 0, i32 0
+  %19 = load i64* %ivalue14, align 8
+  %conv = sitofp i64 %19 to double
+  %20 = load %struct._Object** %b, align 8
+  %v15 = getelementptr inbounds %struct._Object* %20, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v15, i32 0, i32 1
+  %21 = load double* %dvalue, align 8
+  %mul16 = fmul double %conv, %21
+  %22 = load %struct._Object** %ret, align 8
+  %v17 = getelementptr inbounds %struct._Object* %22, i32 0, i32 1
+  %dvalue18 = getelementptr inbounds %struct._Value* %v17, i32 0, i32 1
+  store double %mul16, double* %dvalue18, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %sw.bb
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb4
+  br label %sw.epilog44
+
+sw.bb19:                                          ; preds = %entry
+  %23 = load %struct._Object** %ret, align 8
+  %type20 = getelementptr inbounds %struct._Object* %23, i32 0, i32 0
+  store i32 1, i32* %type20, align 4
+  %24 = load %struct._Object** %b, align 8
+  %type21 = getelementptr inbounds %struct._Object* %24, i32 0, i32 0
+  %25 = load i32* %type21, align 4
+  switch i32 %25, label %sw.default41 [
+    i32 0, label %sw.bb22
+    i32 1, label %sw.bb32
+  ]
+
+sw.bb22:                                          ; preds = %sw.bb19
+  %26 = load %struct._Object** %ret, align 8
+  %type23 = getelementptr inbounds %struct._Object* %26, i32 0, i32 0
+  store i32 0, i32* %type23, align 4
+  %27 = load %struct._Object** %a, align 8
+  %v24 = getelementptr inbounds %struct._Object* %27, i32 0, i32 1
+  %dvalue25 = getelementptr inbounds %struct._Value* %v24, i32 0, i32 1
+  %28 = load double* %dvalue25, align 8
+  %29 = load %struct._Object** %b, align 8
+  %v26 = getelementptr inbounds %struct._Object* %29, i32 0, i32 1
+  %ivalue27 = getelementptr inbounds %struct._Value* %v26, i32 0, i32 0
+  %30 = load i64* %ivalue27, align 8
+  %conv28 = sitofp i64 %30 to double
+  %mul29 = fmul double %28, %conv28
+  %31 = load %struct._Object** %ret, align 8
+  %v30 = getelementptr inbounds %struct._Object* %31, i32 0, i32 1
+  %dvalue31 = getelementptr inbounds %struct._Value* %v30, i32 0, i32 1
+  store double %mul29, double* %dvalue31, align 8
+  br label %sw.epilog42
+
+sw.bb32:                                          ; preds = %sw.bb19
+  %32 = load %struct._Object** %ret, align 8
+  %type33 = getelementptr inbounds %struct._Object* %32, i32 0, i32 0
+  store i32 1, i32* %type33, align 4
+  %33 = load %struct._Object** %a, align 8
+  %v34 = getelementptr inbounds %struct._Object* %33, i32 0, i32 1
+  %dvalue35 = getelementptr inbounds %struct._Value* %v34, i32 0, i32 1
+  %34 = load double* %dvalue35, align 8
+  %35 = load %struct._Object** %b, align 8
+  %v36 = getelementptr inbounds %struct._Object* %35, i32 0, i32 1
+  %dvalue37 = getelementptr inbounds %struct._Value* %v36, i32 0, i32 1
+  %36 = load double* %dvalue37, align 8
+  %mul38 = fmul double %34, %36
+  %37 = load %struct._Object** %ret, align 8
+  %v39 = getelementptr inbounds %struct._Object* %37, i32 0, i32 1
+  %dvalue40 = getelementptr inbounds %struct._Value* %v39, i32 0, i32 1
+  store double %mul38, double* %dvalue40, align 8
+  br label %sw.epilog42
+
+sw.default41:                                     ; preds = %sw.bb19
+  br label %sw.epilog42
+
+sw.epilog42:                                      ; preds = %sw.default41, %sw.bb32, %sw.bb22
+  br label %sw.epilog44
+
+sw.default43:                                     ; preds = %entry
+  br label %sw.epilog44
+
+sw.epilog44:                                      ; preds = %sw.default43, %sw.epilog42, %sw.epilog
+  %38 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %38
+}
+
+define %struct._Object* @Object_mulInt(%struct._Object* %_a, i32 %b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %a, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  %5 = load i32* %type, align 4
+  switch i32 %5, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb5
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %6 = load %struct._Object** %ret, align 8
+  %type1 = getelementptr inbounds %struct._Object* %6, i32 0, i32 0
+  store i32 0, i32* %type1, align 4
+  %7 = load %struct._Object** %a, align 8
+  %v2 = getelementptr inbounds %struct._Object* %7, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %8 = load i64* %ivalue, align 8
+  %9 = load i32* %b.addr, align 4
+  %conv = sext i32 %9 to i64
+  %mul = mul nsw i64 %8, %conv
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %ivalue4 = getelementptr inbounds %struct._Value* %v3, i32 0, i32 0
+  store i64 %mul, i64* %ivalue4, align 8
+  br label %sw.epilog
+
+sw.bb5:                                           ; preds = %entry
+  %11 = load %struct._Object** %ret, align 8
+  %type6 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 1, i32* %type6, align 4
+  %12 = load %struct._Object** %a, align 8
+  %v7 = getelementptr inbounds %struct._Object* %12, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v7, i32 0, i32 1
+  %13 = load double* %dvalue, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv8 = sitofp i32 %14 to double
+  %mul9 = fmul double %13, %conv8
+  %15 = load %struct._Object** %ret, align 8
+  %v10 = getelementptr inbounds %struct._Object* %15, i32 0, i32 1
+  %dvalue11 = getelementptr inbounds %struct._Value* %v10, i32 0, i32 1
+  store double %mul9, double* %dvalue11, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb5, %sw.bb
+  %16 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %16
+}
+
+define %struct._Object* @Object_mulInt2(i32 %a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %a.addr = alloca i32, align 4
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store i32 %a, i32* %a.addr, align 4
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_b.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %b, align 8
+  %4 = load %struct._Object** %b, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  %5 = load i32* %type, align 4
+  switch i32 %5, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb5
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %6 = load %struct._Object** %ret, align 8
+  %type1 = getelementptr inbounds %struct._Object* %6, i32 0, i32 0
+  store i32 0, i32* %type1, align 4
+  %7 = load i32* %a.addr, align 4
+  %conv = sext i32 %7 to i64
+  %8 = load %struct._Object** %b, align 8
+  %v2 = getelementptr inbounds %struct._Object* %8, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %9 = load i64* %ivalue, align 8
+  %mul = mul nsw i64 %conv, %9
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %ivalue4 = getelementptr inbounds %struct._Value* %v3, i32 0, i32 0
+  store i64 %mul, i64* %ivalue4, align 8
+  br label %sw.epilog
+
+sw.bb5:                                           ; preds = %entry
+  %11 = load %struct._Object** %ret, align 8
+  %type6 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 1, i32* %type6, align 4
+  %12 = load i32* %a.addr, align 4
+  %conv7 = sitofp i32 %12 to double
+  %13 = load %struct._Object** %b, align 8
+  %v8 = getelementptr inbounds %struct._Object* %13, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  %14 = load double* %dvalue, align 8
+  %mul9 = fmul double %conv7, %14
+  %15 = load %struct._Object** %ret, align 8
+  %v10 = getelementptr inbounds %struct._Object* %15, i32 0, i32 1
+  %dvalue11 = getelementptr inbounds %struct._Value* %v10, i32 0, i32 1
+  store double %mul9, double* %dvalue11, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb5, %sw.bb
+  %16 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %16
+}
+
+define %struct._Object* @Object_mulDouble(%struct._Object* %_a, double %b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %ret, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  store i32 1, i32* %type, align 4
+  %5 = load %struct._Object** %a, align 8
+  %type1 = getelementptr inbounds %struct._Object* %5, i32 0, i32 0
+  %6 = load i32* %type1, align 4
+  switch i32 %6, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb4
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %7 = load %struct._Object** %a, align 8
+  %v2 = getelementptr inbounds %struct._Object* %7, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %8 = load i64* %ivalue, align 8
+  %conv = sitofp i64 %8 to double
+  %9 = load double* %b.addr, align 8
+  %mul = fmul double %conv, %9
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v3, i32 0, i32 1
+  store double %mul, double* %dvalue, align 8
+  br label %sw.epilog
+
+sw.bb4:                                           ; preds = %entry
+  %11 = load %struct._Object** %a, align 8
+  %v5 = getelementptr inbounds %struct._Object* %11, i32 0, i32 1
+  %dvalue6 = getelementptr inbounds %struct._Value* %v5, i32 0, i32 1
+  %12 = load double* %dvalue6, align 8
+  %13 = load double* %b.addr, align 8
+  %mul7 = fmul double %12, %13
+  %14 = load %struct._Object** %ret, align 8
+  %v8 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %dvalue9 = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  store double %mul7, double* %dvalue9, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb4, %sw.bb
+  %15 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %15
+}
+
+define %struct._Object* @Object_mulDouble2(double %a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %a.addr = alloca double, align 8
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store double %a, double* %a.addr, align 8
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_b.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %b, align 8
+  %4 = load %struct._Object** %ret, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  store i32 1, i32* %type, align 4
+  %5 = load %struct._Object** %b, align 8
+  %type1 = getelementptr inbounds %struct._Object* %5, i32 0, i32 0
+  %6 = load i32* %type1, align 4
+  switch i32 %6, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb4
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %7 = load double* %a.addr, align 8
+  %8 = load %struct._Object** %b, align 8
+  %v2 = getelementptr inbounds %struct._Object* %8, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %9 = load i64* %ivalue, align 8
+  %conv = sitofp i64 %9 to double
+  %mul = fmul double %7, %conv
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v3, i32 0, i32 1
+  store double %mul, double* %dvalue, align 8
+  br label %sw.epilog
+
+sw.bb4:                                           ; preds = %entry
+  %11 = load double* %a.addr, align 8
+  %12 = load %struct._Object** %b, align 8
+  %v5 = getelementptr inbounds %struct._Object* %12, i32 0, i32 1
+  %dvalue6 = getelementptr inbounds %struct._Value* %v5, i32 0, i32 1
+  %13 = load double* %dvalue6, align 8
+  %mul7 = fmul double %11, %13
+  %14 = load %struct._Object** %ret, align 8
+  %v8 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %dvalue9 = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  store double %mul7, double* %dvalue9, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb4, %sw.bb
+  %15 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %15
+}
+
+define %struct._Object* @Object_divObject(%struct._Object* %_a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %_b.addr, align 8
+  %v1 = getelementptr inbounds %struct._Object* %4, i32 0, i32 1
+  %ovalue2 = getelementptr inbounds %struct._Value* %v1, i32 0, i32 3
+  %5 = load i8** %ovalue2, align 8
+  %6 = bitcast i8* %5 to %struct._Object*
+  store %struct._Object* %6, %struct._Object** %b, align 8
+  %7 = load %struct._Object** %a, align 8
+  %type = getelementptr inbounds %struct._Object* %7, i32 0, i32 0
+  %8 = load i32* %type, align 4
+  switch i32 %8, label %sw.default43 [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb19
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %9 = load %struct._Object** %b, align 8
+  %type3 = getelementptr inbounds %struct._Object* %9, i32 0, i32 0
+  %10 = load i32* %type3, align 4
+  switch i32 %10, label %sw.default [
+    i32 0, label %sw.bb4
+    i32 1, label %sw.bb11
+  ]
+
+sw.bb4:                                           ; preds = %sw.bb
+  %11 = load %struct._Object** %ret, align 8
+  %type5 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 0, i32* %type5, align 4
+  %12 = load %struct._Object** %a, align 8
+  %v6 = getelementptr inbounds %struct._Object* %12, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v6, i32 0, i32 0
+  %13 = load i64* %ivalue, align 8
+  %14 = load %struct._Object** %b, align 8
+  %v7 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %ivalue8 = getelementptr inbounds %struct._Value* %v7, i32 0, i32 0
+  %15 = load i64* %ivalue8, align 8
+  %div = sdiv i64 %13, %15
+  %16 = load %struct._Object** %ret, align 8
+  %v9 = getelementptr inbounds %struct._Object* %16, i32 0, i32 1
+  %ivalue10 = getelementptr inbounds %struct._Value* %v9, i32 0, i32 0
+  store i64 %div, i64* %ivalue10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %sw.bb
+  %17 = load %struct._Object** %ret, align 8
+  %type12 = getelementptr inbounds %struct._Object* %17, i32 0, i32 0
+  store i32 1, i32* %type12, align 4
+  %18 = load %struct._Object** %a, align 8
+  %v13 = getelementptr inbounds %struct._Object* %18, i32 0, i32 1
+  %ivalue14 = getelementptr inbounds %struct._Value* %v13, i32 0, i32 0
+  %19 = load i64* %ivalue14, align 8
+  %conv = sitofp i64 %19 to double
+  %20 = load %struct._Object** %b, align 8
+  %v15 = getelementptr inbounds %struct._Object* %20, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v15, i32 0, i32 1
+  %21 = load double* %dvalue, align 8
+  %div16 = fdiv double %conv, %21
+  %22 = load %struct._Object** %ret, align 8
+  %v17 = getelementptr inbounds %struct._Object* %22, i32 0, i32 1
+  %dvalue18 = getelementptr inbounds %struct._Value* %v17, i32 0, i32 1
+  store double %div16, double* %dvalue18, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %sw.bb
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb4
+  br label %sw.epilog44
+
+sw.bb19:                                          ; preds = %entry
+  %23 = load %struct._Object** %ret, align 8
+  %type20 = getelementptr inbounds %struct._Object* %23, i32 0, i32 0
+  store i32 1, i32* %type20, align 4
+  %24 = load %struct._Object** %b, align 8
+  %type21 = getelementptr inbounds %struct._Object* %24, i32 0, i32 0
+  %25 = load i32* %type21, align 4
+  switch i32 %25, label %sw.default41 [
+    i32 0, label %sw.bb22
+    i32 1, label %sw.bb32
+  ]
+
+sw.bb22:                                          ; preds = %sw.bb19
+  %26 = load %struct._Object** %ret, align 8
+  %type23 = getelementptr inbounds %struct._Object* %26, i32 0, i32 0
+  store i32 0, i32* %type23, align 4
+  %27 = load %struct._Object** %a, align 8
+  %v24 = getelementptr inbounds %struct._Object* %27, i32 0, i32 1
+  %dvalue25 = getelementptr inbounds %struct._Value* %v24, i32 0, i32 1
+  %28 = load double* %dvalue25, align 8
+  %29 = load %struct._Object** %b, align 8
+  %v26 = getelementptr inbounds %struct._Object* %29, i32 0, i32 1
+  %ivalue27 = getelementptr inbounds %struct._Value* %v26, i32 0, i32 0
+  %30 = load i64* %ivalue27, align 8
+  %conv28 = sitofp i64 %30 to double
+  %div29 = fdiv double %28, %conv28
+  %31 = load %struct._Object** %ret, align 8
+  %v30 = getelementptr inbounds %struct._Object* %31, i32 0, i32 1
+  %dvalue31 = getelementptr inbounds %struct._Value* %v30, i32 0, i32 1
+  store double %div29, double* %dvalue31, align 8
+  br label %sw.epilog42
+
+sw.bb32:                                          ; preds = %sw.bb19
+  %32 = load %struct._Object** %ret, align 8
+  %type33 = getelementptr inbounds %struct._Object* %32, i32 0, i32 0
+  store i32 1, i32* %type33, align 4
+  %33 = load %struct._Object** %a, align 8
+  %v34 = getelementptr inbounds %struct._Object* %33, i32 0, i32 1
+  %dvalue35 = getelementptr inbounds %struct._Value* %v34, i32 0, i32 1
+  %34 = load double* %dvalue35, align 8
+  %35 = load %struct._Object** %b, align 8
+  %v36 = getelementptr inbounds %struct._Object* %35, i32 0, i32 1
+  %dvalue37 = getelementptr inbounds %struct._Value* %v36, i32 0, i32 1
+  %36 = load double* %dvalue37, align 8
+  %div38 = fdiv double %34, %36
+  %37 = load %struct._Object** %ret, align 8
+  %v39 = getelementptr inbounds %struct._Object* %37, i32 0, i32 1
+  %dvalue40 = getelementptr inbounds %struct._Value* %v39, i32 0, i32 1
+  store double %div38, double* %dvalue40, align 8
+  br label %sw.epilog42
+
+sw.default41:                                     ; preds = %sw.bb19
+  br label %sw.epilog42
+
+sw.epilog42:                                      ; preds = %sw.default41, %sw.bb32, %sw.bb22
+  br label %sw.epilog44
+
+sw.default43:                                     ; preds = %entry
+  br label %sw.epilog44
+
+sw.epilog44:                                      ; preds = %sw.default43, %sw.epilog42, %sw.epilog
+  %38 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %38
+}
+
+define %struct._Object* @Object_divInt(%struct._Object* %_a, i32 %b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %a, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  %5 = load i32* %type, align 4
+  switch i32 %5, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb5
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %6 = load %struct._Object** %ret, align 8
+  %type1 = getelementptr inbounds %struct._Object* %6, i32 0, i32 0
+  store i32 0, i32* %type1, align 4
+  %7 = load %struct._Object** %a, align 8
+  %v2 = getelementptr inbounds %struct._Object* %7, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %8 = load i64* %ivalue, align 8
+  %9 = load i32* %b.addr, align 4
+  %conv = sext i32 %9 to i64
+  %div = sdiv i64 %8, %conv
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %ivalue4 = getelementptr inbounds %struct._Value* %v3, i32 0, i32 0
+  store i64 %div, i64* %ivalue4, align 8
+  br label %sw.epilog
+
+sw.bb5:                                           ; preds = %entry
+  %11 = load %struct._Object** %ret, align 8
+  %type6 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 1, i32* %type6, align 4
+  %12 = load %struct._Object** %a, align 8
+  %v7 = getelementptr inbounds %struct._Object* %12, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v7, i32 0, i32 1
+  %13 = load double* %dvalue, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv8 = sitofp i32 %14 to double
+  %div9 = fdiv double %13, %conv8
+  %15 = load %struct._Object** %ret, align 8
+  %v10 = getelementptr inbounds %struct._Object* %15, i32 0, i32 1
+  %dvalue11 = getelementptr inbounds %struct._Value* %v10, i32 0, i32 1
+  store double %div9, double* %dvalue11, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb5, %sw.bb
+  %16 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %16
+}
+
+define %struct._Object* @Object_divInt2(i32 %a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %a.addr = alloca i32, align 4
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store i32 %a, i32* %a.addr, align 4
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_b.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %b, align 8
+  %4 = load %struct._Object** %b, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  %5 = load i32* %type, align 4
+  switch i32 %5, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb5
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %6 = load %struct._Object** %ret, align 8
+  %type1 = getelementptr inbounds %struct._Object* %6, i32 0, i32 0
+  store i32 0, i32* %type1, align 4
+  %7 = load i32* %a.addr, align 4
+  %conv = sext i32 %7 to i64
+  %8 = load %struct._Object** %b, align 8
+  %v2 = getelementptr inbounds %struct._Object* %8, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %9 = load i64* %ivalue, align 8
+  %div = sdiv i64 %conv, %9
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %ivalue4 = getelementptr inbounds %struct._Value* %v3, i32 0, i32 0
+  store i64 %div, i64* %ivalue4, align 8
+  br label %sw.epilog
+
+sw.bb5:                                           ; preds = %entry
+  %11 = load %struct._Object** %ret, align 8
+  %type6 = getelementptr inbounds %struct._Object* %11, i32 0, i32 0
+  store i32 1, i32* %type6, align 4
+  %12 = load i32* %a.addr, align 4
+  %conv7 = sitofp i32 %12 to double
+  %13 = load %struct._Object** %b, align 8
+  %v8 = getelementptr inbounds %struct._Object* %13, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  %14 = load double* %dvalue, align 8
+  %div9 = fdiv double %conv7, %14
+  %15 = load %struct._Object** %ret, align 8
+  %v10 = getelementptr inbounds %struct._Object* %15, i32 0, i32 1
+  %dvalue11 = getelementptr inbounds %struct._Value* %v10, i32 0, i32 1
+  store double %div9, double* %dvalue11, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb5, %sw.bb
+  %16 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %16
+}
+
+define %struct._Object* @Object_divDouble(%struct._Object* %_a, double %b) nounwind uwtable ssp {
+entry:
+  %_a.addr = alloca %struct._Object*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %struct._Object*, align 8
+  %a = alloca %struct._Object*, align 8
+  store %struct._Object* %_a, %struct._Object** %_a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_a.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %a, align 8
+  %4 = load %struct._Object** %ret, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  store i32 1, i32* %type, align 4
+  %5 = load %struct._Object** %a, align 8
+  %type1 = getelementptr inbounds %struct._Object* %5, i32 0, i32 0
+  %6 = load i32* %type1, align 4
+  switch i32 %6, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb4
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %7 = load %struct._Object** %a, align 8
+  %v2 = getelementptr inbounds %struct._Object* %7, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %8 = load i64* %ivalue, align 8
+  %conv = sitofp i64 %8 to double
+  %9 = load double* %b.addr, align 8
+  %div = fdiv double %conv, %9
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v3, i32 0, i32 1
+  store double %div, double* %dvalue, align 8
+  br label %sw.epilog
+
+sw.bb4:                                           ; preds = %entry
+  %11 = load %struct._Object** %a, align 8
+  %v5 = getelementptr inbounds %struct._Object* %11, i32 0, i32 1
+  %dvalue6 = getelementptr inbounds %struct._Value* %v5, i32 0, i32 1
+  %12 = load double* %dvalue6, align 8
+  %13 = load double* %b.addr, align 8
+  %div7 = fdiv double %12, %13
+  %14 = load %struct._Object** %ret, align 8
+  %v8 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %dvalue9 = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  store double %div7, double* %dvalue9, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb4, %sw.bb
+  %15 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %15
+}
+
+define %struct._Object* @Object_divDouble2(double %a, %struct._Object* %_b) nounwind uwtable ssp {
+entry:
+  %a.addr = alloca double, align 8
+  %_b.addr = alloca %struct._Object*, align 8
+  %ret = alloca %struct._Object*, align 8
+  %b = alloca %struct._Object*, align 8
+  store double %a, double* %a.addr, align 8
+  store %struct._Object* %_b, %struct._Object** %_b.addr, align 8
+  %call = call i8* @malloc(i64 40)
+  %0 = bitcast i8* %call to %struct._Object*
+  store %struct._Object* %0, %struct._Object** %ret, align 8
+  %1 = load %struct._Object** %_b.addr, align 8
+  %v = getelementptr inbounds %struct._Object* %1, i32 0, i32 1
+  %ovalue = getelementptr inbounds %struct._Value* %v, i32 0, i32 3
+  %2 = load i8** %ovalue, align 8
+  %3 = bitcast i8* %2 to %struct._Object*
+  store %struct._Object* %3, %struct._Object** %b, align 8
+  %4 = load %struct._Object** %ret, align 8
+  %type = getelementptr inbounds %struct._Object* %4, i32 0, i32 0
+  store i32 1, i32* %type, align 4
+  %5 = load %struct._Object** %b, align 8
+  %type1 = getelementptr inbounds %struct._Object* %5, i32 0, i32 0
+  %6 = load i32* %type1, align 4
+  switch i32 %6, label %sw.default [
+    i32 0, label %sw.bb
+    i32 1, label %sw.bb4
+  ]
+
+sw.bb:                                            ; preds = %entry
+  %7 = load double* %a.addr, align 8
+  %8 = load %struct._Object** %b, align 8
+  %v2 = getelementptr inbounds %struct._Object* %8, i32 0, i32 1
+  %ivalue = getelementptr inbounds %struct._Value* %v2, i32 0, i32 0
+  %9 = load i64* %ivalue, align 8
+  %conv = sitofp i64 %9 to double
+  %div = fdiv double %7, %conv
+  %10 = load %struct._Object** %ret, align 8
+  %v3 = getelementptr inbounds %struct._Object* %10, i32 0, i32 1
+  %dvalue = getelementptr inbounds %struct._Value* %v3, i32 0, i32 1
+  store double %div, double* %dvalue, align 8
+  br label %sw.epilog
+
+sw.bb4:                                           ; preds = %entry
+  %11 = load double* %a.addr, align 8
+  %12 = load %struct._Object** %b, align 8
+  %v5 = getelementptr inbounds %struct._Object* %12, i32 0, i32 1
+  %dvalue6 = getelementptr inbounds %struct._Value* %v5, i32 0, i32 1
+  %13 = load double* %dvalue6, align 8
+  %div7 = fdiv double %11, %13
+  %14 = load %struct._Object** %ret, align 8
+  %v8 = getelementptr inbounds %struct._Object* %14, i32 0, i32 1
+  %dvalue9 = getelementptr inbounds %struct._Value* %v8, i32 0, i32 1
+  store double %div7, double* %dvalue9, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %entry
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb4, %sw.bb
+  %15 = load %struct._Object** %ret, align 8
+  ret %struct._Object* %15
+}

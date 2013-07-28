@@ -89,6 +89,8 @@ class LLVM {
 public:
 	llvm::Module *module;
 	Enum::Runtime::Type cur_type;
+	llvm::Type *int_type;
+	llvm::Type *double_type;
 	llvm::Type *value_type;
 	llvm::Type *value_ptr_type;
 	llvm::Type *object_type;
@@ -126,6 +128,7 @@ public:
     void generateCommaCode(llvm::IRBuilder<> *builder, BranchNode *node, std::vector<CodeGenerator::Value *> *list);
 	llvm::Value *generateAssignCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateOperatorCode(llvm::IRBuilder<> *builder, BranchNode *node);
+	llvm::Value *generateOperatorCodeWithObject(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, const char *fname);
 	llvm::Value *generateListCode(llvm::IRBuilder<> *builder, ListNode *node);
 	llvm::Value *generateValueCode(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *generateFunctionCallCode(llvm::IRBuilder<> *builder, FunctionCallNode *node);
