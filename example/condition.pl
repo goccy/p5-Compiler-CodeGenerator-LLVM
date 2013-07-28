@@ -19,7 +19,6 @@ $generator->debug_run($ast);
 
 __DATA__
 
-=hge
 my $a = 1 + 1;
 $a = $a + 1;
 say $a;
@@ -31,9 +30,8 @@ if ($a != 2) {
 } else {
     say "else";
 }
-=cut
 
-say 1 && 2.2 && 3 && 4.2; # 2
+say 1 && 2.2 && 3 && 4.2; # 4.2
 say 0 && 2; # 0
 say 1 || 2; # 1
 say 0 || 2; # 2

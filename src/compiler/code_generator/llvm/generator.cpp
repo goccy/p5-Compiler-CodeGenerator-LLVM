@@ -47,6 +47,7 @@ void LLVM::createRuntimeTypes(void)
 	LLVMContext &ctx = getGlobalContext();
 	vector<Type *> fields;
 	int_type = IntegerType::get(ctx, 64);
+	int32_type = IntegerType::get(ctx, 32);
 	double_type = Type::getDoubleTy(ctx);
 	boolean_type = llvm::Type::getInt1Ty(ctx);
 
@@ -96,8 +97,6 @@ const char *LLVM::gen(AST *ast)
 	LLVMContext &ctx = getGlobalContext();
 	linkModule(module, "gen/runtime_api.lli");
 	IRBuilder<> builder(ctx);
-	//Type *int_type = IntegerType::get(module->getContext(), 64);
-	//llvm::FunctionType *mainFuncType = llvm::FunctionType::get(int_type, true);
 	llvm::FunctionType *mainFuncType = llvm::FunctionType::get(builder.getVoidTy(), true);
 	Function *func_main = Function::Create(
 		mainFuncType,
@@ -185,7 +184,7 @@ BasicBlock *LLVM::generateBlockCode(IRBuilder<> *builder, BasicBlock *block, Bas
 void LLVM::generateIfStmtCode(IRBuilder<> *builder, IfStmtNode *node)
 {
 	llvm::Value *expr = generateValueCode(builder, node->expr);
-	llvm::Value *zero = ConstantInt::get(IntegerType::get(module->getContext(), 64), 0);
+	llvm::Value *zero = ConstantInt::get(int_type, 0);
 	llvm::Value *cond = builder->CreateICmpNE(expr, zero);
 	LLVMContext &ctx = getGlobalContext();
 	BasicBlock *true_block = BasicBlock::Create(ctx, "true_block", cur_func);
@@ -213,7 +212,7 @@ void LLVM::generateForStmtCode(IRBuilder<> *builder, ForStmtNode *node)
 	builder->CreateBr(loop_head);
 	builder->SetInsertPoint(loop_head);
 	llvm::Value *_cond = generateValueCode(builder, node->cond);
-	llvm::Value *zero = ConstantInt::get(IntegerType::get(module->getContext(), 64), 0);
+	llvm::Value *zero = ConstantInt::get(int_type, 0);
 	llvm::Value *cond = builder->CreateICmpNE(_cond, zero);
 	builder->CreateCondBr(cond, true_block, after_block);
 
@@ -245,16 +244,15 @@ void LLVM::generateForeachStmtCode(IRBuilder<> *builder, ForeachStmtNode *node)
 	llvm::Value *array_size = builder->CreateLoad(builder->CreateStructGEP(array, 2));
 	setIteratorValue(builder, node->itr);
 	llvm::Value *itr_value = vmgr.getVariable(cur_func_name.c_str(), node->itr->tk->data.c_str(), node->itr->tk->finfo.indent)->value;
-	llvm::Value *hidden_idx = builder->CreateAlloca(IntegerType::get(module->getContext(), 64), 0, "__hidden_idx__");
-	llvm::Value *zero = ConstantInt::get(IntegerType::get(module->getContext(), 64), 0);
-	llvm::Value *five = ConstantInt::get(IntegerType::get(module->getContext(), 64), 5);
+	llvm::Value *hidden_idx = builder->CreateAlloca(int_type, 0, "__hidden_idx__");
+	llvm::Value *zero = ConstantInt::get(int_type, 0);
 	builder->CreateStore(zero, hidden_idx);
 
 	builder->CreateBr(loop_head);
 	builder->SetInsertPoint(loop_head);
-	array_size = builder->CreatePtrToInt(array_size, IntegerType::get(module->getContext(), 64));
+	array_size = builder->CreatePtrToInt(array_size, int_type);
 	llvm::Value *load_v = builder->CreateLoad(hidden_idx);
-	llvm::Value *_cond = builder->CreateZExt(builder->CreateICmpSLT(load_v, array_size), llvm::Type::getInt64Ty(module->getContext()));
+	llvm::Value *_cond = builder->CreateZExt(builder->CreateICmpSLT(load_v, array_size), int_type);
 	llvm::Value *cond = builder->CreateICmpNE(_cond, zero);
 	builder->CreateCondBr(cond, true_block, after_block);
 
@@ -270,8 +268,8 @@ void LLVM::generateForeachStmtCode(IRBuilder<> *builder, ForeachStmtNode *node)
 		generateCode(builder, true_stmt);
 	}
 
-	llvm::Value *one = ConstantInt::get(IntegerType::get(module->getContext(), 64), 1);
-	llvm::Value *incremented_value = builder->CreateAdd(builder->CreatePtrToInt(load_v, IntegerType::get(module->getContext(), 64)), one, "inc");
+	llvm::Value *one = ConstantInt::get(int_type, 1);
+	llvm::Value *incremented_value = builder->CreateAdd(builder->CreatePtrToInt(load_v, int_type), one, "inc");
 	builder->CreateStore(incremented_value, hidden_idx);
 	builder->CreateBr(loop_head);
 
@@ -281,7 +279,7 @@ void LLVM::generateForeachStmtCode(IRBuilder<> *builder, ForeachStmtNode *node)
 void LLVM::generateFunctionCode(IRBuilder<> *builder, FunctionNode *node)
 {
 	//llvm::FunctionType *ftype = llvm::FunctionType::get(object_type, false);
-	FunctionType *ftype = llvm::FunctionType::get(IntegerType::get(module->getContext(), 64), array_ptr_type, false);
+	FunctionType *ftype = llvm::FunctionType::get(int_type, array_ptr_type, false);
 	Function *func = Function::Create(
 		ftype,
 		GlobalValue::ExternalLinkage,
@@ -334,7 +332,7 @@ void LLVM::generateWhileStmtCode(IRBuilder<> *builder, WhileStmtNode *node)
 	builder->CreateBr(loop_head);
 	builder->SetInsertPoint(loop_head);
 	llvm::Value *_cond = generateValueCode(builder, node->expr);
-	llvm::Value *zero = ConstantInt::get(IntegerType::get(module->getContext(), 64), 0);
+	llvm::Value *zero = ConstantInt::get(int_type, 0);
 	llvm::Value *cond = builder->CreateICmpNE(_cond, zero);
 	builder->CreateCondBr(cond, true_block, after_block);
 
@@ -358,13 +356,13 @@ void LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperat
 	case Inc:
 		if (type == Enum::Runtime::Int) {
 			CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
-			llvm::Value *one = ConstantInt::get(IntegerType::get(module->getContext(), 64), 1);
+			llvm::Value *one = ConstantInt::get(int_type, 1);
 			setLLVMValue(builder, v->value, type, builder->CreateAdd(value, one, "inc"));
 			cur_type = Enum::Runtime::Int;
 		} else {
-			llvm::Value *casted_value = builder->CreateSIToFP(value, llvm::Type::getDoubleTy(module->getContext()));
+			llvm::Value *casted_value = builder->CreateSIToFP(value, double_type);
 			CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
-			llvm::Value *one = ConstantFP::get(llvm::Type::getDoubleTy(module->getContext()), 1.0);
+			llvm::Value *one = ConstantFP::get(double_type, 1.0);
 			setLLVMValue(builder, v->value, type, builder->CreateFAdd(casted_value, one, "inc"));
 			cur_type = Enum::Runtime::Double;
 		}
@@ -372,13 +370,13 @@ void LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperat
 	case Dec:
 		if (type == Enum::Runtime::Int) {
 			CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
-			llvm::Value *one = ConstantInt::get(IntegerType::get(module->getContext(), 64), 1);
+			llvm::Value *one = ConstantInt::get(int_type, 1);
 			setLLVMValue(builder, v->value, type, builder->CreateSub(value, one, "dec"));
 			cur_type = Enum::Runtime::Int;
 		} else {
-			llvm::Value *casted_value = builder->CreateSIToFP(value, llvm::Type::getDoubleTy(module->getContext()));
+			llvm::Value *casted_value = builder->CreateSIToFP(value, double_type);
 			CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
-			llvm::Value *one = ConstantFP::get(llvm::Type::getDoubleTy(module->getContext()), 1.0);
+			llvm::Value *one = ConstantFP::get(double_type, 1.0);
 			setLLVMValue(builder, v->value, type, builder->CreateFSub(casted_value, one, "dec"));
 			cur_type = Enum::Runtime::Double;
 		}
@@ -622,13 +620,13 @@ llvm::Value *LLVM::generateListCode(IRBuilder<> *builder, ListNode *node)
 		list.push_back(v);
 	}
 	size_t size = list.size();
-	llvm::Value *elems = builder->CreateAlloca(object_ptr_type, ConstantInt::get(IntegerType::get(module->getContext(), 64), size), "elems");
+	llvm::Value *elems = builder->CreateAlloca(object_ptr_type, ConstantInt::get(int_type, size), "elems");
 	for (size_t i = 0; i < size; i++) {
 		CodeGenerator::Value *v = list.at(i);
 		llvm::Value *value = v->value;
 		Enum::Runtime::Type type = v->type;
 		llvm::Value *elem = builder->CreateAlloca(object_type, 0, "elem");
-		llvm::Value *idx = ConstantInt::get(IntegerType::get(module->getContext(), 64), i);
+		llvm::Value *idx = ConstantInt::get(int_type, i);
 		if (type == Enum::Runtime::Object) {
 			Token *tk = v->tk;
 			builder->CreateStore(vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent)->value, builder->CreateGEP(elems, idx));
@@ -734,11 +732,11 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 	case ExecString:
 		break;
 	case Int:
-		ret = ConstantInt::get(IntegerType::get(module->getContext(), 64), atoi(tk->data.c_str()));
+		ret = ConstantInt::get(int_type, atoi(tk->data.c_str()));
 		cur_type = Enum::Runtime::Int;
 		break;
 	case Double:
-		ret = ConstantFP::get(llvm::Type::getDoubleTy(module->getContext()), atof(tk->data.c_str()));
+		ret = ConstantFP::get(double_type, atof(tk->data.c_str()));
 		cur_type = Enum::Runtime::Double;
 		break;
 	case ArrayVar: case Var: {
@@ -802,13 +800,12 @@ llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNo
 			}
 		}
 		size_t args_num = values.size();
-		llvm::Value *__args__ = builder->CreateAlloca(object_ptr_type, ConstantInt::get(IntegerType::get(module->getContext(), 64), args_num), "__args__");
+		llvm::Value *__args__ = builder->CreateAlloca(object_ptr_type, ConstantInt::get(int_type, args_num), "__args__");
 		for (size_t i = 0; i < args_num; i++) {
 			llvm::Value *value = values.at(i);
 			Enum::Runtime::Type type = types.at(i);
-			//fprintf(stderr, "type = [%d]\n", type);
 			llvm::Value *arg = builder->CreateAlloca(object_type, 0, "__arg__");
-			llvm::Value *idx = ConstantInt::get(IntegerType::get(module->getContext(), 64), i);
+			llvm::Value *idx = ConstantInt::get(int_type, i);
 			if (type == Enum::Runtime::Object || type == Enum::Runtime::Array) {
 				Token *tk = tokens.at(i);
 				if (tk->type == TokenType::Var || tk->type == TokenType::ArrayVar) {
@@ -901,9 +898,9 @@ llvm::Value *LLVM::makeArgumentArray(IRBuilder<> *builder, llvm::Value *list, si
 	llvm::Value *array_type = builder->CreateStructGEP(args, 0);
 	llvm::Value *array_list = builder->CreateStructGEP(args, 1);
 	llvm::Value *array_size = builder->CreateStructGEP(args, 2);
-	builder->CreateStore(ConstantInt::get(IntegerType::get(module->getContext(), 32), (int)Enum::Runtime::Array), array_type);
+	builder->CreateStore(ConstantInt::get(int32_type, Enum::Runtime::Array), array_type);
 	builder->CreateStore(list, array_list);
-	builder->CreateStore(ConstantInt::get(IntegerType::get(module->getContext(), 64), size), array_size);
+	builder->CreateStore(ConstantInt::get(int_type, size), array_size);
 	return args;
 }
 

@@ -90,6 +90,7 @@ public:
 	llvm::Module *module;
 	Enum::Runtime::Type cur_type;
 	llvm::Type *int_type;
+	llvm::Type *int32_type;
 	llvm::Type *double_type;
 	llvm::Type *boolean_type;
 	llvm::Type *value_type;
