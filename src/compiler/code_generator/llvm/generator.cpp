@@ -48,6 +48,7 @@ void LLVM::createRuntimeTypes(void)
 	vector<Type *> fields;
 	int_type = IntegerType::get(ctx, 64);
 	double_type = Type::getDoubleTy(ctx);
+	boolean_type = llvm::Type::getInt1Ty(ctx);
 
 	fields.push_back(Type::getInt64Ty(ctx));
 	fields.push_back(Type::getDoubleTy(ctx));
@@ -469,6 +470,86 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 	case Less:
 		SET_COMPARE_OPCODE(builder->CreateICmpSLT, builder->CreateFCmpOLT, "lt", ret);
 		break;
+	case And: {
+		LLVMContext &ctx = getGlobalContext();
+		llvm::Value *v = builder->CreateAlloca(object_type, 0, "__hidden_cond__");
+		llvm::Value *zero = ConstantInt::get(int_type, 0);
+		llvm::Value *cond = NULL;
+		switch (left_type) {
+		case Enum::Runtime::Int:
+			cond = builder->CreateICmpNE(left_value, zero);
+			break;
+		case Enum::Runtime::Double:
+			cond = builder->CreateFCmpONE(left_value, builder->CreateSIToFP(zero, double_type));
+			break;
+		default: {
+			vector<llvm::Type *> arg_types;
+			arg_types.push_back(object_ptr_type);
+			llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+			FunctionType *ftype = llvm::FunctionType::get(boolean_type, arg_types_ref, false);
+			llvm::Constant *f = module->getOrInsertFunction("Object_isTrue", ftype);
+			cond = builder->CreateCall(f, left_value, "object");
+			break;
+		}
+		}
+		BasicBlock *true_block = BasicBlock::Create(ctx, "true_block", cur_func);
+		BasicBlock *false_block = BasicBlock::Create(ctx, "false_block", cur_func);
+		BasicBlock *merge_block = BasicBlock::Create(ctx, "merge_block", cur_func);
+		builder->CreateCondBr(cond, true_block, false_block);
+		builder->SetInsertPoint(true_block);
+			
+		setLLVMValue(builder, v, right_type, right_value);
+		builder->CreateBr(merge_block);
+
+		builder->SetInsertPoint(false_block);
+		setLLVMValue(builder, v, Enum::Runtime::Int, zero);
+		builder->CreateBr(merge_block);
+			
+		builder->SetInsertPoint(merge_block);
+		ret = v;
+		cur_type = Enum::Runtime::Object;
+		break;
+	}
+	case Or: {
+		LLVMContext &ctx = getGlobalContext();
+		llvm::Value *v = builder->CreateAlloca(object_type, 0, "__hidden_cond__");
+		llvm::Value *zero = ConstantInt::get(int_type, 0);
+		llvm::Value *cond = NULL;
+		switch (left_type) {
+		case Enum::Runtime::Int:
+			cond = builder->CreateICmpNE(left_value, zero);
+			break;
+		case Enum::Runtime::Double:
+			cond = builder->CreateFCmpONE(left_value, builder->CreateSIToFP(zero, double_type));
+			break;
+		default: {
+			vector<llvm::Type *> arg_types;
+			arg_types.push_back(object_ptr_type);
+			llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+			FunctionType *ftype = llvm::FunctionType::get(boolean_type, arg_types_ref, false);
+			llvm::Constant *f = module->getOrInsertFunction("Object_isTrue", ftype);
+			cond = builder->CreateCall(f, left_value, "object");
+			break;
+		}
+		}
+		BasicBlock *true_block = BasicBlock::Create(ctx, "true_block", cur_func);
+		BasicBlock *false_block = BasicBlock::Create(ctx, "false_block", cur_func);
+		BasicBlock *merge_block = BasicBlock::Create(ctx, "merge_block", cur_func);
+		builder->CreateCondBr(cond, true_block, false_block);
+		builder->SetInsertPoint(true_block);
+			
+		setLLVMValue(builder, v, left_type, left_value);
+		builder->CreateBr(merge_block);
+
+		builder->SetInsertPoint(false_block);
+		setLLVMValue(builder, v, right_type, right_value);
+		builder->CreateBr(merge_block);
+			
+		builder->SetInsertPoint(merge_block);
+		ret = v;
+		cur_type = Enum::Runtime::Object;
+		break;
+	}
 	default:
 		break;
 	}

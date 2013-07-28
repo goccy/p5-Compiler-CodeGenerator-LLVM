@@ -528,3 +528,19 @@ Object *Object_divDouble2(double a, Object *_b)
 	}
 	return ret;
 }
+
+int Object_isTrue(Object *a)
+{
+	int ret = 0;
+	switch (a->type) {
+	case Int:
+		ret = a->v.ivalue != 0;
+		break;
+	case Double:
+		ret = a->v.dvalue != 0;
+		break;
+	default:
+		break;
+	}
+	return ret;
+}

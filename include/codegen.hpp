@@ -91,6 +91,7 @@ public:
 	Enum::Runtime::Type cur_type;
 	llvm::Type *int_type;
 	llvm::Type *double_type;
+	llvm::Type *boolean_type;
 	llvm::Type *value_type;
 	llvm::Type *value_ptr_type;
 	llvm::Type *object_type;
