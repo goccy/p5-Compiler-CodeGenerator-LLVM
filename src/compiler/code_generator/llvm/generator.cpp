@@ -185,7 +185,17 @@ void LLVM::generateIfStmtCode(IRBuilder<> *builder, IfStmtNode *node)
 {
 	llvm::Value *expr = generateValueCode(builder, node->expr);
 	llvm::Value *zero = ConstantInt::get(int_type, 0);
-	llvm::Value *cond = builder->CreateICmpNE(expr, zero);
+	llvm::Value *cond = NULL;
+	if (cur_type == Enum::Runtime::Object) {
+		vector<llvm::Type *> arg_types;
+		arg_types.push_back(object_ptr_type);
+		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+		FunctionType *ftype = llvm::FunctionType::get(boolean_type, arg_types_ref, false);
+		llvm::Constant *f = module->getOrInsertFunction("Object_isTrue", ftype);
+		cond = builder->CreateCall(f, expr, "object");
+	} else {
+		cond = builder->CreateICmpNE(expr, zero);
+	}
 	LLVMContext &ctx = getGlobalContext();
 	BasicBlock *true_block = BasicBlock::Create(ctx, "true_block", cur_func);
 	BasicBlock *false_block = BasicBlock::Create(ctx, "false_block", cur_func);
@@ -457,16 +467,32 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 	case Mod:
 		break;
 	case EqualEqual:
-		SET_COMPARE_OPCODE(builder->CreateICmpEQ, builder->CreateFCmpOEQ, "eq", ret);
+		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
+			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "eq");
+		} else {
+			SET_COMPARE_OPCODE(builder->CreateICmpEQ, builder->CreateFCmpOEQ, "eq", ret);
+		}
 		break;
 	case NotEqual:
-		SET_COMPARE_OPCODE(builder->CreateICmpNE, builder->CreateFCmpONE, "ne", ret);
+		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
+			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "ne");
+		} else {
+			SET_COMPARE_OPCODE(builder->CreateICmpNE, builder->CreateFCmpONE, "ne", ret);
+		}
 		break;
 	case Greater:
-		SET_COMPARE_OPCODE(builder->CreateICmpSGT, builder->CreateFCmpOGT, "gt", ret);
+		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
+			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "gt");
+		} else {
+			SET_COMPARE_OPCODE(builder->CreateICmpSGT, builder->CreateFCmpOGT, "gt", ret);
+		}
 		break;
 	case Less:
-		SET_COMPARE_OPCODE(builder->CreateICmpSLT, builder->CreateFCmpOLT, "lt", ret);
+		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
+			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "lt");
+		} else {
+			SET_COMPARE_OPCODE(builder->CreateICmpSLT, builder->CreateFCmpOLT, "lt", ret);
+		}
 		break;
 	case And: {
 		LLVMContext &ctx = getGlobalContext();

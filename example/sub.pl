@@ -50,7 +50,40 @@ sub f {
     say $b / 1.2;
     say 1.2 / $b;
 
+    say $a < $b;
+    say $a < 1;
+    say $a < 1.2;
+    say 1 < $a;
+    say 1.1 < $a;
+
+    say $a > $b;
+    say $a > 1;
+    say $a > 1.2;
+    say 1 > $a;
+    say 1.1 > $a;
+
+    say $a == $b;
+    say $a == 1;
+    say $a == 1.2;
+    say 1 == $a;
+    say 1.1 == $a;
+
+    say $a != $b;
+    say $a != 1;
+    say $a != 1.2;
+    say 1 != $a;
+    say 1.1 != $a;
+
     return 3;
 }
 
 say(f(1, 2));
+
+sub fib {
+    if ($_[0] < 2) {
+        return 1;
+    }
+    return 1;#fib($_[0] - 1) + fib($_[0] - 2);
+}
+
+say(fib(10));
