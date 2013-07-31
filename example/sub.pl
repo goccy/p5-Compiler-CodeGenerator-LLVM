@@ -77,13 +77,19 @@ sub f {
     return 3;
 }
 
-say(f(1, 2));
+#say(f(1, 2));
+
+sub h {
+    say $_[0];
+    return 1;
+}
 
 sub fib {
     if ($_[0] < 2) {
         return 1;
     }
-    return 1;#fib($_[0] - 1) + fib($_[0] - 2);
+    h($_[0] - 1) + 1;
+    return $a;
 }
 
-say(fib(10));
+say(fib(4));

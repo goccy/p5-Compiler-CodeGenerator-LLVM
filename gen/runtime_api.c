@@ -2,6 +2,7 @@
 
 void print_object(Object *o)
 {
+	fprintf(stderr, "o->type = [%d]\n", o->type);
 	switch (o->type) {
 	case Int:
 		printf("%ld", to_Int(o));
@@ -100,11 +101,16 @@ Object *map(ArrayObject *args)
 }
 */
 
+Object *new_Object(void)
+{
+	return (Object *)malloc(sizeof(Object));
+}
+
 Object *Object_addObject(Object *_a, Object *_b)
 {
 	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
+	Object *a = (_a->type == ObjectType) ? to_Object(_a) : _a;
+	Object *b = (_b->type == ObjectType) ? to_Object(_b) : _b;
 	setResultByObjectObject(ret, a, b, +);
 	return ret;
 }
@@ -183,7 +189,7 @@ Object *Object_addInt(Object *_a, int b)
 Object *Object_subInt(Object *_a, int b)
 {
 	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
+	Object *a = (_a->type == ObjectType) ? to_Object(_a) : _a;
 	setResultByObjectInt(ret, a, b, -);
 	return ret;
 }

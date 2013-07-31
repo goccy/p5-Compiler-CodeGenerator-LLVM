@@ -289,7 +289,7 @@ void LLVM::generateForeachStmtCode(IRBuilder<> *builder, ForeachStmtNode *node)
 void LLVM::generateFunctionCode(IRBuilder<> *builder, FunctionNode *node)
 {
 	//llvm::FunctionType *ftype = llvm::FunctionType::get(object_type, false);
-	FunctionType *ftype = llvm::FunctionType::get(int_type, array_ptr_type, false);
+	FunctionType *ftype = llvm::FunctionType::get(object_ptr_type, array_ptr_type, false);
 	Function *func = Function::Create(
 		ftype,
 		GlobalValue::ExternalLinkage,
@@ -313,7 +313,19 @@ void LLVM::generateFunctionCode(IRBuilder<> *builder, FunctionNode *node)
 void LLVM::generateReturnCode(IRBuilder<> *builder, ReturnNode *node)
 {
 	llvm::Value *ret = generateValueCode(builder, node->body);
-	builder->CreateRet(ret);
+	switch (cur_type) {
+	case Enum::Runtime::Int: {
+		FunctionType *ftype = llvm::FunctionType::get(object_ptr_type, false);
+		llvm::Constant *f = module->getOrInsertFunction("new_Object", ftype);
+		llvm::Value *o = builder->CreateCall(f, "ret");
+		builder->CreateRet(setLLVMValue(builder, o, cur_type, ret));
+		cur_type = Enum::Runtime::Object;
+		break;
+	}
+	default:
+		builder->CreateRet(ret);
+		break;
+	}
 }
 
 void LLVM::setIteratorValue(IRBuilder<> *builder, Node *node)
@@ -705,6 +717,7 @@ llvm::Value *LLVM::generateArrayAccessCode(IRBuilder<> *builder, ArrayNode *node
 }
 
 /*
+
 llvm::Value *LLVM::generateDynamicOperatorCode(IRBuilder<> *builder, llvm::Value *v)
 {
 	llvm::Value *type = builder->CreateLoad(builder->CreateStructGEP(v, 0));
@@ -857,7 +870,8 @@ llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNo
 	} else {
 		//getFunction(node->tk->data.c_str());
 		ret = builder->CreateCall(cur_func, vargs);
-		cur_type = Enum::Runtime::Int;
+		cur_type = Enum::Runtime::Object;
+		//cur_type = Enum::Runtime::Int;
 	}
 	return ret;
 }
