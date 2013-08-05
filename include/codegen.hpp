@@ -8,6 +8,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueSymbolTable.h"
+#include "llvm/IR/DerivedTypes.h"
 
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/SourceMgr.h"
@@ -35,6 +36,32 @@ typedef enum {
 } Type;
 };
 };
+
+#define NaN       (0xFFF0000000000000)
+#define MASK      (0x00000000FFFFFFFF)
+#define _TYPE      (0x000F000000000000)
+
+#define INT_TAG    (uint64_t)(0x0001000000000000)
+#define STRING_TAG (uint64_t)(0x0002000000000000)
+#define ARRAY_TAG  (uint64_t)(0x0003000000000000)
+#define HASH_TAG   (uint64_t)(0x0004000000000000)
+#define OBJECT_TAG (uint64_t)(0x0005000000000000)
+
+#define INT_init(data) (void *)(uint64_t)((data & MASK) | NaN | INT_TAG)
+#define DOUBLE_init(data) (void *)&data
+#define STRING_init(data) (void *)((uint64_t)data | NaN | STRING_TAG)
+#define ARRAY_init(data) (void *)((uint64_t)data | NaN | ARRAY_TAG)
+#define HASH_init(data) (void *)((uint64_t)data | NaN | HASH_TAG)
+#define OBJECT_init(data) (void *)((uint64_t)data | NaN | OBJECT_TAG)
+
+#define TYPE_CHECK(data) ((((uint64_t)data & NaN) == NaN) * (((uint64_t)data & _TYPE) >> 48))
+
+#define GET_INT(data) ((intptr_t)data)
+#define GET_DOUBLE(data) (*(double *)data)
+#define GET_STRING(data) (char *)((uint64_t)data ^ (NaN | STRING_TAG))
+//#define GET_ARRAY(data) (Array *)((uint64_t)data ^ (NaN | ARRAY_TAG))
+//#define GET_HASH(data) (Hash *)((uint64_t)data ^ (NaN | HASH_TAG))
+//#define GET_OBJECT(data) (Object *)((uint64_t)data ^ (NaN | OBJECT_TAG))
 
 namespace Runtime {
 

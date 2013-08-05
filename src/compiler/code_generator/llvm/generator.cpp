@@ -50,14 +50,22 @@ void LLVM::createRuntimeTypes(void)
 	int32_type = IntegerType::get(ctx, 32);
 	double_type = Type::getDoubleTy(ctx);
 	boolean_type = llvm::Type::getInt1Ty(ctx);
+	Type *ptr_type = Type::getInt8PtrTy(ctx);
 
-	fields.push_back(Type::getInt64Ty(ctx));
-	fields.push_back(Type::getDoubleTy(ctx));
-	fields.push_back(Type::getInt8PtrTy(ctx));
-	fields.push_back(Type::getInt8PtrTy(ctx));
-	value_type = StructType::create(ArrayRef<Type *>(fields), "Value");
+	int value_elem_num = 4;
+	Type *types[value_elem_num];
+	types[0] = int_type;
+	types[1] = double_type;
+	types[2] = ptr_type;
+	types[3] = ptr_type;
+	Type *value_type = llvm::UnionType::get(types, value_elem_num);
+	//fields.push_back(Type::getInt64Ty(ctx));
+	//fields.push_back(Type::getDoubleTy(ctx));
+	//fields.push_back(Type::getInt8PtrTy(ctx));
+	//fields.push_back(Type::getInt8PtrTy(ctx));
+	//value_type = StructType::create(ArrayRef<Type *>(fields), "Value");
 
-	fields.clear();
+	//fields.clear();
 
 	value_ptr_type = PointerType::get(value_type, 0);
 	fields.push_back(Type::getInt32Ty(ctx));
@@ -770,10 +778,13 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 		break;
 	case ExecString:
 		break;
-	case Int:
-		ret = ConstantInt::get(int_type, atoi(tk->data.c_str()));
+	case Int: {
+		//ret = ConstantInt::get(int_type, atoi(tk->data.c_str()));
+		int ivalue = atoi(tk->data.c_str());
+		INT_init(ivalue);
 		cur_type = Enum::Runtime::Int;
 		break;
+	}
 	case Double:
 		ret = ConstantFP::get(double_type, atof(tk->data.c_str()));
 		cur_type = Enum::Runtime::Double;

@@ -1,7 +1,17 @@
 #include "runtime_api.h"
 
+typedef union {
+	int ivalue;
+	double dvalue;
+	char *svalue;
+	void *ovalue;
+} UNION;
+
+UNION v;
+
 void print_object(Object *o)
 {
+	v.svalue = "hello world";
 	fprintf(stderr, "o->type = [%d]\n", o->type);
 	switch (o->type) {
 	case Int:
