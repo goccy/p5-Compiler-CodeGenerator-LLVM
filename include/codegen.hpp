@@ -54,7 +54,7 @@ typedef enum {
 #define HASH_init(data) (void *)((uint64_t)data | NaN | HASH_TAG)
 #define OBJECT_init(data) (void *)((uint64_t)data | NaN | OBJECT_TAG)
 
-#define TYPE_CHECK(data) ((((uint64_t)data & NaN) == NaN) * (((uint64_t)data & _TYPE) >> 48))
+#define TYPE(data) ((((uint64_t)data & NaN) == NaN) * (((uint64_t)data & _TYPE) >> 48))
 
 #define GET_INT(data) ((intptr_t)data)
 #define GET_DOUBLE(data) (*(double *)data)
@@ -119,9 +119,11 @@ public:
 	llvm::Type *int_type;
 	llvm::Type *int32_type;
 	llvm::Type *double_type;
+	llvm::Type *double_ptr_type;
 	llvm::Type *boolean_type;
 	llvm::Type *value_type;
 	llvm::Type *value_ptr_type;
+	llvm::Type *void_ptr_type;
 	llvm::Type *object_type;
 	llvm::Type *object_ptr_type;
 	llvm::Type *object_double_ptr_type;
@@ -139,6 +141,12 @@ public:
 	void debug_run(AST *ast);
 	const char *gen(AST *ast);
 	llvm::Value *setLLVMValue(llvm::IRBuilder<> *builder, llvm::Value *runtime_object, Enum::Runtime::Type type, llvm::Value *value);
+	llvm::Value *generateCastCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type type, llvm::Value *value);
+	llvm::Value *createNaNBoxingInt(llvm::IRBuilder<> *builder, llvm::Value *value);
+	llvm::Value *createNaNBoxingDouble(llvm::IRBuilder<> *builder, llvm::Value *value);
+	llvm::Value *createNaNBoxingString(llvm::IRBuilder<> *builder, llvm::Value *value);
+	llvm::Value *createNaNBoxingArray(llvm::IRBuilder<> *builder, llvm::Value *value);
+	llvm::Value *createNaNBoxingObject(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *makeArgumentArray(llvm::IRBuilder<> *builder, llvm::Value *list, size_t size);
 	void setIteratorValue(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *getArrayElement(llvm::IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx);

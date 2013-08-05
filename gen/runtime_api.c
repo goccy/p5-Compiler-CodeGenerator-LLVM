@@ -1,24 +1,13 @@
 #include "runtime_api.h"
 
-typedef union {
-	int ivalue;
-	double dvalue;
-	char *svalue;
-	void *ovalue;
-} UNION;
-
-UNION v;
-
-void print_object(Object *o)
+void print_object(Value o)
 {
-	v.svalue = "hello world";
-	fprintf(stderr, "o->type = [%d]\n", o->type);
-	switch (o->type) {
+	switch (TYPE(o)) {
 	case Int:
-		printf("%ld", to_Int(o));
+		printf("%d", to_Int(o));
 		break;
 	case Double:
-		printf("%lf", to_Double(o));
+		printf("%f", to_Double(o));
 		break;
 	case String:
 		printf("%s", to_String(o));
@@ -55,7 +44,7 @@ Object *shift(ArrayObject *args)
 	size_t size = args->size;
 	if (size > 1) return NULL;
 	if (size == 1) {
-		Object *o = args->list[0];
+		Value o = args->list[0];
 		TYPE_CHECK(o, Array);
 		ArrayObject *array = to_Array(o);
 		ret = array->list[0];
@@ -67,28 +56,26 @@ Object *shift(ArrayObject *args)
 	return ret;
 }
 
-Object *push(ArrayObject *args)
+Value push(ArrayObject *args)
 {
 	size_t size = args->size;
-	Object *ret = NULL;
+	Value ret = NULL;
 	if (size != 2) {
 		fprintf(stderr, "Type Error!: near by push\n");
 	} else {
-		Object *array = args->list[0];
-		Object *value = args->list[1];
+		Value array = args->list[0];
+		Value value = args->list[1];
 		TYPE_CHECK(array, Array);
 		ArrayObject *base = to_Array(array);
 		void *tmp;
-		if (!(tmp = malloc(sizeof(Object) * (base->size + 1)))) {
+		if (!(tmp = malloc(sizeof(Value) * (base->size + 1)))) {
 			fprintf(stderr, "ERROR!!: cannot allocated memory\n");
 		} else {
-			memcpy(tmp, base->list, sizeof(Object) * base->size);
-			base->list = (Object **)tmp;
+			memcpy(tmp, base->list, sizeof(Value) * base->size);
+			base->list = (Value *)tmp;
 			base->list[base->size] = value;
 			base->size++;
-			ret = (Object *)malloc(sizeof(Object));
-			ret->type = Int;
-			ret->v.ivalue = base->size;
+			ret = INT_init(base->size);
 		}
 	}
 	return ret;
@@ -116,15 +103,15 @@ Object *new_Object(void)
 	return (Object *)malloc(sizeof(Object));
 }
 
-Object *Object_addObject(Object *_a, Object *_b)
+Value Object_addObject(Value _a, Value _b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = (_a->type == ObjectType) ? to_Object(_a) : _a;
-	Object *b = (_b->type == ObjectType) ? to_Object(_b) : _b;
+	Object *a = to_Object(_a);
+	Object *b = to_Object(_b);
+	Value ret;
 	setResultByObjectObject(ret, a, b, +);
 	return ret;
 }
-
+/*
 Object *Object_subObject(Object *_a, Object *_b)
 {
 	Object *ret = (Object *)malloc(sizeof(Object));
@@ -459,3 +446,4 @@ int Object_isTrue(Object *a)
 	}
 	return ret;
 }
+*/
