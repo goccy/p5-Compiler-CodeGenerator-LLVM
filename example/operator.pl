@@ -35,11 +35,10 @@ say 1 < 2;
 say 1 & 2;
 say 0 & 1;
 
-=hoge
 my $a = 1;
 my $b = 2;
+say $a;
 say $a + 2;
 say 2 + $b;
 say $a + 2.1;
 say 2.1 + $b;
-=cut
