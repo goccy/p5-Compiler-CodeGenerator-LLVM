@@ -28,11 +28,12 @@ int main(void)
 	VALUE v;
 	VALUE v2;
 	char *s = "hello world";
-	int i = -123;
+	int i = -2;
 	int j = 23;
 	double d = 1.234556677;
 	//v = (void *)&d;
 	//fprintf(stderr, "[%f]\n", d);
+	fprintf(stderr, "p = [%p]\n", i);
 	v = (void *)(uint64_t)((i & Mask) | NaN | IntTag);
 	//v2 = (void *)(uint64_t)((j & Mask) | NaN | IntTag);
 	//v = (void *)((uint64_t)s | NaN | StringTag);
@@ -44,8 +45,10 @@ int main(void)
 	//v = f();
 	fprintf(stderr, "v = [%p]\n", v);
 	//double dvalue = *(double *)v;
-	fprintf(stderr, "p = [%p]\n", (uint64_t)v ^ NaN ^ IntTag);
-	double d2 = (double)(intptr_t)((uint64_t)v ^ NaN ^ IntTag ^ ~Mask);
+	fprintf(stderr, "p = [%p]\n", ((intptr_t)v ^ ~Mask) ^ (NaN | IntTag));
+	int k = ((int)v ^ (NaN | IntTag));
+	fprintf(stderr, "k = [%p]\n", k);
+	double d2 = (double)k;//((intptr_t)v ^ (NaN | IntTag));
 	fprintf(stderr, "[%f]\n", d2);//(double)((intptr_t)v + 0));
 	//int added_value = ivalue + ivalue2;
 	//fprintf(stderr, "[%d]\n", added_value);

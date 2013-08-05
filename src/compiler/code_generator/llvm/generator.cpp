@@ -452,10 +452,11 @@ llvm::Value *LLVM::generateCastCode(IRBuilder<> *builder, Enum::Runtime::Type ty
 	switch (type) {
 	case Enum::Runtime::Int: {
 		llvm::Value *ivalue = builder->CreatePtrToInt(value, int_type);
-		llvm::Value *unmask = ConstantInt::get(int_type, (uint64_t)~MASK);
-		llvm::Value *nan = ConstantInt::get(int_type, (uint64_t)NaN);
-		llvm::Value *int_tag = ConstantInt::get(int_type, (uint64_t)INT_TAG);
-		ret = builder->CreateXor(builder->CreateXor(builder->CreateXor(ivalue, nan), int_tag), unmask);
+		llvm::Value *unmask = ConstantInt::get(int_type, ~MASK);
+		llvm::Value *nan = ConstantInt::get(int_type, NaN);
+		llvm::Value *int_tag = ConstantInt::get(int_type, INT_TAG);
+		llvm::Value *result = builder->CreateXor(ivalue, builder->CreateOr(nan, int_tag));
+		ret = builder->CreateIntCast(builder->CreateIntCast(result, int32_type, true), int_type, true);
 		break;
 	}
 	case Enum::Runtime::Double:
@@ -464,6 +465,47 @@ llvm::Value *LLVM::generateCastCode(IRBuilder<> *builder, Enum::Runtime::Type ty
 	default:
 		break;
 	}
+	return ret;
+}
+
+llvm::Value *LLVM::generateBinaryOperatorCode(IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left, Enum::Runtime::Type right_type, llvm::Value *right, Instruction::BinaryOps op, Instruction::BinaryOps fop)
+{
+	llvm::Value *ret = NULL;
+	if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
+		ret = generateOperatorCodeWithObject(builder, left_type, left, right_type, right, "binary_op");
+	} else {
+		if (left_type == Enum::Runtime::Int && right_type == Enum::Runtime::Int) {
+			llvm::Value *result = builder->CreateBinOp(op, left, right, "binary_op");
+			ret = createNaNBoxingInt(builder, result);
+			cur_type = Enum::Runtime::Int;
+		} else {
+			llvm::Value *casted_left_value = builder->CreateSIToFP(left, double_type);
+			llvm::Value *casted_right_value = builder->CreateSIToFP(right, double_type);
+			llvm::Value *result = builder->CreateBinOp(fop, casted_left_value, casted_right_value, "binary_op");
+			ret = createNaNBoxingDouble(builder, result);
+			cur_type = Enum::Runtime::Double;
+		}
+	}
+	return ret;
+}
+
+llvm::Value *LLVM::generateBinaryOperatorCode(IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left, Enum::Runtime::Type right_type, llvm::Value *right, CmpInst::Predicate op, CmpInst::Predicate fop)
+{
+	llvm::Value *ret = NULL;
+	if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
+		ret = generateOperatorCodeWithObject(builder, left_type, left, right_type, right, "cmp_op");
+	} else {
+		llvm::Value *result = NULL;
+		if (left_type == Enum::Runtime::Int && right_type == Enum::Runtime::Int) {
+			result = builder->CreateZExt(builder->CreateICmp(op, left, right, "cmp_op"), int_type);
+		} else {
+			llvm::Value *casted_left_value = builder->CreateSIToFP(left, double_type);
+			llvm::Value *casted_right_value = builder->CreateSIToFP(right, double_type);
+			result = builder->CreateZExt(builder->CreateFCmp(fop, casted_left_value, casted_right_value, "cmp_op"), int_type);
+		}
+		ret = createNaNBoxingInt(builder, result);
+	}
+	cur_type = Enum::Runtime::Int;
 	return ret;
 }
 
@@ -479,90 +521,33 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 	llvm::Value *right = generateCastCode(builder, right_type, right_value);
 	switch (node->tk->info.type) {
 	case Add:
-		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
-			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "add");
-		} else {
-			if (left_type == Enum::Runtime::Int && right_type == Enum::Runtime::Int) {
-				llvm::Value *result = builder->CreateAdd(left, right, "add");
-				ret = createNaNBoxingInt(builder, result);
-				cur_type = Enum::Runtime::Int;
-			} else {
-				llvm::Value *casted_left_value = builder->CreateSIToFP(left, double_type);
-				llvm::Value *casted_right_value = builder->CreateSIToFP(right, double_type);
-				llvm::Value *result = builder->CreateFAdd(casted_left_value, casted_right_value, "add");
-				ret = createNaNBoxingDouble(builder, result);
-				cur_type = Enum::Runtime::Double;
-			}
-		}
+		ret = generateBinaryOperatorCode(builder, left_type, left, right_type, right, Instruction::Add, Instruction::FAdd);
 		break;
 	case Sub:
-		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
-			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "sub");
-		} else {
-			SET_PRIMITIVE_OPCODE(builder->CreateSub, builder->CreateFSub, "sub", ret);
-		}
+		ret = generateBinaryOperatorCode(builder, left_type, left, right_type, right, Instruction::Sub, Instruction::FSub);
 		break;
 	case Mul:
-		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
-			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "mul");
-		} else {
-			SET_PRIMITIVE_OPCODE(builder->CreateMul, builder->CreateFMul, "mul", ret);
-		}
+		ret = generateBinaryOperatorCode(builder, left_type, left, right_type, right, Instruction::Mul, Instruction::FMul);
 		break;
 	case Div:
-		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
-			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "div");
-		} else {
-			SET_PRIMITIVE_OPCODE(builder->CreateExactSDiv, builder->CreateFDiv, "div", ret);
-		}
+		ret = generateBinaryOperatorCode(builder, left_type, left, right_type, right, Instruction::SDiv, Instruction::FDiv);
 		break;
 	case BitAnd:
-		SET_PRIMITIVE_OPCODE(builder->CreateAnd, builder->CreateAnd, "&", ret);
+		ret = generateBinaryOperatorCode(builder, left_type, left, right_type, right, Instruction::And, Instruction::And);
 		break;
 	case Mod:
 		break;
 	case EqualEqual:
-		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
-			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "eq");
-		} else {
-			if (left_type == Enum::Runtime::Int && right_type == Enum::Runtime::Int) {
-				llvm::Value *casted_left_value = builder->CreatePtrToInt(left_value, int_type);
-				llvm::Value *casted_right_value = builder->CreatePtrToInt(right_value, int_type);
-				llvm::Value *result = builder->CreateZExt(builder->CreateICmpEQ(casted_left_value, casted_right_value, "eq"), int_type);
-				ret = createNaNBoxingInt(builder, result);
-				cur_type = Enum::Runtime::Int;
-			} else {
-				llvm::Value *casted_left_value = builder->CreateBitCast(left_value, double_ptr_type);
-				llvm::Value *casted_right_value = builder->CreateBitCast(right_value, double_ptr_type);
-				llvm::Value *left = builder->CreateLoad(casted_left_value);
-				llvm::Value *right = builder->CreateLoad(casted_right_value);
-				llvm::Value *result = builder->CreateZExt(builder->CreateFCmpOEQ(left, right, "eq"), int_type);
-				ret = createNaNBoxingInt(builder, result);
-				cur_type = Enum::Runtime::Int;
-			}
-			//SET_COMPARE_OPCODE(builder->CreateICmpEQ, builder->CreateFCmpOEQ, "eq", ret);
-		}
+		ret = generateBinaryOperatorCode(builder, left_type, left, right_type, right, CmpInst::ICMP_EQ, CmpInst::FCMP_OEQ);
 		break;
 	case NotEqual:
-		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
-			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "ne");
-		} else {
-			SET_COMPARE_OPCODE(builder->CreateICmpNE, builder->CreateFCmpONE, "ne", ret);
-		}
+		ret = generateBinaryOperatorCode(builder, left_type, left, right_type, right, CmpInst::ICMP_NE, CmpInst::FCMP_ONE);
 		break;
 	case Greater:
-		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
-			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "gt");
-		} else {
-			SET_COMPARE_OPCODE(builder->CreateICmpSGT, builder->CreateFCmpOGT, "gt", ret);
-		}
+		ret = generateBinaryOperatorCode(builder, left_type, left, right_type, right, CmpInst::ICMP_SGT, CmpInst::FCMP_OGT);
 		break;
 	case Less:
-		if (left_type == Enum::Runtime::Object || right_type == Enum::Runtime::Object) {
-			ret = generateOperatorCodeWithObject(builder, left_type, left_value, right_type, right_value, "lt");
-		} else {
-			SET_COMPARE_OPCODE(builder->CreateICmpSLT, builder->CreateFCmpOLT, "lt", ret);
-		}
+		ret = generateBinaryOperatorCode(builder, left_type, left, right_type, right, CmpInst::ICMP_SLT, CmpInst::FCMP_OLT);
 		break;
 	case And: {
 		LLVMContext &ctx = getGlobalContext();
@@ -833,7 +818,7 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 	case Int: {
 		int ivalue = atoi(tk->data.c_str());
 		Constant *integer = ConstantInt::get(int_type, (uint64_t)INT_init(ivalue));
-		ret = ConstantExpr::getIntToPtr(integer, PointerType::getUnqual(void_ptr_type));
+		ret = ConstantExpr::getIntToPtr(integer, void_ptr_type);
 		cur_type = Enum::Runtime::Int;
 		break;
 	}
@@ -1023,9 +1008,9 @@ llvm::Value *LLVM::setLLVMValue(IRBuilder<> *builder, llvm::Value *runtime_objec
 
 llvm::Value *LLVM::createNaNBoxingInt(IRBuilder<> *builder, llvm::Value *value)
 {
-	llvm::Value *mask = ConstantInt::get(int_type, (uint64_t)MASK);
-	llvm::Value *nan = ConstantInt::get(int_type, (uint64_t)NaN);
-	llvm::Value *int_tag = ConstantInt::get(int_type, (uint64_t)INT_TAG);
+	llvm::Value *mask = ConstantInt::get(int_type, MASK);
+	llvm::Value *nan = ConstantInt::get(int_type, NaN);
+	llvm::Value *int_tag = ConstantInt::get(int_type, INT_TAG);
 	llvm::Value *nan_boxing_ivalue = builder->CreateOr(builder->CreateOr(builder->CreateAnd(value, mask), nan), int_tag);
 	llvm::Value *nan_boxing_value = builder->CreateIntToPtr(nan_boxing_ivalue, void_ptr_type);
 	return nan_boxing_value;
@@ -1041,8 +1026,8 @@ llvm::Value *LLVM::createNaNBoxingDouble(IRBuilder<> *builder, llvm::Value *valu
 llvm::Value *LLVM::createNaNBoxingString(IRBuilder<> *builder, llvm::Value *_value)
 {
 	llvm::Value *value = builder->CreatePtrToInt(_value, int_type);
-	llvm::Value *nan = ConstantInt::get(int_type, (uint64_t)NaN);
-	llvm::Value *string_tag = ConstantInt::get(int_type, (uint64_t)STRING_TAG);
+	llvm::Value *nan = ConstantInt::get(int_type, (int64_t)NaN);
+	llvm::Value *string_tag = ConstantInt::get(int_type, (int64_t)STRING_TAG);
 	llvm::Value *nan_boxing_value = builder->CreateOr(builder->CreateOr(value, nan), string_tag);
 	return builder->CreateIntToPtr(nan_boxing_value, void_ptr_type);
 }
@@ -1050,8 +1035,8 @@ llvm::Value *LLVM::createNaNBoxingString(IRBuilder<> *builder, llvm::Value *_val
 llvm::Value *LLVM::createNaNBoxingArray(IRBuilder<> *builder, llvm::Value *_value)
 {
 	llvm::Value *value = builder->CreatePtrToInt(_value, int_type);
-	llvm::Value *nan = ConstantInt::get(int_type, (uint64_t)NaN);
-	llvm::Value *array_tag = ConstantInt::get(int_type, (uint64_t)ARRAY_TAG);
+	llvm::Value *nan = ConstantInt::get(int_type, (int64_t)NaN);
+	llvm::Value *array_tag = ConstantInt::get(int_type, (int64_t)ARRAY_TAG);
 	llvm::Value *nan_boxing_value = builder->CreateOr(builder->CreateOr(value, nan), array_tag);
 	return builder->CreateIntToPtr(nan_boxing_value, void_ptr_type);
 }
@@ -1059,8 +1044,8 @@ llvm::Value *LLVM::createNaNBoxingArray(IRBuilder<> *builder, llvm::Value *_valu
 llvm::Value *LLVM::createNaNBoxingObject(IRBuilder<> *builder, llvm::Value *_value)
 {
 	llvm::Value *value = builder->CreatePtrToInt(_value, int_type);
-	llvm::Value *nan = ConstantInt::get(int_type, (uint64_t)NaN);
-	llvm::Value *object_tag = ConstantInt::get(int_type, (uint64_t)OBJECT_TAG);
+	llvm::Value *nan = ConstantInt::get(int_type, (int64_t)NaN);
+	llvm::Value *object_tag = ConstantInt::get(int_type, (int64_t)OBJECT_TAG);
 	llvm::Value *nan_boxing_value = builder->CreateOr(builder->CreateOr(value, nan), object_tag);
 	return builder->CreateIntToPtr(nan_boxing_value, void_ptr_type);
 }
