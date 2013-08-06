@@ -114,64 +114,62 @@ Object *new_Object(void)
 	return (Object *)malloc(sizeof(Object));
 }
 
-Value Object_addObject(Value a, Value b)
+UnionType *Object_addObject(UnionType *a, UnionType *b)
 {
-	Value ret;
-	fprintf(stderr, "type = [%d]\n", TYPE(ret.o));
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, +);
-	fprintf(stderr, "ret = [%f]\n", ret.d);
-	return ret;
+	return &ret;
 }
-/*
-Value Object_subObject(Value a, Value b)
+
+UnionType *Object_subObject(UnionType *a, UnionType *b)
 {
-	Value ret;
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, -);
-	return ret;
+	return &ret;
 }
 
-Value Object_mulObject(Value a, Value b)
+UnionType *Object_mulObject(UnionType *a, UnionType *b)
 {
-	Value ret;
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, *);
-	return ret;
+	return &ret;
 }
 
-Value Object_divObject(Value a, Value b)
+UnionType *Object_divObject(UnionType *a, UnionType *b)
 {
-	Value ret;
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, /);
-	return ret;
+	return &ret;
 }
 
-Value Object_eqObject(Value a, Value b)
+UnionType *Object_eqObject(UnionType *a, UnionType *b)
 {
-	Value ret;
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, ==);
-	return ret;
+	return &ret;
 }
 
-Value Object_neObject(Value a, Value b)
+UnionType *Object_neObject(UnionType *a, UnionType *b)
 {
-	Value ret;
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, !=);
-	return ret;
+	return &ret;
 }
 
-Value Object_gtObject(Value a, Value b)
+UnionType *Object_gtObject(UnionType *a, UnionType *b)
 {
-	Value ret;
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, >);
-	return ret;
+	return &ret;
 }
 
-Value Object_ltObject(Value a, Value b)
+UnionType *Object_ltObject(UnionType *a, UnionType *b)
 {
-	Value ret;
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, >);
-	return ret;
+	return &ret;
 }
-*/
+
 /*
 Object *Object_addInt(Object *_a, int b)
 {
@@ -430,20 +428,20 @@ Object *Object_ltDouble2(double a, Object *_b)
 }
 
 */
-/*
-int Object_isTrue(Value a)
+
+int Object_isTrue(UnionType a)
 {
 	int ret = 0;
-	switch (TYPE(a)) {
+	void *o = a.o;
+	switch (TYPE(o)) {
 	case Int:
-		ret = (to_Int(a) != 0);
+		ret = (to_Int(o) != 0);
 		break;
 	case Double:
-		ret = (to_Double(a) != 0);
+		ret = (a.d != 0);
 		break;
 	default:
 		break;
 	}
 	return ret;
 }
-*/

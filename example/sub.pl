@@ -16,27 +16,27 @@ open my $fh, '>', 'sub.ll';
 print $fh $llvm_ir;
 close $fh;
 print "generated\n";
+#$generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
 
 sub f {
-    #my $d = 4.5;
+    my $d = 4.5;
     my $a = $_[0];
     my $b = $_[1];
-    #my $c = $a + $b;
+    my $c = $a + $b;
     say $a;
     say $b;
-#    say $a + $b;
-#    say $a - $b;
-#    say $a * $b;
-#    say $a / $b;
-#    say $a < $b;
-#    say $a > $b;
-#    say $a == $b;
-#    say $a != $b;
-#    say "==== c ====";
-#    say $c;
+    say $a + $b;
+    say $a - $b;
+    say $a * $b;
+    say $a / $b;
+    say $a < $b;
+    say $a > $b;
+    say $a == $b;
+    say $a != $b;
+    say $c;
 
 =hoge
     say $a + 2;
@@ -80,10 +80,10 @@ sub f {
     say 1 != $a;
     say 1.1 != $a;
 =cut
-    return 3.5;
+    return $d;
 }
 
-f(1, 2.3);
+say(f(1, 2.3));
 
 =hoge
 sub h {

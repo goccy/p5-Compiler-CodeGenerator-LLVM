@@ -67,31 +67,30 @@ typedef struct _Array {
 
 void print(ArrayObject *array);
 
-double g_d = 0;
-#define SET(ret, a, b, op) do {						\
-		switch (TYPE(b.o)) {							\
-		case Int: {									\
-			int i = a op to_Int(b.o);					\
-			ret.o = INT_init(i);					\
-			break;									\
-		}											\
-		case Double: {								\
-			double d = (double)(int)a op to_Double(b.o);	\
-			ret.d = d;										\
-			break;									\
-		}											\
-		default:									\
-			break;									\
-		}											\
+#define SET(ret, a, b, op) do {					\
+		switch (TYPE(b->o)) {					\
+		case Int: {								\
+			int i = a op to_Int(b->o);			\
+			ret.o = INT_init(i);				\
+			break;								\
+		}										\
+		case Double: {							\
+			double d = (double)(int)a op b->d;	\
+			ret.d = d;							\
+			break;								\
+		}										\
+		default:								\
+			break;								\
+		}										\
 	} while (0)
 
 #define setResultByObjectObject(ret, a, b, op) do {	\
-		switch (TYPE(a.o)) {							\
+		switch (TYPE(a->o)) {						\
 		case Int:									\
-			SET(ret, to_Int(a.o), b, op);				\
+			SET(ret, to_Int(a->o), b, op);			\
 			break;									\
 		case Double:								\
-			SET(ret, to_Double(a.o), b, op);			\
+			SET(ret, to_Double(a->o), b, op);		\
 			break;									\
 		default:									\
 			break;									\

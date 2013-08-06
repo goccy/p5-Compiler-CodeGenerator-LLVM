@@ -322,7 +322,7 @@ void LLVM::setIteratorValue(IRBuilder<> *builder, Node *node)
 llvm::Value *LLVM::getArrayElement(IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx)
 {
 	llvm::Value *list = builder->CreateLoad(builder->CreateStructGEP(array, 1));
-	return builder->CreateLoad(builder->CreateGEP(list, idx));
+	return builder->CreateGEP(list, idx);
 }
 
 void LLVM::generateWhileStmtCode(IRBuilder<> *builder, WhileStmtNode *node)
@@ -422,7 +422,7 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 		} else {
 			/* v->value is Object */
 			llvm::Value *object = generateCastCode(builder, Enum::Runtime::Object, v->value);
-			builder->CreateStore(value, builder->CreateStructGEP(object, 1));
+			builder->CreateStore(builder->CreateLoad(value), builder->CreateStructGEP(object, 1));
 		}
 	}
 	return v->value;
@@ -555,7 +555,7 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 		break;
 	case And: {
 		LLVMContext &ctx = getGlobalContext();
-		llvm::Value *result = builder->CreateAlloca(value_type, 0, "__hidden_cond__");
+		llvm::Value *result = builder->CreateAlloca(union_type, 0, "__hidden_cond__");
 
 		llvm::Value *zero = ConstantInt::get(int_type, 0);
 		llvm::Value *cond = NULL;
@@ -568,11 +568,11 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 			break;
 		default: {
 			vector<llvm::Type *> arg_types;
-			arg_types.push_back(value_type);
+			arg_types.push_back(union_type);
 			llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
 			FunctionType *ftype = llvm::FunctionType::get(boolean_type, arg_types_ref, false);
 			llvm::Constant *f = module->getOrInsertFunction("Object_isTrue", ftype);
-			cond = builder->CreateCall(f, left, "object");
+			cond = builder->CreateCall(f, builder->CreateLoad(left), "object");
 			break;
 		}
 		}
@@ -584,10 +584,10 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 
 		switch (right_type) {
 		case Enum::Runtime::Int:
-			builder->CreateStore(createNaNBoxingInt(builder, right), result);
+			builder->CreateStore(builder->CreateLoad(createNaNBoxingInt(builder, right)), result);
 			break;
 		case Enum::Runtime::Double:
-			builder->CreateStore(createNaNBoxingDouble(builder, right), result);
+			builder->CreateStore(builder->CreateLoad(createNaNBoxingDouble(builder, right)), result);
 			break;
 		default:
 			asm("int3");
@@ -597,17 +597,18 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 		builder->CreateBr(merge_block);
 
 		builder->SetInsertPoint(false_block);
-		builder->CreateStore(createNaNBoxingInt(builder, zero), result);
+		builder->CreateStore(builder->CreateLoad(createNaNBoxingInt(builder, zero)), result);
 		builder->CreateBr(merge_block);
 
 		builder->SetInsertPoint(merge_block);
-		ret = builder->CreateLoad(result);
+		ret = builder->CreateAlloca(union_type, 0, "__hidden_cond__");
+		builder->CreateStore(builder->CreateLoad(result), ret);
 		cur_type = Enum::Runtime::Value;
 		break;
 	}
 	case Or: {
 		LLVMContext &ctx = getGlobalContext();
-		llvm::Value *result = builder->CreateAlloca(value_type, 0, "__hidden_cond__");
+		llvm::Value *result = builder->CreateAlloca(union_type, 0, "__hidden_cond__");
 		llvm::Value *zero = ConstantInt::get(int_type, 0);
 		llvm::Value *cond = NULL;
 		switch (left_type) {
@@ -619,11 +620,11 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 			break;
 		default: {
 			vector<llvm::Type *> arg_types;
-			arg_types.push_back(value_type);
+			arg_types.push_back(union_type);
 			llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
 			FunctionType *ftype = llvm::FunctionType::get(boolean_type, arg_types_ref, false);
 			llvm::Constant *f = module->getOrInsertFunction("Object_isTrue", ftype);
-			cond = builder->CreateCall(f, left, "object");
+			cond = builder->CreateCall(f, builder->CreateLoad(left), "object");
 			break;
 		}
 		}
@@ -635,10 +636,10 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 
 		switch (left_type) {
 		case Enum::Runtime::Int:
-			builder->CreateStore(createNaNBoxingInt(builder, left), result);
+			builder->CreateStore(builder->CreateLoad(createNaNBoxingInt(builder, left)), result);
 			break;
 		case Enum::Runtime::Double:
-			builder->CreateStore(createNaNBoxingDouble(builder, left), result);
+			builder->CreateStore(builder->CreateLoad(createNaNBoxingDouble(builder, left)), result);
 			break;
 		default:
 			asm("int3");
@@ -650,10 +651,10 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 		builder->SetInsertPoint(false_block);
 		switch (right_type) {
 		case Enum::Runtime::Int:
-			builder->CreateStore(createNaNBoxingInt(builder, right), result);
+			builder->CreateStore(builder->CreateLoad(createNaNBoxingInt(builder, right)), result);
 			break;
 		case Enum::Runtime::Double:
-			builder->CreateStore(createNaNBoxingDouble(builder, right), result);
+			builder->CreateStore(builder->CreateLoad(createNaNBoxingDouble(builder, right)), result);
 			break;
 		default:
 			asm("int3");
@@ -662,7 +663,8 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 		builder->CreateBr(merge_block);
 			
 		builder->SetInsertPoint(merge_block);
-		ret = builder->CreateLoad(result);
+		ret = builder->CreateAlloca(union_type, 0, "__hidden_cond__");
+		builder->CreateStore(builder->CreateLoad(result), ret);
 		cur_type = Enum::Runtime::Value;
 		break;
 	}
@@ -681,15 +683,12 @@ llvm::Value *LLVM::generateOperatorCodeWithObject(IRBuilder<> *builder,
 	string fname = "Object_" + string(func_name);
 	if (left_type == Enum::Runtime::Value && right_type == Enum::Runtime::Value) {
 		vector<llvm::Type *> arg_types;
-		arg_types.push_back(union_type);
-		arg_types.push_back(union_type);
+		arg_types.push_back(union_ptr_type);
+		arg_types.push_back(union_ptr_type);
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-		FunctionType *ftype = llvm::FunctionType::get(union_type, arg_types_ref, false);
+		FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Object", ftype);
 		ret = builder->CreateCall2(f, left_value, right_value, "object");
-		//llvm::Value *double_ptr = builder->CreateBitCast(result, double_ptr_type);
-		//llvm::Value *double_value = builder->CreateLoad(double_ptr);
-		//ret = createNaNBoxingDouble(builder, double_value);
 	} else if (left_type == Enum::Runtime::Value && right_type == Enum::Runtime::Int) {
 		vector<llvm::Type *> arg_types;
 		arg_types.push_back(value_type);
@@ -874,7 +873,6 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 		ValueSymbolTable &vs_table = cur_func->getValueSymbolTable();
 		CodeGenerator::Value *var = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
 		llvm::Value *object = generateCastCode(builder, Enum::Runtime::Object, var->value);
-		//ret = builder->CreateLoad(builder->CreateStructGEP(object, 1));
 		ret = builder->CreateStructGEP(object, 1);
 		cur_type = var->type;
 		break;
@@ -934,12 +932,13 @@ llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNo
 					llvm::Value *elem = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent)->value;
 					builder->CreateStore(builder->CreateLoad(elem), builder->CreateGEP(__args__, idx));
 				} else {
-					builder->CreateStore(value, builder->CreateGEP(__args__, idx));
+					builder->CreateStore(builder->CreateLoad(value), builder->CreateGEP(__args__, idx));
 				}
 			} else {
 				//llvm::Value *value = builder->CreateBitCast(value, void_ptr_type);
-				value = (type == Enum::Runtime::Int || type == Enum::Runtime::Double) ? builder->CreateLoad(value) : value;
-				builder->CreateStore(value, builder->CreateGEP(__args__, idx));
+				//value = (type == Enum::Runtime::Int || type == Enum::Runtime::Double) ? builder->CreateLoad(value) : value;
+				//value = (type != Enum::Runtime::Value) ? builder->CreateLoad(value) : value;
+				builder->CreateStore(builder->CreateLoad(value), builder->CreateGEP(__args__, idx));
 				//builder->CreateStore(setLLVMValue(builder, arg, type, value), builder->CreateGEP(__args__, idx));
 			}
 		}
@@ -1050,10 +1049,8 @@ llvm::Value *LLVM::createNaNBoxingInt(IRBuilder<> *builder, llvm::Value *value)
 	llvm::Value *nan = ConstantInt::get(int_type, NaN);
 	llvm::Value *int_tag = ConstantInt::get(int_type, INT_TAG);
 	llvm::Value *nan_boxing_ivalue = builder->CreateOr(builder->CreateOr(builder->CreateAnd(value, mask), nan), int_tag);
-	//llvm::Value *nan_boxing_value = builder->CreateIntToPtr(nan_boxing_ivalue, void_ptr_type);
 	builder->CreateStore(nan_boxing_ivalue, builder->CreateBitCast(union_ptr, int_ptr_type));
 	return union_ptr;
-	//return nan_boxing_value;
 }
 
 llvm::Value *LLVM::createNaNBoxingDouble(IRBuilder<> *builder, llvm::Value *value)
@@ -1061,26 +1058,28 @@ llvm::Value *LLVM::createNaNBoxingDouble(IRBuilder<> *builder, llvm::Value *valu
 	llvm::Value *union_ptr = builder->CreateAlloca(union_type, 0, "double_ptr");
 	builder->CreateStore(value, builder->CreateBitCast(union_ptr, double_ptr_type));
 	return union_ptr;
-	//builder->CreateStore(value, double_ptr);
-	//return builder->CreateBitCast(double_ptr, void_ptr_type);
 }
 
 llvm::Value *LLVM::createNaNBoxingString(IRBuilder<> *builder, llvm::Value *_value)
 {
+	llvm::Value *union_ptr = builder->CreateAlloca(union_type, 0, "string_ptr");
 	llvm::Value *value = builder->CreatePtrToInt(_value, int_type);
 	llvm::Value *nan = ConstantInt::get(int_type, (int64_t)NaN);
 	llvm::Value *string_tag = ConstantInt::get(int_type, (int64_t)STRING_TAG);
 	llvm::Value *nan_boxing_value = builder->CreateOr(builder->CreateOr(value, nan), string_tag);
-	return builder->CreateIntToPtr(nan_boxing_value, void_ptr_type);
+	builder->CreateStore(nan_boxing_value, builder->CreateBitCast(union_ptr, int_ptr_type));
+	return union_ptr;
 }
 
 llvm::Value *LLVM::createNaNBoxingArray(IRBuilder<> *builder, llvm::Value *_value)
 {
+	llvm::Value *union_ptr = builder->CreateAlloca(union_type, 0, "array_ptr");
 	llvm::Value *value = builder->CreatePtrToInt(_value, int_type);
 	llvm::Value *nan = ConstantInt::get(int_type, NaN);
 	llvm::Value *array_tag = ConstantInt::get(int_type, ARRAY_TAG);
 	llvm::Value *nan_boxing_value = builder->CreateOr(builder->CreateOr(value, nan), array_tag);
-	return builder->CreateIntToPtr(nan_boxing_value, void_ptr_type);
+	builder->CreateStore(nan_boxing_value, builder->CreateBitCast(union_ptr, int_ptr_type));
+	return union_ptr;
 }
 
 llvm::Value *LLVM::createNaNBoxingObject(IRBuilder<> *builder, llvm::Value *_value)
@@ -1092,10 +1091,6 @@ llvm::Value *LLVM::createNaNBoxingObject(IRBuilder<> *builder, llvm::Value *_val
 	llvm::Value *nan_boxing_value = builder->CreateOr(builder->CreateOr(value, nan), object_tag);
 	builder->CreateStore(nan_boxing_value, builder->CreateBitCast(union_ptr, int_ptr_type));
 	return union_ptr;
-	//llvm::Value *result = builder->CreateIntToPtr(nan_boxing_value, void_ptr_type);
-	//builder->CreateStore(result, builder->CreateBitCast(union_ptr, PointerType::get(void_ptr_type, 0)));
-	//return union_ptr;
-	//return 
 }
 
 llvm::Value *LLVM::makeArgumentArray(IRBuilder<> *builder, llvm::Value *list, size_t size)
