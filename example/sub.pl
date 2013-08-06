@@ -21,48 +21,54 @@ $generator->debug_run($ast);
 __DATA__
 
 sub f {
+    #my $d = 4.5;
     my $a = $_[0];
     my $b = $_[1];
+    #my $c = $a + $b;
     say $a;
     say $b;
+#    say $a + $b;
+#    say $a - $b;
+#    say $a * $b;
+#    say $a / $b;
+#    say $a < $b;
+#    say $a > $b;
+#    say $a == $b;
+#    say $a != $b;
+#    say "==== c ====";
+#    say $c;
 
-    say $a + $b;
+=hoge
     say $a + 2;
     say 2 + $b;
     say $a + 2.1;
     say 2.1 + $b;
 
-    say $a - $b;
     say $b - 1;
     say 1 - $b;
     say $b - 1.2;
     say 1.2 - $b;
 
-    say $a * $b;
     say $b * 2;
     say 2 * $b;
     say $b * 1.2;
     say 1.2 * $b;
 
-    say $a / $b;
     say $b / 1;
     say 1 / $b;
     say $b / 1.2;
     say 1.2 / $b;
 
-    say $a < $b;
     say $a < 1;
     say $a < 1.2;
     say 1 < $a;
     say 1.1 < $a;
 
-    say $a > $b;
     say $a > 1;
     say $a > 1.2;
     say 1 > $a;
     say 1.1 > $a;
 
-    say $a == $b;
     say $a == 1;
     say $a == 1.2;
     say 1 == $a;
@@ -73,12 +79,13 @@ sub f {
     say $a != 1.2;
     say 1 != $a;
     say 1.1 != $a;
-
-    return 3;
+=cut
+    return 3.5;
 }
 
-#say(f(1, 2));
+f(1, 2.3);
 
+=hoge
 sub h {
     say $_[0];
     return 1;
@@ -93,3 +100,4 @@ sub fib {
 }
 
 say(fib(4));
+=cut

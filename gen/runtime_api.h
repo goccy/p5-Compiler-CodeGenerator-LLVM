@@ -15,7 +15,15 @@ typedef enum {
 	Unknown
 } Type;
 
-typedef void * Value;
+typedef union {
+	double d;
+	int i;
+	char *s;
+	void *a;
+	void *o;
+} UnionType;
+
+typedef UnionType Value;
 
 typedef struct _Object {
 	int type;
@@ -24,7 +32,7 @@ typedef struct _Object {
 
 typedef struct _Array {
 	int type;
-	void **list;
+	Value *list;
 	size_t size;
 } ArrayObject;
 
@@ -57,19 +65,19 @@ typedef struct _Array {
 		}										\
 	} while (0)
 
-
 void print(ArrayObject *array);
 
+double g_d = 0;
 #define SET(ret, a, b, op) do {						\
-		switch (b->type) {							\
+		switch (TYPE(b.o)) {							\
 		case Int: {									\
-			int i = a op to_Int(b);					\
-			ret = INT_init(i);						\
+			int i = a op to_Int(b.o);					\
+			ret.o = INT_init(i);					\
 			break;									\
 		}											\
 		case Double: {								\
-			double d = a op to_Double(b);			\
-			ret = DOUBLE_init(d);					\
+			double d = (double)(int)a op to_Double(b.o);	\
+			ret.d = d;										\
 			break;									\
 		}											\
 		default:									\
@@ -78,12 +86,12 @@ void print(ArrayObject *array);
 	} while (0)
 
 #define setResultByObjectObject(ret, a, b, op) do {	\
-		switch (a->type) {							\
+		switch (TYPE(a.o)) {							\
 		case Int:									\
-			SET(ret, to_Int(a), b, op);				\
+			SET(ret, to_Int(a.o), b, op);				\
 			break;									\
 		case Double:								\
-			SET(ret, to_Double(a), b, op);			\
+			SET(ret, to_Double(a.o), b, op);			\
 			break;									\
 		default:									\
 			break;									\

@@ -118,6 +118,7 @@ public:
 	llvm::Module *module;
 	Enum::Runtime::Type cur_type;
 	llvm::Type *int_type;
+	llvm::Type *int_ptr_type;
 	llvm::Type *uint_type;
 	llvm::Type *int32_type;
 	llvm::Type *double_type;
@@ -131,6 +132,8 @@ public:
 	llvm::Type *object_double_ptr_type;
 	llvm::Type *array_type;
 	llvm::Type *array_ptr_type;
+	llvm::Type *union_type;
+	llvm::Type *union_ptr_type;
 	llvm::Function *cur_func;
 	llvm::Value *cur_args;
 	std::string cur_func_name;
@@ -166,8 +169,8 @@ public:
 	void generateSingleTermOperatorCode(llvm::IRBuilder<> *builder, SingleTermOperatorNode *node);
     void generateCommaCode(llvm::IRBuilder<> *builder, BranchNode *node, std::vector<CodeGenerator::Value *> *list);
 	llvm::Value *generateAssignCode(llvm::IRBuilder<> *builder, BranchNode *node);
-	llvm::Value *generateBinaryOperatorCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, llvm::Instruction::BinaryOps op, llvm::Instruction::BinaryOps fop);
-	llvm::Value *generateBinaryOperatorCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, llvm::CmpInst::Predicate op, llvm::CmpInst::Predicate fop);
+	llvm::Value *generateBinaryOperatorCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, llvm::Instruction::BinaryOps op, llvm::Instruction::BinaryOps fop, const char *fname);
+	llvm::Value *generateBinaryOperatorCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, llvm::CmpInst::Predicate op, llvm::CmpInst::Predicate fop, const char *fname);
 	llvm::Value *generateOperatorCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateOperatorCodeWithObject(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, const char *fname);
 	llvm::Value *generateListCode(llvm::IRBuilder<> *builder, ListNode *node);

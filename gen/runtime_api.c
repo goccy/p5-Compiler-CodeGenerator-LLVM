@@ -1,13 +1,15 @@
 #include "runtime_api.h"
+UnionType u;
 
-void print_object(Value o)
+void print_object(UnionType _o)
 {
+	void *o = _o.o;
 	switch (TYPE(o)) {
 	case Int:
 		printf("%d", to_Int(o));
 		break;
 	case Double:
-		printf("%f", to_Double(o));
+		fprintf(stderr, "%f", _o.d);
 		break;
 	case String:
 		printf("%s", to_String(o));
@@ -15,9 +17,11 @@ void print_object(Value o)
 	case Array:
 		print(to_Array(o));
 		break;
-	case ObjectType:
-		print_object(to_Object(o));
+	case ObjectType: {
+		Object *object = to_Object(o);
+		print_object(object->v);
 		break;
+	}
 	default:
 		break;
 	}
@@ -38,9 +42,16 @@ void say(ArrayObject *array)
 	printf("\n");
 }
 
+void debug_print(UnionType o)
+{
+	fprintf(stderr, "===== debug_print ======\n");
+	print_object(o);
+	fprintf(stderr, "=============\n");
+}
+/*
 Value shift(ArrayObject *args)
 {
-	Value ret = NULL;
+	Value ret;
 	size_t size = args->size;
 	if (size > 1) return ret;
 	if (size == 1) {
@@ -80,7 +91,7 @@ Value push(ArrayObject *args)
 	}
 	return ret;
 }
-
+*/
 /*
 Object *map(ArrayObject *args)
 {
@@ -103,78 +114,65 @@ Object *new_Object(void)
 	return (Object *)malloc(sizeof(Object));
 }
 
-Value Object_addObject(Value _a, Value _b)
+Value Object_addObject(Value a, Value b)
 {
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
 	Value ret;
+	fprintf(stderr, "type = [%d]\n", TYPE(ret.o));
 	setResultByObjectObject(ret, a, b, +);
+	fprintf(stderr, "ret = [%f]\n", ret.d);
 	return ret;
 }
 /*
-Object *Object_subObject(Object *_a, Object *_b)
+Value Object_subObject(Value a, Value b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
+	Value ret;
 	setResultByObjectObject(ret, a, b, -);
 	return ret;
 }
 
-Object *Object_mulObject(Object *_a, Object *_b)
+Value Object_mulObject(Value a, Value b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
+	Value ret;
 	setResultByObjectObject(ret, a, b, *);
 	return ret;
 }
 
-Object *Object_divObject(Object *_a, Object *_b)
+Value Object_divObject(Value a, Value b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
+	Value ret;
 	setResultByObjectObject(ret, a, b, /);
 	return ret;
 }
 
-Object *Object_eqObject(Object *_a, Object *_b)
+Value Object_eqObject(Value a, Value b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
+	Value ret;
 	setResultByObjectObject(ret, a, b, ==);
 	return ret;
 }
 
-Object *Object_neObject(Object *_a, Object *_b)
+Value Object_neObject(Value a, Value b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
+	Value ret;
 	setResultByObjectObject(ret, a, b, !=);
 	return ret;
 }
 
-Object *Object_gtObject(Object *_a, Object *_b)
+Value Object_gtObject(Value a, Value b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
+	Value ret;
 	setResultByObjectObject(ret, a, b, >);
 	return ret;
 }
 
-Object *Object_ltObject(Object *_a, Object *_b)
+Value Object_ltObject(Value a, Value b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
-	setResultByObjectObject(ret, a, b, <);
+	Value ret;
+	setResultByObjectObject(ret, a, b, >);
 	return ret;
 }
-
+*/
+/*
 Object *Object_addInt(Object *_a, int b)
 {
 	Object *ret = (Object *)malloc(sizeof(Object));
@@ -432,7 +430,7 @@ Object *Object_ltDouble2(double a, Object *_b)
 }
 
 */
-
+/*
 int Object_isTrue(Value a)
 {
 	int ret = 0;
@@ -448,3 +446,4 @@ int Object_isTrue(Value a)
 	}
 	return ret;
 }
+*/
