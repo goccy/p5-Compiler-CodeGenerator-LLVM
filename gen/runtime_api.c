@@ -431,19 +431,20 @@ Object *Object_ltDouble2(double a, Object *_b)
 	return ret;
 }
 
-int Object_isTrue(Object *a)
+*/
+
+int Object_isTrue(Value a)
 {
 	int ret = 0;
-	switch (a->type) {
+	switch (TYPE(a)) {
 	case Int:
-		ret = a->v.ivalue != 0;
+		ret = (to_Int(a) != 0);
 		break;
 	case Double:
-		ret = a->v.dvalue != 0;
+		ret = (to_Double(a) != 0);
 		break;
 	default:
 		break;
 	}
 	return ret;
 }
-*/

@@ -155,7 +155,8 @@ BasicBlock *LLVM::generateBlockCode(IRBuilder<> *builder, BasicBlock *block, Bas
 
 void LLVM::generateIfStmtCode(IRBuilder<> *builder, IfStmtNode *node)
 {
-	llvm::Value *expr = generateValueCode(builder, node->expr);
+	llvm::Value *_expr = generateValueCode(builder, node->expr);
+	llvm::Value *expr = generateCastCode(builder, cur_type, _expr);
 	llvm::Value *zero = ConstantInt::get(int_type, 0);
 	llvm::Value *cond = NULL;
 	if (cur_type == Enum::Runtime::Object) {
@@ -383,9 +384,6 @@ void LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperat
 llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 {
 	llvm::Value *value = generateValueCode(builder, node->right);
-	//fprintf(stderr, "AssignSection: value type = ");
-	//value->getType()->dump();
-	//fprintf(stderr, "\n");
 	Token *tk = node->left->tk;
 	CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
 	if (!v) {
@@ -397,22 +395,20 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 			builder->CreateStore(value, builder->CreateStructGEP(tmp, 1));
 			o = createNaNBoxingObject(builder, tmp);
 		}
-		//llvm::Value *o = setLLVMValue(builder, tmp, cur_type, value);
 		v = (CodeGenerator::Value *)malloc(sizeof(CodeGenerator::Value));
 		v->type = cur_type;
 		v->value = o;
-		//fprintf(stderr, "SET object pointer = [%p]\n", o);
 		vmgr.setVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent, v);
 	} else {
-		//fprintf(stderr, "AssignSection: v->value type = ");
-		//v->value->getType()->dump();
-		//fprintf(stderr, "\n");
-		//setLLVMValue(builder, v->value, cur_type, value);
-		asm("int3");
+		if (v->type == Enum::Runtime::Array) {
+			asm("int3");
+		} else {
+			/* v->value is Object */
+			llvm::Value *object = generateCastCode(builder, Enum::Runtime::Object, v->value);
+			builder->CreateStore(value, builder->CreateStructGEP(object, 1));
+		}
 	}
-	//builder->CreateStore(o, var);
 	return v->value;
-	//return var;
 }
 
 llvm::Value *LLVM::generateCastCode(IRBuilder<> *builder, Enum::Runtime::Type type, llvm::Value *value)
@@ -536,23 +532,24 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 		break;
 	case And: {
 		LLVMContext &ctx = getGlobalContext();
-		llvm::Value *v = builder->CreateAlloca(object_type, 0, "__hidden_cond__");
+		llvm::Value *result = builder->CreateAlloca(value_type, 0, "__hidden_cond__");
+
 		llvm::Value *zero = ConstantInt::get(int_type, 0);
 		llvm::Value *cond = NULL;
 		switch (left_type) {
 		case Enum::Runtime::Int:
-			cond = builder->CreateICmpNE(left_value, zero);
+			cond = builder->CreateICmpNE(left, zero);
 			break;
 		case Enum::Runtime::Double:
-			cond = builder->CreateFCmpONE(left_value, builder->CreateSIToFP(zero, double_type));
+			cond = builder->CreateFCmpONE(left, builder->CreateSIToFP(zero, double_type));
 			break;
 		default: {
 			vector<llvm::Type *> arg_types;
-			arg_types.push_back(object_ptr_type);
+			arg_types.push_back(value_type);
 			llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
 			FunctionType *ftype = llvm::FunctionType::get(boolean_type, arg_types_ref, false);
 			llvm::Constant *f = module->getOrInsertFunction("Object_isTrue", ftype);
-			cond = builder->CreateCall(f, left_value, "object");
+			cond = builder->CreateCall(f, left, "object");
 			break;
 		}
 		}
@@ -561,38 +558,49 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 		BasicBlock *merge_block = BasicBlock::Create(ctx, "merge_block", cur_func);
 		builder->CreateCondBr(cond, true_block, false_block);
 		builder->SetInsertPoint(true_block);
-			
-		setLLVMValue(builder, v, right_type, right_value);
+
+		switch (right_type) {
+		case Enum::Runtime::Int:
+			builder->CreateStore(createNaNBoxingInt(builder, right), result);
+			break;
+		case Enum::Runtime::Double:
+			builder->CreateStore(createNaNBoxingDouble(builder, right), result);
+			break;
+		default:
+			asm("int3");
+			break;
+		}
+
 		builder->CreateBr(merge_block);
 
 		builder->SetInsertPoint(false_block);
-		setLLVMValue(builder, v, Enum::Runtime::Int, zero);
+		builder->CreateStore(createNaNBoxingInt(builder, zero), result);
 		builder->CreateBr(merge_block);
-			
+
 		builder->SetInsertPoint(merge_block);
-		ret = v;
-		cur_type = Enum::Runtime::Object;
+		ret = builder->CreateLoad(result);
+		cur_type = Enum::Runtime::Value;
 		break;
 	}
 	case Or: {
 		LLVMContext &ctx = getGlobalContext();
-		llvm::Value *v = builder->CreateAlloca(object_type, 0, "__hidden_cond__");
+		llvm::Value *result = builder->CreateAlloca(value_type, 0, "__hidden_cond__");
 		llvm::Value *zero = ConstantInt::get(int_type, 0);
 		llvm::Value *cond = NULL;
 		switch (left_type) {
 		case Enum::Runtime::Int:
-			cond = builder->CreateICmpNE(left_value, zero);
+			cond = builder->CreateICmpNE(left, zero);
 			break;
 		case Enum::Runtime::Double:
-			cond = builder->CreateFCmpONE(left_value, builder->CreateSIToFP(zero, double_type));
+			cond = builder->CreateFCmpONE(left, builder->CreateSIToFP(zero, double_type));
 			break;
 		default: {
 			vector<llvm::Type *> arg_types;
-			arg_types.push_back(object_ptr_type);
+			arg_types.push_back(value_type);
 			llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
 			FunctionType *ftype = llvm::FunctionType::get(boolean_type, arg_types_ref, false);
 			llvm::Constant *f = module->getOrInsertFunction("Object_isTrue", ftype);
-			cond = builder->CreateCall(f, left_value, "object");
+			cond = builder->CreateCall(f, left, "object");
 			break;
 		}
 		}
@@ -601,17 +609,38 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 		BasicBlock *merge_block = BasicBlock::Create(ctx, "merge_block", cur_func);
 		builder->CreateCondBr(cond, true_block, false_block);
 		builder->SetInsertPoint(true_block);
-			
-		setLLVMValue(builder, v, left_type, left_value);
+
+		switch (left_type) {
+		case Enum::Runtime::Int:
+			builder->CreateStore(createNaNBoxingInt(builder, left), result);
+			break;
+		case Enum::Runtime::Double:
+			builder->CreateStore(createNaNBoxingDouble(builder, left), result);
+			break;
+		default:
+			asm("int3");
+			break;
+		}
+
 		builder->CreateBr(merge_block);
 
 		builder->SetInsertPoint(false_block);
-		setLLVMValue(builder, v, right_type, right_value);
+		switch (right_type) {
+		case Enum::Runtime::Int:
+			builder->CreateStore(createNaNBoxingInt(builder, right), result);
+			break;
+		case Enum::Runtime::Double:
+			builder->CreateStore(createNaNBoxingDouble(builder, right), result);
+			break;
+		default:
+			asm("int3");
+			break;
+		}
 		builder->CreateBr(merge_block);
 			
 		builder->SetInsertPoint(merge_block);
-		ret = v;
-		cur_type = Enum::Runtime::Object;
+		ret = builder->CreateLoad(result);
+		cur_type = Enum::Runtime::Value;
 		break;
 	}
 	default:
