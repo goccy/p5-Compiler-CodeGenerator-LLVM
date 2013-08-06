@@ -12,7 +12,7 @@ my $ast = $parser->parse($tokens);
 Compiler::Parser::AST::Renderer->new->render($ast);
 my $generator = Compiler::CodeGenerator::LLVM->new();
 my $llvm_ir = $generator->generate($ast);
-open my $fh, '>', 'loop.ll';
+open my $fh, '>', 'array.ll';
 print $fh $llvm_ir;
 close $fh;
 $generator = Compiler::CodeGenerator::LLVM->new();

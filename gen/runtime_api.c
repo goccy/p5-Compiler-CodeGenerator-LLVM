@@ -38,18 +38,18 @@ void say(ArrayObject *array)
 	printf("\n");
 }
 
-Object *shift(ArrayObject *args)
+Value shift(ArrayObject *args)
 {
-	Object *ret = NULL;
+	Value ret = NULL;
 	size_t size = args->size;
-	if (size > 1) return NULL;
+	if (size > 1) return ret;
 	if (size == 1) {
 		Value o = args->list[0];
 		TYPE_CHECK(o, Array);
 		ArrayObject *array = to_Array(o);
 		ret = array->list[0];
 		array->size--;
-		memmove(array->list, array->list + 1, array->size * sizeof(void *));
+		memmove(array->list, array->list + 1, array->size * sizeof(Value));
 	} else {
 		fprintf(stderr, "fetch from function argument\n");
 	}

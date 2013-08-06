@@ -32,6 +32,7 @@ typedef enum {
 	Hash,
 	BlessedObject,
 	Object,
+	Value,
 	Unknown
 } Type;
 };
