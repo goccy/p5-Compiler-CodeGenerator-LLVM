@@ -113,6 +113,16 @@ public:
 	Value *getVariable(const char *func_name, const char *var_name, size_t indent);
 };
 
+typedef std::map<std::string, llvm::Value *> MethodMap;
+typedef std::map<std::string, MethodMap *> PackageMap;
+class FunctionManager {
+public:
+	PackageMap pmap;
+	FunctionManager(void);
+	void setFunction(const char *pkg_name, const char *func_name, llvm::Value *func);
+	llvm::Value *getFunction(const char *pkg_name, const char *func_name);
+};
+
 class LLVM {
 public:
 	llvm::Module *module;
@@ -139,6 +149,7 @@ public:
 	std::string cur_func_name;
 	llvm::BasicBlock *main_entry;
 	VariableManager vmgr;
+	FunctionManager fmgr;
 
 	LLVM(void);
 	void write(void);

@@ -16,7 +16,7 @@ open my $fh, '>', 'sub.ll';
 print $fh $llvm_ir;
 close $fh;
 print "generated\n";
-#$generator = Compiler::CodeGenerator::LLVM->new();
+my $generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
@@ -86,19 +86,21 @@ sub f {
 
 say(f(1, 2.3));
 
-=hoge
 sub h {
-    say $_[0];
-    return 1;
+    return $_[0] + 2;
 }
+
+sub g {
+    return h($_[0] + 1);
+}
+
+say g(3);
 
 sub fib {
     if ($_[0] < 2) {
         return 1;
     }
-    h($_[0] - 1) + 1;
-    return $a;
+    return fib($_[0] - 1) + fib($_[0] - 2);
 }
 
-say(fib(4));
-=cut
+say(fib(35));

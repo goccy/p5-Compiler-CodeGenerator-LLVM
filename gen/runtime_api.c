@@ -114,284 +114,284 @@ Object *new_Object(void)
 	return (Object *)malloc(sizeof(Object));
 }
 
-UnionType *Object_addObject(UnionType *a, UnionType *b)
+UnionType Object_addObject(UnionType *a, UnionType *b)
 {
 	UnionType ret;
 	setResultByObjectObject(ret, a, b, +);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_subObject(UnionType *a, UnionType *b)
+UnionType Object_subObject(UnionType *a, UnionType *b)
 {
 	UnionType ret;
 	setResultByObjectObject(ret, a, b, -);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_mulObject(UnionType *a, UnionType *b)
+UnionType Object_mulObject(UnionType *a, UnionType *b)
 {
 	UnionType ret;
 	setResultByObjectObject(ret, a, b, *);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_divObject(UnionType *a, UnionType *b)
+UnionType Object_divObject(UnionType *a, UnionType *b)
 {
 	UnionType ret;
 	setResultByObjectObject(ret, a, b, /);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_eqObject(UnionType *a, UnionType *b)
+UnionType Object_eqObject(UnionType *a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByObjectObject(ret, a, b, ==);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_neObject(UnionType *a, UnionType *b)
+UnionType Object_neObject(UnionType *a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByObjectObject(ret, a, b, !=);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_gtObject(UnionType *a, UnionType *b)
+UnionType Object_gtObject(UnionType *a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByObjectObject(ret, a, b, >);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_ltObject(UnionType *a, UnionType *b)
+UnionType Object_ltObject(UnionType *a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByObjectObject(ret, a, b, <);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_addInt(UnionType *a, int b)
+UnionType Object_addInt(UnionType *a, int b)
 {
 	UnionType ret;
 	setResultByObjectInt(ret, a, b, +);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_subInt(UnionType *a, int b)
+UnionType Object_subInt(UnionType *a, int b)
 {
 	UnionType ret;
 	setResultByObjectInt(ret, a, b, -);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_mulInt(UnionType *a, int b)
+UnionType Object_mulInt(UnionType *a, int b)
 {
 	UnionType ret;
 	setResultByObjectInt(ret, a, b, *);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_divInt(UnionType *a, int b)
+UnionType Object_divInt(UnionType *a, int b)
 {
 	UnionType ret;
 	setResultByObjectInt(ret, a, b, /);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_eqInt(UnionType *a, int b)
+UnionType Object_eqInt(UnionType *a, int b)
 {
 	UnionType ret;
 	setCmpResultByObjectInt(ret, a, b, ==);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_neInt(UnionType *a, int b)
+UnionType Object_neInt(UnionType *a, int b)
 {
 	UnionType ret;
 	setCmpResultByObjectInt(ret, a, b, !=);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_gtInt(UnionType *a, int b)
+UnionType Object_gtInt(UnionType *a, int b)
 {
 	UnionType ret;
 	setCmpResultByObjectInt(ret, a, b, >);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_ltInt(UnionType *a, int b)
+UnionType Object_ltInt(UnionType *a, int b)
 {
 	UnionType ret;
 	setCmpResultByObjectInt(ret, a, b, <);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_addInt2(int a, UnionType *b)
+UnionType Object_addInt2(int a, UnionType *b)
 {
 	UnionType ret;
 	setResultByIntObject(ret, a, b, +);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_subInt2(int a, UnionType *b)
+UnionType Object_subInt2(int a, UnionType *b)
 {
 	UnionType ret;
 	setResultByIntObject(ret, a, b, -);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_mulInt2(int a, UnionType *b)
+UnionType Object_mulInt2(int a, UnionType *b)
 {
 	UnionType ret;
 	setResultByIntObject(ret, a, b, *);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_divInt2(int a, UnionType *b)
+UnionType Object_divInt2(int a, UnionType *b)
 {
 	UnionType ret;
 	setResultByIntObject(ret, a, b, /);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_eqInt2(int a, UnionType *b)
+UnionType Object_eqInt2(int a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByIntObject(ret, a, b, ==);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_neInt2(int a, UnionType *b)
+UnionType Object_neInt2(int a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByIntObject(ret, a, b, !=);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_gtInt2(int a, UnionType *b)
+UnionType Object_gtInt2(int a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByIntObject(ret, a, b, >);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_ltInt2(int a, UnionType *b)
+UnionType Object_ltInt2(int a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByIntObject(ret, a, b, <);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_addDouble(UnionType *a, double b)
+UnionType Object_addDouble(UnionType *a, double b)
 {
 	UnionType ret;
 	setResultByObjectDouble(ret, a, b, +);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_subDouble(UnionType *a, double b)
+UnionType Object_subDouble(UnionType *a, double b)
 {
 	UnionType ret;
 	setResultByObjectDouble(ret, a, b, -);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_mulDouble(UnionType *a, double b)
+UnionType Object_mulDouble(UnionType *a, double b)
 {
 	UnionType ret;
 	setResultByObjectDouble(ret, a, b, *);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_divDouble(UnionType *a, double b)
+UnionType Object_divDouble(UnionType *a, double b)
 {
 	UnionType ret;
 	setResultByObjectDouble(ret, a, b, /);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_eqDouble(UnionType *a, double b)
+UnionType Object_eqDouble(UnionType *a, double b)
 {
 	UnionType ret;
 	setCmpResultByObjectDouble(ret, a, b, ==);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_neDouble(UnionType *a, double b)
+UnionType Object_neDouble(UnionType *a, double b)
 {
 	UnionType ret;
 	setCmpResultByObjectDouble(ret, a, b, !=);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_gtDouble(UnionType *a, double b)
+UnionType Object_gtDouble(UnionType *a, double b)
 {
 	UnionType ret;
 	setCmpResultByObjectDouble(ret, a, b, >);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_ltDouble(UnionType *a, double b)
+UnionType Object_ltDouble(UnionType *a, double b)
 {
 	UnionType ret;
 	setCmpResultByObjectDouble(ret, a, b, <);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_addDouble2(double a, UnionType *b)
+UnionType Object_addDouble2(double a, UnionType *b)
 {
 	UnionType ret;
 	setResultByDoubleObject(ret, a, b, +);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_subDouble2(double a, UnionType *b)
+UnionType Object_subDouble2(double a, UnionType *b)
 {
 	UnionType ret;
 	setResultByDoubleObject(ret, a, b, +);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_mulDouble2(double a, UnionType *b)
+UnionType Object_mulDouble2(double a, UnionType *b)
 {
 	UnionType ret;
 	setResultByDoubleObject(ret, a, b, *);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_divDouble2(double a, UnionType *b)
+UnionType Object_divDouble2(double a, UnionType *b)
 {
 	UnionType ret;
 	setResultByDoubleObject(ret, a, b, /);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_eqDouble2(double a, UnionType *b)
+UnionType Object_eqDouble2(double a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByDoubleObject(ret, a, b, ==);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_neDouble2(double a, UnionType *b)
+UnionType Object_neDouble2(double a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByDoubleObject(ret, a, b, !=);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_gtDouble2(double a, UnionType *b)
+UnionType Object_gtDouble2(double a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByDoubleObject(ret, a, b, >);
-	return &ret;
+	return ret;
 }
 
-UnionType *Object_ltDouble2(double a, UnionType *b)
+UnionType Object_ltDouble2(double a, UnionType *b)
 {
 	UnionType ret;
 	setCmpResultByDoubleObject(ret, a, b, <);
-	return &ret;
+	return ret;
 }
 
 int Object_isTrue(UnionType a)

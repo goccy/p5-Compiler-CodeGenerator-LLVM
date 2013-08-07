@@ -70,8 +70,9 @@ void print(ArrayObject *array);
 #define SET(ret, a, b, op) do {					\
 		switch (TYPE(b->o)) {					\
 		case Int: {								\
-			int i = a op to_Int(b->o);			\
-			ret.o = INT_init(i);				\
+			int j = to_Int(b->o);				\
+			int k = a op j;						\
+			ret.o = INT_init(k);				\
 			break;								\
 		}										\
 		case Double: {							\
@@ -103,9 +104,11 @@ void print(ArrayObject *array);
 
 #define setResultByObjectObject(ret, a, b, op) do {	\
 		switch (TYPE(a->o)) {						\
-		case Int:									\
-			SET(ret, to_Int(a->o), b, op);			\
+		case Int: {									\
+			int i = to_Int(a->o);					\
+			SET(ret, i, b, op);						\
 			break;									\
+		}											\
 		case Double:								\
 			SET(ret, to_Double(a->o), b, op);		\
 			break;									\
@@ -145,12 +148,12 @@ void print(ArrayObject *array);
 #define setCmpResultByObjectInt(ret, a, b, op) do {	\
 		switch (TYPE(a->o)) {						\
 		case Int: {									\
-			int i = to_Int(a->o) op b;				\
+			int i = (int)to_Int(a->o) op b;			\
 			ret.o = INT_init(i);					\
 			break;									\
 		}											\
 		case Double: {								\
-			int i =  a->d op b;						\
+			int i = a->d op b;						\
 			ret.o = INT_init(i);					\
 			break;									\
 		}											\
@@ -162,7 +165,7 @@ void print(ArrayObject *array);
 #define setResultByIntObject(ret, a, b, op) do {	\
 		switch (TYPE(b->o)) {						\
 		case Int: {									\
-			int i = a op to_Int(b->o);				\
+			int i = a op (int)to_Int(b->o);			\
 			ret.o = INT_init(i);					\
 			break;									\
 		}											\

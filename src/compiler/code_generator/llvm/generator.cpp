@@ -273,12 +273,13 @@ void LLVM::generateForeachStmtCode(IRBuilder<> *builder, ForeachStmtNode *node)
 
 void LLVM::generateFunctionCode(IRBuilder<> *builder, FunctionNode *node)
 {
-	FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, array_ptr_type, false);
+	FunctionType *ftype = llvm::FunctionType::get(int_type, array_ptr_type, false);
 	Function *func = Function::Create(
 		ftype,
 		GlobalValue::ExternalLinkage,
 		node->tk->data.c_str(), module
 	);
+	fmgr.setFunction("main", node->tk->data.c_str(), func);
 	Function *main_func = func;
 	cur_func = func;
 	cur_func_name = node->tk->data.c_str();
@@ -296,7 +297,10 @@ void LLVM::generateFunctionCode(IRBuilder<> *builder, FunctionNode *node)
 
 void LLVM::generateReturnCode(IRBuilder<> *builder, ReturnNode *node)
 {
-	llvm::Value *ret = generateValueCode(builder, node->body);
+	llvm::Value *result = generateValueCode(builder, node->body);
+	llvm::Value *dvalue = builder->CreateStructGEP(result, 0, "dvalue");
+	llvm::Value *casted_value = builder->CreateBitCast(dvalue, int_ptr_type, "cast");
+	llvm::Value *ret = builder->CreateLoad(casted_value, "ret");
 	switch (cur_type) {
 	case Enum::Runtime::Int: {
 		builder->CreateRet(ret);
@@ -321,8 +325,8 @@ void LLVM::setIteratorValue(IRBuilder<> *builder, Node *node)
 
 llvm::Value *LLVM::getArrayElement(IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx)
 {
-	llvm::Value *list = builder->CreateLoad(builder->CreateStructGEP(array, 1));
-	return builder->CreateGEP(list, idx);
+	llvm::Value *list = builder->CreateLoad(builder->CreateStructGEP(array, 1, "fetch_list"), "load_list");
+	return builder->CreateGEP(list, idx, "get_elem");
 }
 
 void LLVM::generateWhileStmtCode(IRBuilder<> *builder, WhileStmtNode *node)
@@ -442,8 +446,8 @@ llvm::Value *LLVM::generateCastCode(IRBuilder<> *builder, Enum::Runtime::Type ty
 		ret = builder->CreateIntCast(builder->CreateIntCast(result, int32_type, true), int_type, true);
 		*/
 		//ret = builder->CreatePtrToInt(value, int_type);
-		llvm::Value *result = builder->CreateLoad(builder->CreateBitCast(value, int_ptr_type));
-		ret = builder->CreateIntCast(builder->CreateIntCast(result, int32_type, true), int_type, true);
+		llvm::Value *result = builder->CreateLoad(builder->CreateBitCast(value, int_ptr_type, "union_to_int_ptr"), "dereference");
+		ret = builder->CreateIntCast(builder->CreateIntCast(result, int32_type, true, "trunc_int_cast"), int_type, true, "i32_to_i64_cast");
 		break;
 	}
 	case Enum::Runtime::Double:
@@ -686,37 +690,62 @@ llvm::Value *LLVM::generateOperatorCodeWithObject(IRBuilder<> *builder,
 		arg_types.push_back(union_ptr_type);
 		arg_types.push_back(union_ptr_type);
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-		FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, arg_types_ref, false);
+		FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Object", ftype);
-		ret = builder->CreateCall2(f, left_value, right_value, "object");
+		llvm::Value *result = builder->CreateCall2(f, left_value, right_value, "object");
+		llvm::Value *storage = builder->CreateAlloca(union_type, 0, "union_storage");
+		llvm::Value *dvalue = builder->CreateStructGEP(storage, 0, "cast_to_double_ptr");
+		llvm::Value *casted_value = builder->CreateBitCast(dvalue, int_ptr_type, "cast_to_int_ptr");
+		builder->CreateStore(result, casted_value);
+		ret = storage;
 	} else if (left_type == Enum::Runtime::Value && right_type == Enum::Runtime::Int) {
 		arg_types.push_back(union_ptr_type);
 		arg_types.push_back(int_type);
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-		FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, arg_types_ref, false);
+		FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Int", ftype);
-		ret = builder->CreateCall2(f, left_value, right_value, "object");
+		llvm::Value *result = builder->CreateCall2(f, left_value, right_value, "object");
+		llvm::Value *storage = builder->CreateAlloca(union_type, 0, "union_storage");
+		llvm::Value *dvalue = builder->CreateStructGEP(storage, 0, "cast_to_double_ptr");
+		llvm::Value *casted_value = builder->CreateBitCast(dvalue, int_ptr_type, "cast_to_int_ptr");
+		builder->CreateStore(result, casted_value);
+		ret = storage;
 	} else if (left_type == Enum::Runtime::Int && right_type == Enum::Runtime::Value) {
 		arg_types.push_back(int_type);
 		arg_types.push_back(union_ptr_type);
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-		FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, arg_types_ref, false);
+		FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Int2", ftype);
-		ret = builder->CreateCall2(f, left_value, right_value, "object");
+		llvm::Value *result = builder->CreateCall2(f, left_value, right_value, "object");
+		llvm::Value *storage = builder->CreateAlloca(union_type, 0);
+		llvm::Value *dvalue = builder->CreateStructGEP(storage, 0);
+		llvm::Value *casted_value = builder->CreateBitCast(dvalue, int_ptr_type);
+		builder->CreateStore(result, casted_value);
+		ret = storage;
 	} else if (left_type == Enum::Runtime::Double && right_type == Enum::Runtime::Value) {
 		arg_types.push_back(double_type);
 		arg_types.push_back(union_ptr_type);
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-		FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, arg_types_ref, false);
+		FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Double2", ftype);
-		ret = builder->CreateCall2(f, left_value, right_value, "object");
+		llvm::Value *storage = builder->CreateAlloca(union_type, 0);
+		llvm::Value *result = builder->CreateCall2(f, left_value, right_value, "object");
+		llvm::Value *dvalue = builder->CreateStructGEP(storage, 0);
+		llvm::Value *casted_value = builder->CreateBitCast(dvalue, int_ptr_type);
+		builder->CreateStore(result, casted_value);
+		ret = storage;
 	} else if (left_type == Enum::Runtime::Value && right_type == Enum::Runtime::Double) {
 		arg_types.push_back(union_ptr_type);
 		arg_types.push_back(double_type);
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-		FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, arg_types_ref, false);
+		FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Double", ftype);
-		ret = builder->CreateCall2(f, left_value, right_value, "object");
+		llvm::Value *storage = builder->CreateAlloca(union_type, 0);
+		llvm::Value *result = builder->CreateCall2(f, left_value, right_value, "object");
+		llvm::Value *dvalue = builder->CreateStructGEP(storage, 0);
+		llvm::Value *casted_value = builder->CreateBitCast(dvalue, int_ptr_type);
+		builder->CreateStore(result, casted_value);
+		ret = storage;
 	}
 	cur_type = Enum::Runtime::Value;
 	return ret;
@@ -855,7 +884,7 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 		int ivalue = atoi(tk->data.c_str());
 		llvm::Value *v = builder->CreateAlloca(union_type, 0, "ivalue");
 		Constant *integer = ConstantInt::get(int_type, (uint64_t)INT_init(ivalue));
-		builder->CreateStore(integer, builder->CreateBitCast(v, int_ptr_type));
+		builder->CreateStore(integer, builder->CreateBitCast(v, int_ptr_type, "union_to_int_ptr"));
 		ret = v;
 		cur_type = Enum::Runtime::Int;
 		break;
@@ -927,15 +956,15 @@ llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNo
 				Token *tk = tokens.at(i);
 				if (tk->type == TokenType::Var || tk->type == TokenType::ArrayVar) {
 					llvm::Value *elem = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent)->value;
-					builder->CreateStore(builder->CreateLoad(elem), builder->CreateGEP(__args__, idx));
+					builder->CreateStore(builder->CreateLoad(elem, "elem"), builder->CreateGEP(__args__, idx, "get_idx"));
 				} else {
-					builder->CreateStore(builder->CreateLoad(value), builder->CreateGEP(__args__, idx));
+					builder->CreateStore(builder->CreateLoad(value, "elem"), builder->CreateGEP(__args__, idx, "get_idx"));
 				}
 			} else {
 				//llvm::Value *value = builder->CreateBitCast(value, void_ptr_type);
 				//value = (type == Enum::Runtime::Int || type == Enum::Runtime::Double) ? builder->CreateLoad(value) : value;
 				//value = (type != Enum::Runtime::Value) ? builder->CreateLoad(value) : value;
-				builder->CreateStore(builder->CreateLoad(value), builder->CreateGEP(__args__, idx));
+				builder->CreateStore(builder->CreateLoad(value, "elem"), builder->CreateGEP(__args__, idx, "get_idx"));
 				//builder->CreateStore(setLLVMValue(builder, arg, type, value), builder->CreateGEP(__args__, idx));
 			}
 		}
@@ -951,8 +980,13 @@ llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNo
 		//module->dump();
 		ret = builder->CreateCall(func, vargs);
 	} else {
-		//getFunction(node->tk->data.c_str());
-		ret = builder->CreateCall(cur_func, vargs);
+		llvm::Value *func = fmgr.getFunction("main", node->tk->data.c_str());
+		llvm::Value *result = builder->CreateCall(func, vargs, "function_rvalue");
+		llvm::Value *storage = builder->CreateAlloca(union_type, 0, "union_storage");
+		llvm::Value *dvalue = builder->CreateStructGEP(storage, 0, "cast_to_double_ptr");
+		llvm::Value *casted_value = builder->CreateBitCast(dvalue, int_ptr_type, "cast_to_int_ptr");
+		builder->CreateStore(result, casted_value);
+		ret = storage;
 	}
 	cur_type = Enum::Runtime::Value;
 	return ret;
@@ -1046,7 +1080,7 @@ llvm::Value *LLVM::createNaNBoxingInt(IRBuilder<> *builder, llvm::Value *value)
 	llvm::Value *nan = ConstantInt::get(int_type, NaN);
 	llvm::Value *int_tag = ConstantInt::get(int_type, INT_TAG);
 	llvm::Value *nan_boxing_ivalue = builder->CreateOr(builder->CreateOr(builder->CreateAnd(value, mask), nan), int_tag);
-	builder->CreateStore(nan_boxing_ivalue, builder->CreateBitCast(union_ptr, int_ptr_type));
+	builder->CreateStore(nan_boxing_ivalue, builder->CreateBitCast(union_ptr, int_ptr_type, "union_to_int_ptr"));
 	return union_ptr;
 }
 
@@ -1093,9 +1127,9 @@ llvm::Value *LLVM::createNaNBoxingObject(IRBuilder<> *builder, llvm::Value *_val
 llvm::Value *LLVM::makeArgumentArray(IRBuilder<> *builder, llvm::Value *list, size_t size)
 {
 	llvm::Value *args = builder->CreateAlloca(array_type, 0, "arg_array");
-	llvm::Value *array_type = builder->CreateStructGEP(args, 0);
-	llvm::Value *array_list = builder->CreateStructGEP(args, 1);
-	llvm::Value *array_size = builder->CreateStructGEP(args, 2);
+	llvm::Value *array_type = builder->CreateStructGEP(args, 0, "array_type");
+	llvm::Value *array_list = builder->CreateStructGEP(args, 1, "array_list");
+	llvm::Value *array_size = builder->CreateStructGEP(args, 2, "array_size");
 	builder->CreateStore(ConstantInt::get(int32_type, Enum::Runtime::Array), array_type);
 	builder->CreateStore(list, array_list);
 	builder->CreateStore(ConstantInt::get(int_type, size), array_size);
