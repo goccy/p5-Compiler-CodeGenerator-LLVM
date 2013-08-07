@@ -99,11 +99,13 @@ const char *LLVM::gen(AST *ast)
 	builder.CreateRetVoid();
 	PassManager pm;
 	pm.add(createPromoteMemoryToRegisterPass());
-	//pm.add(createTailCallEliminationPass());
-	//pm.add(createMemCpyOptPass());
-	//pm.add(createCodeGenPreparePass());
+	pm.add(createTailCallEliminationPass());
+	pm.add(createMemCpyOptPass());
+	pm.add(createCodeGenPreparePass());
+	pm.add(createIPSCCPPass());
+	pm.add(createFunctionInliningPass());
 	pm.run(*module);
-	
+
 	//write();
 	//module->dump();
 	AssemblyAnnotationWriter writer;
