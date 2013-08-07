@@ -28,6 +28,8 @@ sub f {
     my $c = $a + $b;
     say $a;
     say $b;
+
+    # Object op Object
     say $a + $b;
     say $a - $b;
     say $a * $b;
@@ -36,50 +38,49 @@ sub f {
     say $a > $b;
     say $a == $b;
     say $a != $b;
+
+    # Object op Int
+    say $a + 2;
+    say $b - 1;
+    say $b * 2;
+    say $b / 1;
+    say $a < 1;
+    say $a > 1;
+    say $a == 1;
+    say $a != 1;
+
+    # Int op Object
+    say 2 + $b;
+    say 1 - $b;
+    say 2 * $b;
+    say 1 / $b;
+    say 1 < $a;
+    say 1 > $a;
+    say 1 == $a;
+    say 1 != $a;
+
+    # Object op Double
+    say $a < 1.2;
+    say $a > 1.2;
+    say $a + 2.1;
+    say $b - 1.2;
+    say $b * 1.2;
+    say $b / 1.2;
+    say $a == 1.2;
+    say $a != 1.2;
+
+    # Double op Object
+    say 2.1 + $b;
+    say 1.2 - $b;
+    say 1.2 * $b;
+    say 1.2 / $b;
+    say 1.1 < $a;
+    say 1.1 > $a;
+    say 1.1 == $a;
+    say 1.1 != $a;
+
     say $c;
 
-=hoge
-    say $a + 2;
-    say 2 + $b;
-    say $a + 2.1;
-    say 2.1 + $b;
-
-    say $b - 1;
-    say 1 - $b;
-    say $b - 1.2;
-    say 1.2 - $b;
-
-    say $b * 2;
-    say 2 * $b;
-    say $b * 1.2;
-    say 1.2 * $b;
-
-    say $b / 1;
-    say 1 / $b;
-    say $b / 1.2;
-    say 1.2 / $b;
-
-    say $a < 1;
-    say $a < 1.2;
-    say 1 < $a;
-    say 1.1 < $a;
-
-    say $a > 1;
-    say $a > 1.2;
-    say 1 > $a;
-    say 1.1 > $a;
-
-    say $a == 1;
-    say $a == 1.2;
-    say 1 == $a;
-    say 1.1 == $a;
-
-    say $a != $b;
-    say $a != 1;
-    say $a != 1.2;
-    say 1 != $a;
-    say 1.1 != $a;
-=cut
     return $d;
 }
 

@@ -84,6 +84,23 @@ void print(ArrayObject *array);
 		}										\
 	} while (0)
 
+#define CMP_SET(ret, a, b, op) do {				\
+		switch (TYPE(b->o)) {					\
+		case Int: {								\
+			int i = a op to_Int(b->o);			\
+			ret.o = INT_init(i);				\
+			break;								\
+		}										\
+		case Double: {							\
+			double d = (double)(int)a op b->d;	\
+			ret.o = INT_init((int)d);			\
+			break;								\
+		}										\
+		default:								\
+			break;								\
+		}										\
+	} while (0)
+
 #define setResultByObjectObject(ret, a, b, op) do {	\
 		switch (TYPE(a->o)) {						\
 		case Int:									\
@@ -97,60 +114,139 @@ void print(ArrayObject *array);
 		}											\
 	} while (0)
 
-#define setResultByObjectInt(ret, a, b, op) do {	\
-		switch (a->type) {							\
+#define setCmpResultByObjectObject(ret, a, b, op) do {	\
+		switch (TYPE(a->o)) {						\
 		case Int:									\
-			ret->type = Int;						\
-			ret->v.ivalue = to_Int(a) op b;			\
+			CMP_SET(ret, to_Int(a->o), b, op);		\
 			break;									\
 		case Double:								\
-			ret->type = Double;						\
-			ret->v.dvalue = to_Double(a) op b;		\
+			CMP_SET(ret, a->d, b, op);				\
 			break;									\
+		default:									\
+			break;									\
+		}											\
+	} while (0)
+
+#define setResultByObjectInt(ret, a, b, op) do {	\
+		switch (TYPE(a->o)) {						\
+		case Int: {									\
+			int i = to_Int(a->o) op b;				\
+			ret.o = INT_init(i);					\
+			break;									\
+		}											\
+		case Double:								\
+			ret.d = a->d op b;						\
+			break;									\
+		default:									\
+			break;									\
+		}											\
+	} while (0)
+
+#define setCmpResultByObjectInt(ret, a, b, op) do {	\
+		switch (TYPE(a->o)) {						\
+		case Int: {									\
+			int i = to_Int(a->o) op b;				\
+			ret.o = INT_init(i);					\
+			break;									\
+		}											\
+		case Double: {								\
+			int i =  a->d op b;						\
+			ret.o = INT_init(i);					\
+			break;									\
+		}											\
 		default:									\
 			break;									\
 		}											\
 	} while (0)
 
 #define setResultByIntObject(ret, a, b, op) do {	\
-		switch (b->type) {							\
-		case Int:									\
-			ret->type = Int;						\
-			ret->v.ivalue = a op to_Int(b);			\
+		switch (TYPE(b->o)) {						\
+		case Int: {									\
+			int i = a op to_Int(b->o);				\
+			ret.o = INT_init(i);					\
 			break;									\
+		}											\
 		case Double:								\
-			ret->type = Double;						\
-			ret->v.dvalue = a op to_Double(b);		\
+			ret.d = (double)(int)a op b->d;			\
 			break;									\
+		default:									\
+			break;									\
+		}											\
+	} while (0)
+
+#define setCmpResultByIntObject(ret, a, b, op) do {	\
+		switch (TYPE(b->o)) {						\
+		case Int: {									\
+			int i = a op to_Int(b->o);				\
+			ret.o = INT_init(i);					\
+			break;									\
+		}											\
+		case Double: {								\
+			int i = (double)(int)a op b->d;			\
+			ret.o = INT_init(i);					\
+			break;									\
+		}											\
 		default:									\
 			break;									\
 		}											\
 	} while (0)
 
 #define setResultByObjectDouble(ret, a, b, op) do {	\
-		ret->type = Double;							\
-		switch (a->type) {							\
+		switch (TYPE(a->o)) {						\
 		case Int:									\
-			ret->v.dvalue = to_Int(a) op b;			\
+			ret.d = (double)(int)to_Int(a->o) op b;	\
 			break;									\
 		case Double:								\
-			ret->v.dvalue = to_Double(a) op b;		\
+			ret.d = a->d op b;						\
 			break;									\
 		default:									\
 			break;									\
 		}											\
 	} while (0)
 
+#define setCmpResultByObjectDouble(ret, a, b, op) do {	\
+		switch (TYPE(a->o)) {							\
+		case Int: {										\
+			int i = (double)(int)to_Int(a->o) op b;		\
+			ret.o = INT_init(i);						\
+			break;										\
+		}												\
+		case Double: {									\
+			int i = a->d op b;							\
+			ret.o = INT_init(i);						\
+			break;										\
+		}												\
+		default:										\
+			break;										\
+		}												\
+	} while (0)
+
 #define setResultByDoubleObject(ret, a, b, op) do {	\
-		ret->type = Double;							\
-		switch (b->type) {							\
+		switch (TYPE(b->o)) {						\
 		case Int:									\
-			ret->v.dvalue = a op to_Int(b);			\
+			ret.d = a op to_Int(b->o);				\
 			break;									\
 		case Double:								\
-			ret->v.dvalue = a op to_Double(b);		\
+			ret.d = a op b->d;						\
 			break;									\
 		default:									\
 			break;									\
 		}											\
+	} while (0)
+
+#define setCmpResultByDoubleObject(ret, a, b, op) do {	\
+		switch (TYPE(b->o)) {							\
+		case Int: {										\
+			int i = a op to_Int(b->o);					\
+			ret.o = INT_init(i);						\
+			break;										\
+		}												\
+		case Double: {									\
+			int i = a op b->d;							\
+			ret.o = INT_init(i);						\
+			break;										\
+		}												\
+		default:										\
+			break;										\
+		}												\
 	} while (0)

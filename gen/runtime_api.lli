@@ -1,6 +1,6 @@
 ; ModuleID = 'gen/runtime_api.c'
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
-target triple = "x86_64-apple-macosx10.6.0"
+target triple = "x86_64-apple-macosx10.7.0"
 
 %struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
 %struct.__sbuf = type { i8*, i32 }
@@ -16,9 +16,17 @@ target triple = "x86_64-apple-macosx10.6.0"
 @.str3 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
 @.str4 = private unnamed_addr constant [26 x i8] c"===== debug_print ======\0A\00", align 1
 @.str5 = private unnamed_addr constant [15 x i8] c"=============\0A\00", align 1
+@__func__.shift = private unnamed_addr constant [6 x i8] c"shift\00", align 1
+@.str6 = private unnamed_addr constant [18 x i8] c"gen/runtime_api.c\00", align 1
+@.str7 = private unnamed_addr constant [21 x i8] c"0 && \22Type Error!\5Cn\22\00", align 1
+@.str8 = private unnamed_addr constant [30 x i8] c"fetch from function argument\0A\00", align 1
+@.str9 = private unnamed_addr constant [27 x i8] c"Type Error!: near by push\0A\00", align 1
+@__func__.push = private unnamed_addr constant [5 x i8] c"push\00", align 1
+@.str10 = private unnamed_addr constant [34 x i8] c"ERROR!!: cannot allocated memory\0A\00", align 1
 @u = common global %union.UnionType zeroinitializer, align 8
 
-define void @print_object(i64 %_o.coerce) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define void @print_object(i64 %_o.coerce) #0 {
 entry:
   %_o = alloca %union.UnionType, align 8
   %o = alloca i8*, align 8
@@ -98,11 +106,12 @@ sw.epilog:                                        ; preds = %sw.default, %sw.bb1
   ret void
 }
 
-declare i32 @printf(i8*, ...)
+declare i32 @printf(i8*, ...) #1
 
-declare i32 @fprintf(%struct.__sFILE*, i8*, ...)
+declare i32 @fprintf(%struct.__sFILE*, i8*, ...) #1
 
-define void @print(%struct._Array* %array) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define void @print(%struct._Array* %array) #0 {
 entry:
   %array.addr = alloca %struct._Array*, align 8
   %size = alloca i64, align 8
@@ -144,7 +153,8 @@ for.end:                                          ; preds = %for.cond
   ret void
 }
 
-define void @say(%struct._Array* %array) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define void @say(%struct._Array* %array) #0 {
 entry:
   %array.addr = alloca %struct._Array*, align 8
   store %struct._Array* %array, %struct._Array** %array.addr, align 8
@@ -154,7 +164,8 @@ entry:
   ret void
 }
 
-define void @debug_print(i64 %o.coerce) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define void @debug_print(i64 %o.coerce) #0 {
 entry:
   %o = alloca %union.UnionType, align 8
   %coerce.dive = getelementptr %union.UnionType* %o, i32 0, i32 0
@@ -171,16 +182,375 @@ entry:
   ret void
 }
 
-define %struct._Object* @new_Object() nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @shift(%struct._Array* %args) #0 {
+entry:
+  %retval = alloca %union.UnionType*, align 8
+  %args.addr = alloca %struct._Array*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %size = alloca i64, align 8
+  %o = alloca %union.UnionType, align 8
+  %array = alloca %struct._Array*, align 8
+  store %struct._Array* %args, %struct._Array** %args.addr, align 8
+  %0 = load %struct._Array** %args.addr, align 8
+  %size1 = getelementptr inbounds %struct._Array* %0, i32 0, i32 2
+  %1 = load i64* %size1, align 8
+  store i64 %1, i64* %size, align 8
+  %2 = load i64* %size, align 8
+  %cmp = icmp ugt i64 %2, 1
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  store %union.UnionType* %ret, %union.UnionType** %retval
+  br label %return
+
+if.end:                                           ; preds = %entry
+  %3 = load i64* %size, align 8
+  %cmp2 = icmp eq i64 %3, 1
+  br i1 %cmp2, label %if.then3, label %if.else
+
+if.then3:                                         ; preds = %if.end
+  %4 = load %struct._Array** %args.addr, align 8
+  %list = getelementptr inbounds %struct._Array* %4, i32 0, i32 1
+  %5 = load %union.UnionType** %list, align 8
+  %arrayidx = getelementptr inbounds %union.UnionType* %5, i64 0
+  %6 = bitcast %union.UnionType* %o to i8*
+  %7 = bitcast %union.UnionType* %arrayidx to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %6, i8* %7, i64 8, i32 8, i1 false)
+  br label %do.body
+
+do.body:                                          ; preds = %if.then3
+  %o4 = bitcast %union.UnionType* %o to i8**
+  %8 = load i8** %o4, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %and = and i64 %9, -4503599627370496
+  %cmp5 = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp5 to i32
+  %conv6 = sext i32 %conv to i64
+  %o7 = bitcast %union.UnionType* %o to i8**
+  %10 = load i8** %o7, align 8
+  %11 = ptrtoint i8* %10 to i64
+  %and8 = and i64 %11, 4222124650659840
+  %shr = lshr i64 %and8, 48
+  %mul = mul i64 %conv6, %shr
+  %cmp9 = icmp ne i64 %mul, 3
+  br i1 %cmp9, label %if.then11, label %if.end12
+
+if.then11:                                        ; preds = %do.body
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.shift, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str6, i32 0, i32 0), i32 59, i8* getelementptr inbounds ([21 x i8]* @.str7, i32 0, i32 0)) #7
+  unreachable
+
+if.end12:                                         ; preds = %do.body
+  br label %do.end
+
+do.end:                                           ; preds = %if.end12
+  %o13 = bitcast %union.UnionType* %o to i8**
+  %12 = load i8** %o13, align 8
+  %13 = ptrtoint i8* %12 to i64
+  %xor = xor i64 %13, -3659174697238528
+  %14 = inttoptr i64 %xor to %struct._Array*
+  store %struct._Array* %14, %struct._Array** %array, align 8
+  %15 = load %struct._Array** %array, align 8
+  %list14 = getelementptr inbounds %struct._Array* %15, i32 0, i32 1
+  %16 = load %union.UnionType** %list14, align 8
+  %arrayidx15 = getelementptr inbounds %union.UnionType* %16, i64 0
+  %17 = bitcast %union.UnionType* %ret to i8*
+  %18 = bitcast %union.UnionType* %arrayidx15 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %17, i8* %18, i64 8, i32 8, i1 false)
+  %19 = load %struct._Array** %array, align 8
+  %size16 = getelementptr inbounds %struct._Array* %19, i32 0, i32 2
+  %20 = load i64* %size16, align 8
+  %dec = add i64 %20, -1
+  store i64 %dec, i64* %size16, align 8
+  %21 = load %struct._Array** %array, align 8
+  %list17 = getelementptr inbounds %struct._Array* %21, i32 0, i32 1
+  %22 = load %union.UnionType** %list17, align 8
+  %23 = bitcast %union.UnionType* %22 to i8*
+  %24 = call i64 @llvm.objectsize.i64(i8* %23, i1 false)
+  %cmp18 = icmp ne i64 %24, -1
+  br i1 %cmp18, label %cond.true, label %cond.false
+
+cond.true:                                        ; preds = %do.end
+  %25 = load %struct._Array** %array, align 8
+  %list20 = getelementptr inbounds %struct._Array* %25, i32 0, i32 1
+  %26 = load %union.UnionType** %list20, align 8
+  %27 = bitcast %union.UnionType* %26 to i8*
+  %28 = load %struct._Array** %array, align 8
+  %list21 = getelementptr inbounds %struct._Array* %28, i32 0, i32 1
+  %29 = load %union.UnionType** %list21, align 8
+  %add.ptr = getelementptr inbounds %union.UnionType* %29, i64 1
+  %30 = bitcast %union.UnionType* %add.ptr to i8*
+  %31 = load %struct._Array** %array, align 8
+  %size22 = getelementptr inbounds %struct._Array* %31, i32 0, i32 2
+  %32 = load i64* %size22, align 8
+  %mul23 = mul i64 %32, 8
+  %33 = load %struct._Array** %array, align 8
+  %list24 = getelementptr inbounds %struct._Array* %33, i32 0, i32 1
+  %34 = load %union.UnionType** %list24, align 8
+  %35 = bitcast %union.UnionType* %34 to i8*
+  %36 = call i64 @llvm.objectsize.i64(i8* %35, i1 false)
+  %call = call i8* @__memmove_chk(i8* %27, i8* %30, i64 %mul23, i64 %36) #2
+  br label %cond.end
+
+cond.false:                                       ; preds = %do.end
+  %37 = load %struct._Array** %array, align 8
+  %list25 = getelementptr inbounds %struct._Array* %37, i32 0, i32 1
+  %38 = load %union.UnionType** %list25, align 8
+  %39 = bitcast %union.UnionType* %38 to i8*
+  %40 = load %struct._Array** %array, align 8
+  %list26 = getelementptr inbounds %struct._Array* %40, i32 0, i32 1
+  %41 = load %union.UnionType** %list26, align 8
+  %add.ptr27 = getelementptr inbounds %union.UnionType* %41, i64 1
+  %42 = bitcast %union.UnionType* %add.ptr27 to i8*
+  %43 = load %struct._Array** %array, align 8
+  %size28 = getelementptr inbounds %struct._Array* %43, i32 0, i32 2
+  %44 = load i64* %size28, align 8
+  %mul29 = mul i64 %44, 8
+  %call30 = call i8* @__inline_memmove_chk(i8* %39, i8* %42, i64 %mul29)
+  br label %cond.end
+
+cond.end:                                         ; preds = %cond.false, %cond.true
+  %cond = phi i8* [ %call, %cond.true ], [ %call30, %cond.false ]
+  br label %if.end32
+
+if.else:                                          ; preds = %if.end
+  %45 = load %struct.__sFILE** @__stderrp, align 8
+  %call31 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %45, i8* getelementptr inbounds ([30 x i8]* @.str8, i32 0, i32 0))
+  br label %if.end32
+
+if.end32:                                         ; preds = %if.else, %cond.end
+  store %union.UnionType* %ret, %union.UnionType** %retval
+  br label %return
+
+return:                                           ; preds = %if.end32, %if.then
+  %46 = load %union.UnionType** %retval
+  ret %union.UnionType* %46
+}
+
+; Function Attrs: nounwind
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) #2
+
+; Function Attrs: noreturn
+declare void @__assert_rtn(i8*, i8*, i32, i8*) #3
+
+; Function Attrs: nounwind readnone
+declare i64 @llvm.objectsize.i64(i8*, i1) #4
+
+; Function Attrs: nounwind
+declare i8* @__memmove_chk(i8*, i8*, i64, i64) #5
+
+; Function Attrs: inlinehint nounwind ssp uwtable
+define internal i8* @__inline_memmove_chk(i8* %__dest, i8* %__src, i64 %__len) #6 {
+entry:
+  %__dest.addr = alloca i8*, align 8
+  %__src.addr = alloca i8*, align 8
+  %__len.addr = alloca i64, align 8
+  store i8* %__dest, i8** %__dest.addr, align 8
+  store i8* %__src, i8** %__src.addr, align 8
+  store i64 %__len, i64* %__len.addr, align 8
+  %0 = load i8** %__dest.addr, align 8
+  %1 = load i8** %__src.addr, align 8
+  %2 = load i64* %__len.addr, align 8
+  %3 = load i8** %__dest.addr, align 8
+  %4 = call i64 @llvm.objectsize.i64(i8* %3, i1 false)
+  %call = call i8* @__memmove_chk(i8* %0, i8* %1, i64 %2, i64 %4) #2
+  ret i8* %call
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @push(%struct._Array* %args) #0 {
+entry:
+  %args.addr = alloca %struct._Array*, align 8
+  %size = alloca i64, align 8
+  %ret = alloca %union.UnionType, align 8
+  %array = alloca %union.UnionType, align 8
+  %value = alloca %union.UnionType, align 8
+  %base = alloca %struct._Array*, align 8
+  %tmp = alloca i8*, align 8
+  store %struct._Array* %args, %struct._Array** %args.addr, align 8
+  %0 = load %struct._Array** %args.addr, align 8
+  %size1 = getelementptr inbounds %struct._Array* %0, i32 0, i32 2
+  %1 = load i64* %size1, align 8
+  store i64 %1, i64* %size, align 8
+  %2 = load i64* %size, align 8
+  %cmp = icmp ne i64 %2, 2
+  br i1 %cmp, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  %3 = load %struct.__sFILE** @__stderrp, align 8
+  %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %3, i8* getelementptr inbounds ([27 x i8]* @.str9, i32 0, i32 0))
+  br label %if.end38
+
+if.else:                                          ; preds = %entry
+  %4 = load %struct._Array** %args.addr, align 8
+  %list = getelementptr inbounds %struct._Array* %4, i32 0, i32 1
+  %5 = load %union.UnionType** %list, align 8
+  %arrayidx = getelementptr inbounds %union.UnionType* %5, i64 0
+  %6 = bitcast %union.UnionType* %array to i8*
+  %7 = bitcast %union.UnionType* %arrayidx to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %6, i8* %7, i64 8, i32 8, i1 false)
+  %8 = load %struct._Array** %args.addr, align 8
+  %list2 = getelementptr inbounds %struct._Array* %8, i32 0, i32 1
+  %9 = load %union.UnionType** %list2, align 8
+  %arrayidx3 = getelementptr inbounds %union.UnionType* %9, i64 1
+  %10 = bitcast %union.UnionType* %value to i8*
+  %11 = bitcast %union.UnionType* %arrayidx3 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %10, i8* %11, i64 8, i32 8, i1 false)
+  br label %do.body
+
+do.body:                                          ; preds = %if.else
+  %o = bitcast %union.UnionType* %array to i8**
+  %12 = load i8** %o, align 8
+  %13 = ptrtoint i8* %12 to i64
+  %and = and i64 %13, -4503599627370496
+  %cmp4 = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp4 to i32
+  %conv5 = sext i32 %conv to i64
+  %o6 = bitcast %union.UnionType* %array to i8**
+  %14 = load i8** %o6, align 8
+  %15 = ptrtoint i8* %14 to i64
+  %and7 = and i64 %15, 4222124650659840
+  %shr = lshr i64 %and7, 48
+  %mul = mul i64 %conv5, %shr
+  %cmp8 = icmp ne i64 %mul, 3
+  br i1 %cmp8, label %if.then10, label %if.end
+
+if.then10:                                        ; preds = %do.body
+  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__.push, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str6, i32 0, i32 0), i32 79, i8* getelementptr inbounds ([21 x i8]* @.str7, i32 0, i32 0)) #7
+  unreachable
+
+if.end:                                           ; preds = %do.body
+  br label %do.end
+
+do.end:                                           ; preds = %if.end
+  %o11 = bitcast %union.UnionType* %array to i8**
+  %16 = load i8** %o11, align 8
+  %17 = ptrtoint i8* %16 to i64
+  %xor = xor i64 %17, -3659174697238528
+  %18 = inttoptr i64 %xor to %struct._Array*
+  store %struct._Array* %18, %struct._Array** %base, align 8
+  %19 = load %struct._Array** %base, align 8
+  %size12 = getelementptr inbounds %struct._Array* %19, i32 0, i32 2
+  %20 = load i64* %size12, align 8
+  %add = add i64 %20, 1
+  %mul13 = mul i64 8, %add
+  %call14 = call i8* @malloc(i64 %mul13)
+  store i8* %call14, i8** %tmp, align 8
+  %tobool = icmp ne i8* %call14, null
+  br i1 %tobool, label %if.else17, label %if.then15
+
+if.then15:                                        ; preds = %do.end
+  %21 = load %struct.__sFILE** @__stderrp, align 8
+  %call16 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %21, i8* getelementptr inbounds ([34 x i8]* @.str10, i32 0, i32 0))
+  br label %if.end37
+
+if.else17:                                        ; preds = %do.end
+  %22 = load i8** %tmp, align 8
+  %23 = call i64 @llvm.objectsize.i64(i8* %22, i1 false)
+  %cmp18 = icmp ne i64 %23, -1
+  br i1 %cmp18, label %cond.true, label %cond.false
+
+cond.true:                                        ; preds = %if.else17
+  %24 = load i8** %tmp, align 8
+  %25 = load %struct._Array** %base, align 8
+  %list20 = getelementptr inbounds %struct._Array* %25, i32 0, i32 1
+  %26 = load %union.UnionType** %list20, align 8
+  %27 = bitcast %union.UnionType* %26 to i8*
+  %28 = load %struct._Array** %base, align 8
+  %size21 = getelementptr inbounds %struct._Array* %28, i32 0, i32 2
+  %29 = load i64* %size21, align 8
+  %mul22 = mul i64 8, %29
+  %30 = load i8** %tmp, align 8
+  %31 = call i64 @llvm.objectsize.i64(i8* %30, i1 false)
+  %call23 = call i8* @__memcpy_chk(i8* %24, i8* %27, i64 %mul22, i64 %31) #2
+  br label %cond.end
+
+cond.false:                                       ; preds = %if.else17
+  %32 = load i8** %tmp, align 8
+  %33 = load %struct._Array** %base, align 8
+  %list24 = getelementptr inbounds %struct._Array* %33, i32 0, i32 1
+  %34 = load %union.UnionType** %list24, align 8
+  %35 = bitcast %union.UnionType* %34 to i8*
+  %36 = load %struct._Array** %base, align 8
+  %size25 = getelementptr inbounds %struct._Array* %36, i32 0, i32 2
+  %37 = load i64* %size25, align 8
+  %mul26 = mul i64 8, %37
+  %call27 = call i8* @__inline_memcpy_chk(i8* %32, i8* %35, i64 %mul26)
+  br label %cond.end
+
+cond.end:                                         ; preds = %cond.false, %cond.true
+  %cond = phi i8* [ %call23, %cond.true ], [ %call27, %cond.false ]
+  %38 = load i8** %tmp, align 8
+  %39 = bitcast i8* %38 to %union.UnionType*
+  %40 = load %struct._Array** %base, align 8
+  %list28 = getelementptr inbounds %struct._Array* %40, i32 0, i32 1
+  store %union.UnionType* %39, %union.UnionType** %list28, align 8
+  %41 = load %struct._Array** %base, align 8
+  %size29 = getelementptr inbounds %struct._Array* %41, i32 0, i32 2
+  %42 = load i64* %size29, align 8
+  %43 = load %struct._Array** %base, align 8
+  %list30 = getelementptr inbounds %struct._Array* %43, i32 0, i32 1
+  %44 = load %union.UnionType** %list30, align 8
+  %arrayidx31 = getelementptr inbounds %union.UnionType* %44, i64 %42
+  %45 = bitcast %union.UnionType* %arrayidx31 to i8*
+  %46 = bitcast %union.UnionType* %value to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %45, i8* %46, i64 8, i32 8, i1 false)
+  %47 = load %struct._Array** %base, align 8
+  %size32 = getelementptr inbounds %struct._Array* %47, i32 0, i32 2
+  %48 = load i64* %size32, align 8
+  %inc = add i64 %48, 1
+  store i64 %inc, i64* %size32, align 8
+  %49 = load %struct._Array** %base, align 8
+  %size33 = getelementptr inbounds %struct._Array* %49, i32 0, i32 2
+  %50 = load i64* %size33, align 8
+  %and34 = and i64 %50, 4294967295
+  %or = or i64 %and34, -4503599627370496
+  %or35 = or i64 %or, 281474976710656
+  %51 = inttoptr i64 %or35 to i8*
+  %o36 = bitcast %union.UnionType* %ret to i8**
+  store i8* %51, i8** %o36, align 8
+  br label %if.end37
+
+if.end37:                                         ; preds = %cond.end, %if.then15
+  br label %if.end38
+
+if.end38:                                         ; preds = %if.end37, %if.then
+  ret %union.UnionType* %ret
+}
+
+declare i8* @malloc(i64) #1
+
+; Function Attrs: nounwind
+declare i8* @__memcpy_chk(i8*, i8*, i64, i64) #5
+
+; Function Attrs: inlinehint nounwind ssp uwtable
+define internal i8* @__inline_memcpy_chk(i8* %__dest, i8* %__src, i64 %__len) #6 {
+entry:
+  %__dest.addr = alloca i8*, align 8
+  %__src.addr = alloca i8*, align 8
+  %__len.addr = alloca i64, align 8
+  store i8* %__dest, i8** %__dest.addr, align 8
+  store i8* %__src, i8** %__src.addr, align 8
+  store i64 %__len, i64* %__len.addr, align 8
+  %0 = load i8** %__dest.addr, align 8
+  %1 = load i8** %__src.addr, align 8
+  %2 = load i64* %__len.addr, align 8
+  %3 = load i8** %__dest.addr, align 8
+  %4 = call i64 @llvm.objectsize.i64(i8* %3, i1 false)
+  %call = call i8* @__memcpy_chk(i8* %0, i8* %1, i64 %2, i64 %4) #2
+  ret i8* %call
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %struct._Object* @new_Object() #0 {
 entry:
   %call = call i8* @malloc(i64 16)
   %0 = bitcast i8* %call to %struct._Object*
   ret %struct._Object* %0
 }
 
-declare i8* @malloc(i64)
-
-define %union.UnionType* @Object_addObject(%union.UnionType* %a, %union.UnionType* %b) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_addObject(%union.UnionType* %a, %union.UnionType* %b) #0 {
 entry:
   %a.addr = alloca %union.UnionType*, align 8
   %b.addr = alloca %union.UnionType*, align 8
@@ -369,7 +739,8 @@ do.end63:                                         ; preds = %sw.epilog62
   ret %union.UnionType* %ret
 }
 
-define %union.UnionType* @Object_subObject(%union.UnionType* %a, %union.UnionType* %b) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_subObject(%union.UnionType* %a, %union.UnionType* %b) #0 {
 entry:
   %a.addr = alloca %union.UnionType*, align 8
   %b.addr = alloca %union.UnionType*, align 8
@@ -558,7 +929,8 @@ do.end63:                                         ; preds = %sw.epilog62
   ret %union.UnionType* %ret
 }
 
-define %union.UnionType* @Object_mulObject(%union.UnionType* %a, %union.UnionType* %b) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_mulObject(%union.UnionType* %a, %union.UnionType* %b) #0 {
 entry:
   %a.addr = alloca %union.UnionType*, align 8
   %b.addr = alloca %union.UnionType*, align 8
@@ -747,7 +1119,8 @@ do.end64:                                         ; preds = %sw.epilog63
   ret %union.UnionType* %ret
 }
 
-define %union.UnionType* @Object_divObject(%union.UnionType* %a, %union.UnionType* %b) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_divObject(%union.UnionType* %a, %union.UnionType* %b) #0 {
 entry:
   %a.addr = alloca %union.UnionType*, align 8
   %b.addr = alloca %union.UnionType*, align 8
@@ -936,15 +1309,16 @@ do.end63:                                         ; preds = %sw.epilog62
   ret %union.UnionType* %ret
 }
 
-define %union.UnionType* @Object_eqObject(%union.UnionType* %a, %union.UnionType* %b) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_eqObject(%union.UnionType* %a, %union.UnionType* %b) #0 {
 entry:
   %a.addr = alloca %union.UnionType*, align 8
   %b.addr = alloca %union.UnionType*, align 8
   %ret = alloca %union.UnionType, align 8
   %i = alloca i32, align 4
   %d = alloca double, align 8
-  %i43 = alloca i32, align 4
-  %d54 = alloca double, align 8
+  %i47 = alloca i32, align 4
+  %d58 = alloca double, align 8
   store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
   store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
   br label %do.body
@@ -965,9 +1339,9 @@ do.body:                                          ; preds = %entry
   %and3 = and i64 %5, 4222124650659840
   %shr = lshr i64 %and3, 48
   %mul = mul i64 %conv1, %shr
-  switch i64 %mul, label %sw.default66 [
+  switch i64 %mul, label %sw.default74 [
     i64 1, label %sw.bb
-    i64 0, label %sw.bb31
+    i64 0, label %sw.bb35
   ]
 
 sw.bb:                                            ; preds = %do.body
@@ -1030,8 +1404,13 @@ sw.bb22:                                          ; preds = %do.body4
   %conv29 = sitofp i32 %conv28 to double
   store double %conv29, double* %d, align 8
   %25 = load double* %d, align 8
-  %d30 = bitcast %union.UnionType* %ret to double*
-  store double %25, double* %d30, align 8
+  %conv30 = fptosi double %25 to i32
+  %conv31 = zext i32 %conv30 to i64
+  %or32 = or i64 %conv31, -4503599627370496
+  %or33 = or i64 %or32, 281474976710656
+  %26 = inttoptr i64 %or33 to i8*
+  %o34 = bitcast %union.UnionType* %ret to i8**
+  store i8* %26, i8** %o34, align 8
   br label %sw.epilog
 
 sw.default:                                       ; preds = %do.body4
@@ -1041,103 +1420,105 @@ sw.epilog:                                        ; preds = %sw.default, %sw.bb2
   br label %do.end
 
 do.end:                                           ; preds = %sw.epilog
-  br label %sw.epilog67
+  br label %sw.epilog75
 
-sw.bb31:                                          ; preds = %do.body
-  br label %do.body32
+sw.bb35:                                          ; preds = %do.body
+  br label %do.body36
 
-do.body32:                                        ; preds = %sw.bb31
-  %26 = load %union.UnionType** %b.addr, align 8
-  %o33 = bitcast %union.UnionType* %26 to i8**
-  %27 = load i8** %o33, align 8
-  %28 = ptrtoint i8* %27 to i64
-  %and34 = and i64 %28, -4503599627370496
-  %cmp35 = icmp eq i64 %and34, -4503599627370496
-  %conv36 = zext i1 %cmp35 to i32
-  %conv37 = sext i32 %conv36 to i64
-  %29 = load %union.UnionType** %b.addr, align 8
-  %o38 = bitcast %union.UnionType* %29 to i8**
-  %30 = load i8** %o38, align 8
-  %31 = ptrtoint i8* %30 to i64
-  %and39 = and i64 %31, 4222124650659840
-  %shr40 = lshr i64 %and39, 48
-  %mul41 = mul i64 %conv37, %shr40
-  switch i64 %mul41, label %sw.default63 [
-    i64 1, label %sw.bb42
-    i64 0, label %sw.bb53
+do.body36:                                        ; preds = %sw.bb35
+  %27 = load %union.UnionType** %b.addr, align 8
+  %o37 = bitcast %union.UnionType* %27 to i8**
+  %28 = load i8** %o37, align 8
+  %29 = ptrtoint i8* %28 to i64
+  %and38 = and i64 %29, -4503599627370496
+  %cmp39 = icmp eq i64 %and38, -4503599627370496
+  %conv40 = zext i1 %cmp39 to i32
+  %conv41 = sext i32 %conv40 to i64
+  %30 = load %union.UnionType** %b.addr, align 8
+  %o42 = bitcast %union.UnionType* %30 to i8**
+  %31 = load i8** %o42, align 8
+  %32 = ptrtoint i8* %31 to i64
+  %and43 = and i64 %32, 4222124650659840
+  %shr44 = lshr i64 %and43, 48
+  %mul45 = mul i64 %conv41, %shr44
+  switch i64 %mul45, label %sw.default71 [
+    i64 1, label %sw.bb46
+    i64 0, label %sw.bb57
   ]
 
-sw.bb42:                                          ; preds = %do.body32
-  %32 = load %union.UnionType** %a.addr, align 8
-  %o44 = bitcast %union.UnionType* %32 to i8**
-  %33 = load i8** %o44, align 8
-  %34 = bitcast i8* %33 to double*
-  %35 = load double* %34, align 8
-  %36 = load %union.UnionType** %b.addr, align 8
-  %o45 = bitcast %union.UnionType* %36 to i8**
-  %37 = load i8** %o45, align 8
-  %38 = ptrtoint i8* %37 to i64
-  %conv46 = sitofp i64 %38 to double
-  %cmp47 = fcmp oeq double %35, %conv46
-  %conv48 = zext i1 %cmp47 to i32
-  store i32 %conv48, i32* %i43, align 4
-  %39 = load i32* %i43, align 4
-  %conv49 = zext i32 %39 to i64
-  %or50 = or i64 %conv49, -4503599627370496
-  %or51 = or i64 %or50, 281474976710656
-  %40 = inttoptr i64 %or51 to i8*
-  %o52 = bitcast %union.UnionType* %ret to i8**
-  store i8* %40, i8** %o52, align 8
-  br label %sw.epilog64
+sw.bb46:                                          ; preds = %do.body36
+  %33 = load %union.UnionType** %a.addr, align 8
+  %d48 = bitcast %union.UnionType* %33 to double*
+  %34 = load double* %d48, align 8
+  %35 = load %union.UnionType** %b.addr, align 8
+  %o49 = bitcast %union.UnionType* %35 to i8**
+  %36 = load i8** %o49, align 8
+  %37 = ptrtoint i8* %36 to i64
+  %conv50 = sitofp i64 %37 to double
+  %cmp51 = fcmp oeq double %34, %conv50
+  %conv52 = zext i1 %cmp51 to i32
+  store i32 %conv52, i32* %i47, align 4
+  %38 = load i32* %i47, align 4
+  %conv53 = zext i32 %38 to i64
+  %or54 = or i64 %conv53, -4503599627370496
+  %or55 = or i64 %or54, 281474976710656
+  %39 = inttoptr i64 %or55 to i8*
+  %o56 = bitcast %union.UnionType* %ret to i8**
+  store i8* %39, i8** %o56, align 8
+  br label %sw.epilog72
 
-sw.bb53:                                          ; preds = %do.body32
-  %41 = load %union.UnionType** %a.addr, align 8
-  %o55 = bitcast %union.UnionType* %41 to i8**
-  %42 = load i8** %o55, align 8
-  %43 = bitcast i8* %42 to double*
-  %44 = load double* %43, align 8
-  %conv56 = fptosi double %44 to i32
-  %conv57 = sitofp i32 %conv56 to double
-  %45 = load %union.UnionType** %b.addr, align 8
-  %d58 = bitcast %union.UnionType* %45 to double*
-  %46 = load double* %d58, align 8
-  %cmp59 = fcmp oeq double %conv57, %46
-  %conv60 = zext i1 %cmp59 to i32
+sw.bb57:                                          ; preds = %do.body36
+  %40 = load %union.UnionType** %a.addr, align 8
+  %d59 = bitcast %union.UnionType* %40 to double*
+  %41 = load double* %d59, align 8
+  %conv60 = fptosi double %41 to i32
   %conv61 = sitofp i32 %conv60 to double
-  store double %conv61, double* %d54, align 8
-  %47 = load double* %d54, align 8
-  %d62 = bitcast %union.UnionType* %ret to double*
-  store double %47, double* %d62, align 8
-  br label %sw.epilog64
+  %42 = load %union.UnionType** %b.addr, align 8
+  %d62 = bitcast %union.UnionType* %42 to double*
+  %43 = load double* %d62, align 8
+  %cmp63 = fcmp oeq double %conv61, %43
+  %conv64 = zext i1 %cmp63 to i32
+  %conv65 = sitofp i32 %conv64 to double
+  store double %conv65, double* %d58, align 8
+  %44 = load double* %d58, align 8
+  %conv66 = fptosi double %44 to i32
+  %conv67 = zext i32 %conv66 to i64
+  %or68 = or i64 %conv67, -4503599627370496
+  %or69 = or i64 %or68, 281474976710656
+  %45 = inttoptr i64 %or69 to i8*
+  %o70 = bitcast %union.UnionType* %ret to i8**
+  store i8* %45, i8** %o70, align 8
+  br label %sw.epilog72
 
-sw.default63:                                     ; preds = %do.body32
-  br label %sw.epilog64
+sw.default71:                                     ; preds = %do.body36
+  br label %sw.epilog72
 
-sw.epilog64:                                      ; preds = %sw.default63, %sw.bb53, %sw.bb42
-  br label %do.end65
+sw.epilog72:                                      ; preds = %sw.default71, %sw.bb57, %sw.bb46
+  br label %do.end73
 
-do.end65:                                         ; preds = %sw.epilog64
-  br label %sw.epilog67
+do.end73:                                         ; preds = %sw.epilog72
+  br label %sw.epilog75
 
-sw.default66:                                     ; preds = %do.body
-  br label %sw.epilog67
+sw.default74:                                     ; preds = %do.body
+  br label %sw.epilog75
 
-sw.epilog67:                                      ; preds = %sw.default66, %do.end65, %do.end
-  br label %do.end68
+sw.epilog75:                                      ; preds = %sw.default74, %do.end73, %do.end
+  br label %do.end76
 
-do.end68:                                         ; preds = %sw.epilog67
+do.end76:                                         ; preds = %sw.epilog75
   ret %union.UnionType* %ret
 }
 
-define %union.UnionType* @Object_neObject(%union.UnionType* %a, %union.UnionType* %b) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_neObject(%union.UnionType* %a, %union.UnionType* %b) #0 {
 entry:
   %a.addr = alloca %union.UnionType*, align 8
   %b.addr = alloca %union.UnionType*, align 8
   %ret = alloca %union.UnionType, align 8
   %i = alloca i32, align 4
   %d = alloca double, align 8
-  %i43 = alloca i32, align 4
-  %d54 = alloca double, align 8
+  %i47 = alloca i32, align 4
+  %d58 = alloca double, align 8
   store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
   store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
   br label %do.body
@@ -1158,9 +1539,9 @@ do.body:                                          ; preds = %entry
   %and3 = and i64 %5, 4222124650659840
   %shr = lshr i64 %and3, 48
   %mul = mul i64 %conv1, %shr
-  switch i64 %mul, label %sw.default66 [
+  switch i64 %mul, label %sw.default74 [
     i64 1, label %sw.bb
-    i64 0, label %sw.bb31
+    i64 0, label %sw.bb35
   ]
 
 sw.bb:                                            ; preds = %do.body
@@ -1223,8 +1604,13 @@ sw.bb22:                                          ; preds = %do.body4
   %conv29 = sitofp i32 %conv28 to double
   store double %conv29, double* %d, align 8
   %25 = load double* %d, align 8
-  %d30 = bitcast %union.UnionType* %ret to double*
-  store double %25, double* %d30, align 8
+  %conv30 = fptosi double %25 to i32
+  %conv31 = zext i32 %conv30 to i64
+  %or32 = or i64 %conv31, -4503599627370496
+  %or33 = or i64 %or32, 281474976710656
+  %26 = inttoptr i64 %or33 to i8*
+  %o34 = bitcast %union.UnionType* %ret to i8**
+  store i8* %26, i8** %o34, align 8
   br label %sw.epilog
 
 sw.default:                                       ; preds = %do.body4
@@ -1234,103 +1620,105 @@ sw.epilog:                                        ; preds = %sw.default, %sw.bb2
   br label %do.end
 
 do.end:                                           ; preds = %sw.epilog
-  br label %sw.epilog67
+  br label %sw.epilog75
 
-sw.bb31:                                          ; preds = %do.body
-  br label %do.body32
+sw.bb35:                                          ; preds = %do.body
+  br label %do.body36
 
-do.body32:                                        ; preds = %sw.bb31
-  %26 = load %union.UnionType** %b.addr, align 8
-  %o33 = bitcast %union.UnionType* %26 to i8**
-  %27 = load i8** %o33, align 8
-  %28 = ptrtoint i8* %27 to i64
-  %and34 = and i64 %28, -4503599627370496
-  %cmp35 = icmp eq i64 %and34, -4503599627370496
-  %conv36 = zext i1 %cmp35 to i32
-  %conv37 = sext i32 %conv36 to i64
-  %29 = load %union.UnionType** %b.addr, align 8
-  %o38 = bitcast %union.UnionType* %29 to i8**
-  %30 = load i8** %o38, align 8
-  %31 = ptrtoint i8* %30 to i64
-  %and39 = and i64 %31, 4222124650659840
-  %shr40 = lshr i64 %and39, 48
-  %mul41 = mul i64 %conv37, %shr40
-  switch i64 %mul41, label %sw.default63 [
-    i64 1, label %sw.bb42
-    i64 0, label %sw.bb53
+do.body36:                                        ; preds = %sw.bb35
+  %27 = load %union.UnionType** %b.addr, align 8
+  %o37 = bitcast %union.UnionType* %27 to i8**
+  %28 = load i8** %o37, align 8
+  %29 = ptrtoint i8* %28 to i64
+  %and38 = and i64 %29, -4503599627370496
+  %cmp39 = icmp eq i64 %and38, -4503599627370496
+  %conv40 = zext i1 %cmp39 to i32
+  %conv41 = sext i32 %conv40 to i64
+  %30 = load %union.UnionType** %b.addr, align 8
+  %o42 = bitcast %union.UnionType* %30 to i8**
+  %31 = load i8** %o42, align 8
+  %32 = ptrtoint i8* %31 to i64
+  %and43 = and i64 %32, 4222124650659840
+  %shr44 = lshr i64 %and43, 48
+  %mul45 = mul i64 %conv41, %shr44
+  switch i64 %mul45, label %sw.default71 [
+    i64 1, label %sw.bb46
+    i64 0, label %sw.bb57
   ]
 
-sw.bb42:                                          ; preds = %do.body32
-  %32 = load %union.UnionType** %a.addr, align 8
-  %o44 = bitcast %union.UnionType* %32 to i8**
-  %33 = load i8** %o44, align 8
-  %34 = bitcast i8* %33 to double*
-  %35 = load double* %34, align 8
-  %36 = load %union.UnionType** %b.addr, align 8
-  %o45 = bitcast %union.UnionType* %36 to i8**
-  %37 = load i8** %o45, align 8
-  %38 = ptrtoint i8* %37 to i64
-  %conv46 = sitofp i64 %38 to double
-  %cmp47 = fcmp une double %35, %conv46
-  %conv48 = zext i1 %cmp47 to i32
-  store i32 %conv48, i32* %i43, align 4
-  %39 = load i32* %i43, align 4
-  %conv49 = zext i32 %39 to i64
-  %or50 = or i64 %conv49, -4503599627370496
-  %or51 = or i64 %or50, 281474976710656
-  %40 = inttoptr i64 %or51 to i8*
-  %o52 = bitcast %union.UnionType* %ret to i8**
-  store i8* %40, i8** %o52, align 8
-  br label %sw.epilog64
+sw.bb46:                                          ; preds = %do.body36
+  %33 = load %union.UnionType** %a.addr, align 8
+  %d48 = bitcast %union.UnionType* %33 to double*
+  %34 = load double* %d48, align 8
+  %35 = load %union.UnionType** %b.addr, align 8
+  %o49 = bitcast %union.UnionType* %35 to i8**
+  %36 = load i8** %o49, align 8
+  %37 = ptrtoint i8* %36 to i64
+  %conv50 = sitofp i64 %37 to double
+  %cmp51 = fcmp une double %34, %conv50
+  %conv52 = zext i1 %cmp51 to i32
+  store i32 %conv52, i32* %i47, align 4
+  %38 = load i32* %i47, align 4
+  %conv53 = zext i32 %38 to i64
+  %or54 = or i64 %conv53, -4503599627370496
+  %or55 = or i64 %or54, 281474976710656
+  %39 = inttoptr i64 %or55 to i8*
+  %o56 = bitcast %union.UnionType* %ret to i8**
+  store i8* %39, i8** %o56, align 8
+  br label %sw.epilog72
 
-sw.bb53:                                          ; preds = %do.body32
-  %41 = load %union.UnionType** %a.addr, align 8
-  %o55 = bitcast %union.UnionType* %41 to i8**
-  %42 = load i8** %o55, align 8
-  %43 = bitcast i8* %42 to double*
-  %44 = load double* %43, align 8
-  %conv56 = fptosi double %44 to i32
-  %conv57 = sitofp i32 %conv56 to double
-  %45 = load %union.UnionType** %b.addr, align 8
-  %d58 = bitcast %union.UnionType* %45 to double*
-  %46 = load double* %d58, align 8
-  %cmp59 = fcmp une double %conv57, %46
-  %conv60 = zext i1 %cmp59 to i32
+sw.bb57:                                          ; preds = %do.body36
+  %40 = load %union.UnionType** %a.addr, align 8
+  %d59 = bitcast %union.UnionType* %40 to double*
+  %41 = load double* %d59, align 8
+  %conv60 = fptosi double %41 to i32
   %conv61 = sitofp i32 %conv60 to double
-  store double %conv61, double* %d54, align 8
-  %47 = load double* %d54, align 8
-  %d62 = bitcast %union.UnionType* %ret to double*
-  store double %47, double* %d62, align 8
-  br label %sw.epilog64
+  %42 = load %union.UnionType** %b.addr, align 8
+  %d62 = bitcast %union.UnionType* %42 to double*
+  %43 = load double* %d62, align 8
+  %cmp63 = fcmp une double %conv61, %43
+  %conv64 = zext i1 %cmp63 to i32
+  %conv65 = sitofp i32 %conv64 to double
+  store double %conv65, double* %d58, align 8
+  %44 = load double* %d58, align 8
+  %conv66 = fptosi double %44 to i32
+  %conv67 = zext i32 %conv66 to i64
+  %or68 = or i64 %conv67, -4503599627370496
+  %or69 = or i64 %or68, 281474976710656
+  %45 = inttoptr i64 %or69 to i8*
+  %o70 = bitcast %union.UnionType* %ret to i8**
+  store i8* %45, i8** %o70, align 8
+  br label %sw.epilog72
 
-sw.default63:                                     ; preds = %do.body32
-  br label %sw.epilog64
+sw.default71:                                     ; preds = %do.body36
+  br label %sw.epilog72
 
-sw.epilog64:                                      ; preds = %sw.default63, %sw.bb53, %sw.bb42
-  br label %do.end65
+sw.epilog72:                                      ; preds = %sw.default71, %sw.bb57, %sw.bb46
+  br label %do.end73
 
-do.end65:                                         ; preds = %sw.epilog64
-  br label %sw.epilog67
+do.end73:                                         ; preds = %sw.epilog72
+  br label %sw.epilog75
 
-sw.default66:                                     ; preds = %do.body
-  br label %sw.epilog67
+sw.default74:                                     ; preds = %do.body
+  br label %sw.epilog75
 
-sw.epilog67:                                      ; preds = %sw.default66, %do.end65, %do.end
-  br label %do.end68
+sw.epilog75:                                      ; preds = %sw.default74, %do.end73, %do.end
+  br label %do.end76
 
-do.end68:                                         ; preds = %sw.epilog67
+do.end76:                                         ; preds = %sw.epilog75
   ret %union.UnionType* %ret
 }
 
-define %union.UnionType* @Object_gtObject(%union.UnionType* %a, %union.UnionType* %b) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_gtObject(%union.UnionType* %a, %union.UnionType* %b) #0 {
 entry:
   %a.addr = alloca %union.UnionType*, align 8
   %b.addr = alloca %union.UnionType*, align 8
   %ret = alloca %union.UnionType, align 8
   %i = alloca i32, align 4
   %d = alloca double, align 8
-  %i43 = alloca i32, align 4
-  %d54 = alloca double, align 8
+  %i47 = alloca i32, align 4
+  %d58 = alloca double, align 8
   store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
   store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
   br label %do.body
@@ -1351,9 +1739,9 @@ do.body:                                          ; preds = %entry
   %and3 = and i64 %5, 4222124650659840
   %shr = lshr i64 %and3, 48
   %mul = mul i64 %conv1, %shr
-  switch i64 %mul, label %sw.default66 [
+  switch i64 %mul, label %sw.default74 [
     i64 1, label %sw.bb
-    i64 0, label %sw.bb31
+    i64 0, label %sw.bb35
   ]
 
 sw.bb:                                            ; preds = %do.body
@@ -1416,8 +1804,13 @@ sw.bb22:                                          ; preds = %do.body4
   %conv29 = sitofp i32 %conv28 to double
   store double %conv29, double* %d, align 8
   %25 = load double* %d, align 8
-  %d30 = bitcast %union.UnionType* %ret to double*
-  store double %25, double* %d30, align 8
+  %conv30 = fptosi double %25 to i32
+  %conv31 = zext i32 %conv30 to i64
+  %or32 = or i64 %conv31, -4503599627370496
+  %or33 = or i64 %or32, 281474976710656
+  %26 = inttoptr i64 %or33 to i8*
+  %o34 = bitcast %union.UnionType* %ret to i8**
+  store i8* %26, i8** %o34, align 8
   br label %sw.epilog
 
 sw.default:                                       ; preds = %do.body4
@@ -1427,103 +1820,105 @@ sw.epilog:                                        ; preds = %sw.default, %sw.bb2
   br label %do.end
 
 do.end:                                           ; preds = %sw.epilog
-  br label %sw.epilog67
+  br label %sw.epilog75
 
-sw.bb31:                                          ; preds = %do.body
-  br label %do.body32
+sw.bb35:                                          ; preds = %do.body
+  br label %do.body36
 
-do.body32:                                        ; preds = %sw.bb31
-  %26 = load %union.UnionType** %b.addr, align 8
-  %o33 = bitcast %union.UnionType* %26 to i8**
-  %27 = load i8** %o33, align 8
-  %28 = ptrtoint i8* %27 to i64
-  %and34 = and i64 %28, -4503599627370496
-  %cmp35 = icmp eq i64 %and34, -4503599627370496
-  %conv36 = zext i1 %cmp35 to i32
-  %conv37 = sext i32 %conv36 to i64
-  %29 = load %union.UnionType** %b.addr, align 8
-  %o38 = bitcast %union.UnionType* %29 to i8**
-  %30 = load i8** %o38, align 8
-  %31 = ptrtoint i8* %30 to i64
-  %and39 = and i64 %31, 4222124650659840
-  %shr40 = lshr i64 %and39, 48
-  %mul41 = mul i64 %conv37, %shr40
-  switch i64 %mul41, label %sw.default63 [
-    i64 1, label %sw.bb42
-    i64 0, label %sw.bb53
+do.body36:                                        ; preds = %sw.bb35
+  %27 = load %union.UnionType** %b.addr, align 8
+  %o37 = bitcast %union.UnionType* %27 to i8**
+  %28 = load i8** %o37, align 8
+  %29 = ptrtoint i8* %28 to i64
+  %and38 = and i64 %29, -4503599627370496
+  %cmp39 = icmp eq i64 %and38, -4503599627370496
+  %conv40 = zext i1 %cmp39 to i32
+  %conv41 = sext i32 %conv40 to i64
+  %30 = load %union.UnionType** %b.addr, align 8
+  %o42 = bitcast %union.UnionType* %30 to i8**
+  %31 = load i8** %o42, align 8
+  %32 = ptrtoint i8* %31 to i64
+  %and43 = and i64 %32, 4222124650659840
+  %shr44 = lshr i64 %and43, 48
+  %mul45 = mul i64 %conv41, %shr44
+  switch i64 %mul45, label %sw.default71 [
+    i64 1, label %sw.bb46
+    i64 0, label %sw.bb57
   ]
 
-sw.bb42:                                          ; preds = %do.body32
-  %32 = load %union.UnionType** %a.addr, align 8
-  %o44 = bitcast %union.UnionType* %32 to i8**
-  %33 = load i8** %o44, align 8
-  %34 = bitcast i8* %33 to double*
-  %35 = load double* %34, align 8
-  %36 = load %union.UnionType** %b.addr, align 8
-  %o45 = bitcast %union.UnionType* %36 to i8**
-  %37 = load i8** %o45, align 8
-  %38 = ptrtoint i8* %37 to i64
-  %conv46 = sitofp i64 %38 to double
-  %cmp47 = fcmp ogt double %35, %conv46
-  %conv48 = zext i1 %cmp47 to i32
-  store i32 %conv48, i32* %i43, align 4
-  %39 = load i32* %i43, align 4
-  %conv49 = zext i32 %39 to i64
-  %or50 = or i64 %conv49, -4503599627370496
-  %or51 = or i64 %or50, 281474976710656
-  %40 = inttoptr i64 %or51 to i8*
-  %o52 = bitcast %union.UnionType* %ret to i8**
-  store i8* %40, i8** %o52, align 8
-  br label %sw.epilog64
+sw.bb46:                                          ; preds = %do.body36
+  %33 = load %union.UnionType** %a.addr, align 8
+  %d48 = bitcast %union.UnionType* %33 to double*
+  %34 = load double* %d48, align 8
+  %35 = load %union.UnionType** %b.addr, align 8
+  %o49 = bitcast %union.UnionType* %35 to i8**
+  %36 = load i8** %o49, align 8
+  %37 = ptrtoint i8* %36 to i64
+  %conv50 = sitofp i64 %37 to double
+  %cmp51 = fcmp ogt double %34, %conv50
+  %conv52 = zext i1 %cmp51 to i32
+  store i32 %conv52, i32* %i47, align 4
+  %38 = load i32* %i47, align 4
+  %conv53 = zext i32 %38 to i64
+  %or54 = or i64 %conv53, -4503599627370496
+  %or55 = or i64 %or54, 281474976710656
+  %39 = inttoptr i64 %or55 to i8*
+  %o56 = bitcast %union.UnionType* %ret to i8**
+  store i8* %39, i8** %o56, align 8
+  br label %sw.epilog72
 
-sw.bb53:                                          ; preds = %do.body32
-  %41 = load %union.UnionType** %a.addr, align 8
-  %o55 = bitcast %union.UnionType* %41 to i8**
-  %42 = load i8** %o55, align 8
-  %43 = bitcast i8* %42 to double*
-  %44 = load double* %43, align 8
-  %conv56 = fptosi double %44 to i32
-  %conv57 = sitofp i32 %conv56 to double
-  %45 = load %union.UnionType** %b.addr, align 8
-  %d58 = bitcast %union.UnionType* %45 to double*
-  %46 = load double* %d58, align 8
-  %cmp59 = fcmp ogt double %conv57, %46
-  %conv60 = zext i1 %cmp59 to i32
+sw.bb57:                                          ; preds = %do.body36
+  %40 = load %union.UnionType** %a.addr, align 8
+  %d59 = bitcast %union.UnionType* %40 to double*
+  %41 = load double* %d59, align 8
+  %conv60 = fptosi double %41 to i32
   %conv61 = sitofp i32 %conv60 to double
-  store double %conv61, double* %d54, align 8
-  %47 = load double* %d54, align 8
-  %d62 = bitcast %union.UnionType* %ret to double*
-  store double %47, double* %d62, align 8
-  br label %sw.epilog64
+  %42 = load %union.UnionType** %b.addr, align 8
+  %d62 = bitcast %union.UnionType* %42 to double*
+  %43 = load double* %d62, align 8
+  %cmp63 = fcmp ogt double %conv61, %43
+  %conv64 = zext i1 %cmp63 to i32
+  %conv65 = sitofp i32 %conv64 to double
+  store double %conv65, double* %d58, align 8
+  %44 = load double* %d58, align 8
+  %conv66 = fptosi double %44 to i32
+  %conv67 = zext i32 %conv66 to i64
+  %or68 = or i64 %conv67, -4503599627370496
+  %or69 = or i64 %or68, 281474976710656
+  %45 = inttoptr i64 %or69 to i8*
+  %o70 = bitcast %union.UnionType* %ret to i8**
+  store i8* %45, i8** %o70, align 8
+  br label %sw.epilog72
 
-sw.default63:                                     ; preds = %do.body32
-  br label %sw.epilog64
+sw.default71:                                     ; preds = %do.body36
+  br label %sw.epilog72
 
-sw.epilog64:                                      ; preds = %sw.default63, %sw.bb53, %sw.bb42
-  br label %do.end65
+sw.epilog72:                                      ; preds = %sw.default71, %sw.bb57, %sw.bb46
+  br label %do.end73
 
-do.end65:                                         ; preds = %sw.epilog64
-  br label %sw.epilog67
+do.end73:                                         ; preds = %sw.epilog72
+  br label %sw.epilog75
 
-sw.default66:                                     ; preds = %do.body
-  br label %sw.epilog67
+sw.default74:                                     ; preds = %do.body
+  br label %sw.epilog75
 
-sw.epilog67:                                      ; preds = %sw.default66, %do.end65, %do.end
-  br label %do.end68
+sw.epilog75:                                      ; preds = %sw.default74, %do.end73, %do.end
+  br label %do.end76
 
-do.end68:                                         ; preds = %sw.epilog67
+do.end76:                                         ; preds = %sw.epilog75
   ret %union.UnionType* %ret
 }
 
-define %union.UnionType* @Object_ltObject(%union.UnionType* %a, %union.UnionType* %b) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_ltObject(%union.UnionType* %a, %union.UnionType* %b) #0 {
 entry:
   %a.addr = alloca %union.UnionType*, align 8
   %b.addr = alloca %union.UnionType*, align 8
   %ret = alloca %union.UnionType, align 8
   %i = alloca i32, align 4
   %d = alloca double, align 8
-  %i43 = alloca i32, align 4
-  %d54 = alloca double, align 8
+  %i47 = alloca i32, align 4
+  %d58 = alloca double, align 8
   store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
   store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
   br label %do.body
@@ -1544,9 +1939,9 @@ do.body:                                          ; preds = %entry
   %and3 = and i64 %5, 4222124650659840
   %shr = lshr i64 %and3, 48
   %mul = mul i64 %conv1, %shr
-  switch i64 %mul, label %sw.default66 [
+  switch i64 %mul, label %sw.default74 [
     i64 1, label %sw.bb
-    i64 0, label %sw.bb31
+    i64 0, label %sw.bb35
   ]
 
 sw.bb:                                            ; preds = %do.body
@@ -1582,7 +1977,7 @@ sw.bb14:                                          ; preds = %do.body4
   %o16 = bitcast %union.UnionType* %15 to i8**
   %16 = load i8** %o16, align 8
   %17 = ptrtoint i8* %16 to i64
-  %cmp17 = icmp sgt i64 %14, %17
+  %cmp17 = icmp slt i64 %14, %17
   %conv18 = zext i1 %cmp17 to i32
   store i32 %conv18, i32* %i, align 4
   %18 = load i32* %i, align 4
@@ -1604,13 +1999,18 @@ sw.bb22:                                          ; preds = %do.body4
   %23 = load %union.UnionType** %b.addr, align 8
   %d26 = bitcast %union.UnionType* %23 to double*
   %24 = load double* %d26, align 8
-  %cmp27 = fcmp ogt double %conv25, %24
+  %cmp27 = fcmp olt double %conv25, %24
   %conv28 = zext i1 %cmp27 to i32
   %conv29 = sitofp i32 %conv28 to double
   store double %conv29, double* %d, align 8
   %25 = load double* %d, align 8
-  %d30 = bitcast %union.UnionType* %ret to double*
-  store double %25, double* %d30, align 8
+  %conv30 = fptosi double %25 to i32
+  %conv31 = zext i32 %conv30 to i64
+  %or32 = or i64 %conv31, -4503599627370496
+  %or33 = or i64 %or32, 281474976710656
+  %26 = inttoptr i64 %or33 to i8*
+  %o34 = bitcast %union.UnionType* %ret to i8**
+  store i8* %26, i8** %o34, align 8
   br label %sw.epilog
 
 sw.default:                                       ; preds = %do.body4
@@ -1620,95 +2020,2457 @@ sw.epilog:                                        ; preds = %sw.default, %sw.bb2
   br label %do.end
 
 do.end:                                           ; preds = %sw.epilog
-  br label %sw.epilog67
+  br label %sw.epilog75
 
-sw.bb31:                                          ; preds = %do.body
-  br label %do.body32
+sw.bb35:                                          ; preds = %do.body
+  br label %do.body36
 
-do.body32:                                        ; preds = %sw.bb31
-  %26 = load %union.UnionType** %b.addr, align 8
-  %o33 = bitcast %union.UnionType* %26 to i8**
-  %27 = load i8** %o33, align 8
-  %28 = ptrtoint i8* %27 to i64
-  %and34 = and i64 %28, -4503599627370496
-  %cmp35 = icmp eq i64 %and34, -4503599627370496
-  %conv36 = zext i1 %cmp35 to i32
-  %conv37 = sext i32 %conv36 to i64
-  %29 = load %union.UnionType** %b.addr, align 8
-  %o38 = bitcast %union.UnionType* %29 to i8**
-  %30 = load i8** %o38, align 8
-  %31 = ptrtoint i8* %30 to i64
-  %and39 = and i64 %31, 4222124650659840
-  %shr40 = lshr i64 %and39, 48
-  %mul41 = mul i64 %conv37, %shr40
-  switch i64 %mul41, label %sw.default63 [
-    i64 1, label %sw.bb42
-    i64 0, label %sw.bb53
+do.body36:                                        ; preds = %sw.bb35
+  %27 = load %union.UnionType** %b.addr, align 8
+  %o37 = bitcast %union.UnionType* %27 to i8**
+  %28 = load i8** %o37, align 8
+  %29 = ptrtoint i8* %28 to i64
+  %and38 = and i64 %29, -4503599627370496
+  %cmp39 = icmp eq i64 %and38, -4503599627370496
+  %conv40 = zext i1 %cmp39 to i32
+  %conv41 = sext i32 %conv40 to i64
+  %30 = load %union.UnionType** %b.addr, align 8
+  %o42 = bitcast %union.UnionType* %30 to i8**
+  %31 = load i8** %o42, align 8
+  %32 = ptrtoint i8* %31 to i64
+  %and43 = and i64 %32, 4222124650659840
+  %shr44 = lshr i64 %and43, 48
+  %mul45 = mul i64 %conv41, %shr44
+  switch i64 %mul45, label %sw.default71 [
+    i64 1, label %sw.bb46
+    i64 0, label %sw.bb57
   ]
 
-sw.bb42:                                          ; preds = %do.body32
-  %32 = load %union.UnionType** %a.addr, align 8
-  %o44 = bitcast %union.UnionType* %32 to i8**
-  %33 = load i8** %o44, align 8
-  %34 = bitcast i8* %33 to double*
-  %35 = load double* %34, align 8
-  %36 = load %union.UnionType** %b.addr, align 8
-  %o45 = bitcast %union.UnionType* %36 to i8**
-  %37 = load i8** %o45, align 8
-  %38 = ptrtoint i8* %37 to i64
-  %conv46 = sitofp i64 %38 to double
-  %cmp47 = fcmp ogt double %35, %conv46
-  %conv48 = zext i1 %cmp47 to i32
-  store i32 %conv48, i32* %i43, align 4
-  %39 = load i32* %i43, align 4
-  %conv49 = zext i32 %39 to i64
-  %or50 = or i64 %conv49, -4503599627370496
-  %or51 = or i64 %or50, 281474976710656
-  %40 = inttoptr i64 %or51 to i8*
-  %o52 = bitcast %union.UnionType* %ret to i8**
-  store i8* %40, i8** %o52, align 8
-  br label %sw.epilog64
+sw.bb46:                                          ; preds = %do.body36
+  %33 = load %union.UnionType** %a.addr, align 8
+  %d48 = bitcast %union.UnionType* %33 to double*
+  %34 = load double* %d48, align 8
+  %35 = load %union.UnionType** %b.addr, align 8
+  %o49 = bitcast %union.UnionType* %35 to i8**
+  %36 = load i8** %o49, align 8
+  %37 = ptrtoint i8* %36 to i64
+  %conv50 = sitofp i64 %37 to double
+  %cmp51 = fcmp olt double %34, %conv50
+  %conv52 = zext i1 %cmp51 to i32
+  store i32 %conv52, i32* %i47, align 4
+  %38 = load i32* %i47, align 4
+  %conv53 = zext i32 %38 to i64
+  %or54 = or i64 %conv53, -4503599627370496
+  %or55 = or i64 %or54, 281474976710656
+  %39 = inttoptr i64 %or55 to i8*
+  %o56 = bitcast %union.UnionType* %ret to i8**
+  store i8* %39, i8** %o56, align 8
+  br label %sw.epilog72
 
-sw.bb53:                                          ; preds = %do.body32
-  %41 = load %union.UnionType** %a.addr, align 8
-  %o55 = bitcast %union.UnionType* %41 to i8**
-  %42 = load i8** %o55, align 8
-  %43 = bitcast i8* %42 to double*
-  %44 = load double* %43, align 8
-  %conv56 = fptosi double %44 to i32
-  %conv57 = sitofp i32 %conv56 to double
-  %45 = load %union.UnionType** %b.addr, align 8
-  %d58 = bitcast %union.UnionType* %45 to double*
-  %46 = load double* %d58, align 8
-  %cmp59 = fcmp ogt double %conv57, %46
-  %conv60 = zext i1 %cmp59 to i32
+sw.bb57:                                          ; preds = %do.body36
+  %40 = load %union.UnionType** %a.addr, align 8
+  %d59 = bitcast %union.UnionType* %40 to double*
+  %41 = load double* %d59, align 8
+  %conv60 = fptosi double %41 to i32
   %conv61 = sitofp i32 %conv60 to double
-  store double %conv61, double* %d54, align 8
-  %47 = load double* %d54, align 8
-  %d62 = bitcast %union.UnionType* %ret to double*
-  store double %47, double* %d62, align 8
-  br label %sw.epilog64
+  %42 = load %union.UnionType** %b.addr, align 8
+  %d62 = bitcast %union.UnionType* %42 to double*
+  %43 = load double* %d62, align 8
+  %cmp63 = fcmp olt double %conv61, %43
+  %conv64 = zext i1 %cmp63 to i32
+  %conv65 = sitofp i32 %conv64 to double
+  store double %conv65, double* %d58, align 8
+  %44 = load double* %d58, align 8
+  %conv66 = fptosi double %44 to i32
+  %conv67 = zext i32 %conv66 to i64
+  %or68 = or i64 %conv67, -4503599627370496
+  %or69 = or i64 %or68, 281474976710656
+  %45 = inttoptr i64 %or69 to i8*
+  %o70 = bitcast %union.UnionType* %ret to i8**
+  store i8* %45, i8** %o70, align 8
+  br label %sw.epilog72
 
-sw.default63:                                     ; preds = %do.body32
-  br label %sw.epilog64
+sw.default71:                                     ; preds = %do.body36
+  br label %sw.epilog72
 
-sw.epilog64:                                      ; preds = %sw.default63, %sw.bb53, %sw.bb42
-  br label %do.end65
+sw.epilog72:                                      ; preds = %sw.default71, %sw.bb57, %sw.bb46
+  br label %do.end73
 
-do.end65:                                         ; preds = %sw.epilog64
-  br label %sw.epilog67
+do.end73:                                         ; preds = %sw.epilog72
+  br label %sw.epilog75
 
-sw.default66:                                     ; preds = %do.body
-  br label %sw.epilog67
+sw.default74:                                     ; preds = %do.body
+  br label %sw.epilog75
 
-sw.epilog67:                                      ; preds = %sw.default66, %do.end65, %do.end
-  br label %do.end68
+sw.epilog75:                                      ; preds = %sw.default74, %do.end73, %do.end
+  br label %do.end76
 
-do.end68:                                         ; preds = %sw.epilog67
+do.end76:                                         ; preds = %sw.epilog75
   ret %union.UnionType* %ret
 }
 
-define i32 @Object_isTrue(i64 %a.coerce) nounwind uwtable ssp {
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_addInt(%union.UnionType* %a, i32 %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb10
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %9 = load i32* %b.addr, align 4
+  %conv5 = sext i32 %9 to i64
+  %add = add nsw i64 %8, %conv5
+  %conv6 = trunc i64 %add to i32
+  store i32 %conv6, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv7 = zext i32 %10 to i64
+  %or = or i64 %conv7, -4503599627370496
+  %or8 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or8 to i8*
+  %o9 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o9, align 8
+  br label %sw.epilog
+
+sw.bb10:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv11 = sitofp i32 %14 to double
+  %add12 = fadd double %13, %conv11
+  %d13 = bitcast %union.UnionType* %ret to double*
+  store double %add12, double* %d13, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb10, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_subInt(%union.UnionType* %a, i32 %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb10
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %9 = load i32* %b.addr, align 4
+  %conv5 = sext i32 %9 to i64
+  %sub = sub nsw i64 %8, %conv5
+  %conv6 = trunc i64 %sub to i32
+  store i32 %conv6, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv7 = zext i32 %10 to i64
+  %or = or i64 %conv7, -4503599627370496
+  %or8 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or8 to i8*
+  %o9 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o9, align 8
+  br label %sw.epilog
+
+sw.bb10:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv11 = sitofp i32 %14 to double
+  %sub12 = fsub double %13, %conv11
+  %d13 = bitcast %union.UnionType* %ret to double*
+  store double %sub12, double* %d13, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb10, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_mulInt(%union.UnionType* %a, i32 %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %9 = load i32* %b.addr, align 4
+  %conv5 = sext i32 %9 to i64
+  %mul6 = mul nsw i64 %8, %conv5
+  %conv7 = trunc i64 %mul6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv12 = sitofp i32 %14 to double
+  %mul13 = fmul double %13, %conv12
+  %d14 = bitcast %union.UnionType* %ret to double*
+  store double %mul13, double* %d14, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_divInt(%union.UnionType* %a, i32 %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb10
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %9 = load i32* %b.addr, align 4
+  %conv5 = sext i32 %9 to i64
+  %div = sdiv i64 %8, %conv5
+  %conv6 = trunc i64 %div to i32
+  store i32 %conv6, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv7 = zext i32 %10 to i64
+  %or = or i64 %conv7, -4503599627370496
+  %or8 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or8 to i8*
+  %o9 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o9, align 8
+  br label %sw.epilog
+
+sw.bb10:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv11 = sitofp i32 %14 to double
+  %div12 = fdiv double %13, %conv11
+  %d13 = bitcast %union.UnionType* %ret to double*
+  store double %div12, double* %d13, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb10, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_eqInt(%union.UnionType* %a, i32 %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %9 = load i32* %b.addr, align 4
+  %conv5 = sext i32 %9 to i64
+  %cmp6 = icmp eq i64 %8, %conv5
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv13 = sitofp i32 %14 to double
+  %cmp14 = fcmp oeq double %13, %conv13
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_neInt(%union.UnionType* %a, i32 %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %9 = load i32* %b.addr, align 4
+  %conv5 = sext i32 %9 to i64
+  %cmp6 = icmp ne i64 %8, %conv5
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv13 = sitofp i32 %14 to double
+  %cmp14 = fcmp une double %13, %conv13
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_gtInt(%union.UnionType* %a, i32 %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %9 = load i32* %b.addr, align 4
+  %conv5 = sext i32 %9 to i64
+  %cmp6 = icmp sgt i64 %8, %conv5
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv13 = sitofp i32 %14 to double
+  %cmp14 = fcmp ogt double %13, %conv13
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_ltInt(%union.UnionType* %a, i32 %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca i32, align 4
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store i32 %b, i32* %b.addr, align 4
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %9 = load i32* %b.addr, align 4
+  %conv5 = sext i32 %9 to i64
+  %cmp6 = icmp slt i64 %8, %conv5
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load i32* %b.addr, align 4
+  %conv13 = sitofp i32 %14 to double
+  %cmp14 = fcmp olt double %13, %conv13
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_addInt2(i32 %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca i32, align 4
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  store i32 %a, i32* %a.addr, align 4
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb10
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load i32* %a.addr, align 4
+  %conv4 = sext i32 %6 to i64
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o5 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o5, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %add = add nsw i64 %conv4, %9
+  %conv6 = trunc i64 %add to i32
+  store i32 %conv6, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv7 = zext i32 %10 to i64
+  %or = or i64 %conv7, -4503599627370496
+  %or8 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or8 to i8*
+  %o9 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o9, align 8
+  br label %sw.epilog
+
+sw.bb10:                                          ; preds = %do.body
+  %12 = load i32* %a.addr, align 4
+  %conv11 = sitofp i32 %12 to double
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %add12 = fadd double %conv11, %14
+  %d13 = bitcast %union.UnionType* %ret to double*
+  store double %add12, double* %d13, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb10, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_subInt2(i32 %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca i32, align 4
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  store i32 %a, i32* %a.addr, align 4
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb10
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load i32* %a.addr, align 4
+  %conv4 = sext i32 %6 to i64
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o5 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o5, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %sub = sub nsw i64 %conv4, %9
+  %conv6 = trunc i64 %sub to i32
+  store i32 %conv6, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv7 = zext i32 %10 to i64
+  %or = or i64 %conv7, -4503599627370496
+  %or8 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or8 to i8*
+  %o9 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o9, align 8
+  br label %sw.epilog
+
+sw.bb10:                                          ; preds = %do.body
+  %12 = load i32* %a.addr, align 4
+  %conv11 = sitofp i32 %12 to double
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %sub12 = fsub double %conv11, %14
+  %d13 = bitcast %union.UnionType* %ret to double*
+  store double %sub12, double* %d13, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb10, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_mulInt2(i32 %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca i32, align 4
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  store i32 %a, i32* %a.addr, align 4
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load i32* %a.addr, align 4
+  %conv4 = sext i32 %6 to i64
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o5 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o5, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %mul6 = mul nsw i64 %conv4, %9
+  %conv7 = trunc i64 %mul6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load i32* %a.addr, align 4
+  %conv12 = sitofp i32 %12 to double
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %mul13 = fmul double %conv12, %14
+  %d14 = bitcast %union.UnionType* %ret to double*
+  store double %mul13, double* %d14, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_divInt2(i32 %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca i32, align 4
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  store i32 %a, i32* %a.addr, align 4
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb10
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load i32* %a.addr, align 4
+  %conv4 = sext i32 %6 to i64
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o5 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o5, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %div = sdiv i64 %conv4, %9
+  %conv6 = trunc i64 %div to i32
+  store i32 %conv6, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv7 = zext i32 %10 to i64
+  %or = or i64 %conv7, -4503599627370496
+  %or8 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or8 to i8*
+  %o9 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o9, align 8
+  br label %sw.epilog
+
+sw.bb10:                                          ; preds = %do.body
+  %12 = load i32* %a.addr, align 4
+  %conv11 = sitofp i32 %12 to double
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %div12 = fdiv double %conv11, %14
+  %d13 = bitcast %union.UnionType* %ret to double*
+  store double %div12, double* %d13, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb10, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_eqInt2(i32 %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca i32, align 4
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store i32 %a, i32* %a.addr, align 4
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load i32* %a.addr, align 4
+  %conv4 = sext i32 %6 to i64
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o5 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o5, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %cmp6 = icmp eq i64 %conv4, %9
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load i32* %a.addr, align 4
+  %conv13 = sitofp i32 %12 to double
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %cmp14 = fcmp oeq double %conv13, %14
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_neInt2(i32 %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca i32, align 4
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store i32 %a, i32* %a.addr, align 4
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load i32* %a.addr, align 4
+  %conv4 = sext i32 %6 to i64
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o5 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o5, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %cmp6 = icmp ne i64 %conv4, %9
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load i32* %a.addr, align 4
+  %conv13 = sitofp i32 %12 to double
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %cmp14 = fcmp une double %conv13, %14
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_gtInt2(i32 %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca i32, align 4
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store i32 %a, i32* %a.addr, align 4
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load i32* %a.addr, align 4
+  %conv4 = sext i32 %6 to i64
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o5 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o5, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %cmp6 = icmp sgt i64 %conv4, %9
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load i32* %a.addr, align 4
+  %conv13 = sitofp i32 %12 to double
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %cmp14 = fcmp ogt double %conv13, %14
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_ltInt2(i32 %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca i32, align 4
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store i32 %a, i32* %a.addr, align 4
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load i32* %a.addr, align 4
+  %conv4 = sext i32 %6 to i64
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o5 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o5, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %cmp6 = icmp slt i64 %conv4, %9
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load i32* %a.addr, align 4
+  %conv13 = sitofp i32 %12 to double
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %cmp14 = fcmp olt double %conv13, %14
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_addDouble(%union.UnionType* %a, double %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %union.UnionType, align 8
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb7
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %conv5 = trunc i64 %8 to i32
+  %conv6 = sitofp i32 %conv5 to double
+  %9 = load double* %b.addr, align 8
+  %add = fadd double %conv6, %9
+  %d = bitcast %union.UnionType* %ret to double*
+  store double %add, double* %d, align 8
+  br label %sw.epilog
+
+sw.bb7:                                           ; preds = %do.body
+  %10 = load %union.UnionType** %a.addr, align 8
+  %d8 = bitcast %union.UnionType* %10 to double*
+  %11 = load double* %d8, align 8
+  %12 = load double* %b.addr, align 8
+  %add9 = fadd double %11, %12
+  %d10 = bitcast %union.UnionType* %ret to double*
+  store double %add9, double* %d10, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb7, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_subDouble(%union.UnionType* %a, double %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %union.UnionType, align 8
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb7
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %conv5 = trunc i64 %8 to i32
+  %conv6 = sitofp i32 %conv5 to double
+  %9 = load double* %b.addr, align 8
+  %sub = fsub double %conv6, %9
+  %d = bitcast %union.UnionType* %ret to double*
+  store double %sub, double* %d, align 8
+  br label %sw.epilog
+
+sw.bb7:                                           ; preds = %do.body
+  %10 = load %union.UnionType** %a.addr, align 8
+  %d8 = bitcast %union.UnionType* %10 to double*
+  %11 = load double* %d8, align 8
+  %12 = load double* %b.addr, align 8
+  %sub9 = fsub double %11, %12
+  %d10 = bitcast %union.UnionType* %ret to double*
+  store double %sub9, double* %d10, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb7, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_mulDouble(%union.UnionType* %a, double %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %union.UnionType, align 8
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb8
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %conv5 = trunc i64 %8 to i32
+  %conv6 = sitofp i32 %conv5 to double
+  %9 = load double* %b.addr, align 8
+  %mul7 = fmul double %conv6, %9
+  %d = bitcast %union.UnionType* %ret to double*
+  store double %mul7, double* %d, align 8
+  br label %sw.epilog
+
+sw.bb8:                                           ; preds = %do.body
+  %10 = load %union.UnionType** %a.addr, align 8
+  %d9 = bitcast %union.UnionType* %10 to double*
+  %11 = load double* %d9, align 8
+  %12 = load double* %b.addr, align 8
+  %mul10 = fmul double %11, %12
+  %d11 = bitcast %union.UnionType* %ret to double*
+  store double %mul10, double* %d11, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb8, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_divDouble(%union.UnionType* %a, double %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %union.UnionType, align 8
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb7
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %conv5 = trunc i64 %8 to i32
+  %conv6 = sitofp i32 %conv5 to double
+  %9 = load double* %b.addr, align 8
+  %div = fdiv double %conv6, %9
+  %d = bitcast %union.UnionType* %ret to double*
+  store double %div, double* %d, align 8
+  br label %sw.epilog
+
+sw.bb7:                                           ; preds = %do.body
+  %10 = load %union.UnionType** %a.addr, align 8
+  %d8 = bitcast %union.UnionType* %10 to double*
+  %11 = load double* %d8, align 8
+  %12 = load double* %b.addr, align 8
+  %div9 = fdiv double %11, %12
+  %d10 = bitcast %union.UnionType* %ret to double*
+  store double %div9, double* %d10, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb7, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_eqDouble(%union.UnionType* %a, double %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i13 = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb12
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %conv5 = trunc i64 %8 to i32
+  %conv6 = sitofp i32 %conv5 to double
+  %9 = load double* %b.addr, align 8
+  %cmp7 = fcmp oeq double %conv6, %9
+  %conv8 = zext i1 %cmp7 to i32
+  store i32 %conv8, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv9 = zext i32 %10 to i64
+  %or = or i64 %conv9, -4503599627370496
+  %or10 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or10 to i8*
+  %o11 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o11, align 8
+  br label %sw.epilog
+
+sw.bb12:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load double* %b.addr, align 8
+  %cmp14 = fcmp oeq double %13, %14
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i13, align 4
+  %15 = load i32* %i13, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb12, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_neDouble(%union.UnionType* %a, double %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i13 = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb12
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %conv5 = trunc i64 %8 to i32
+  %conv6 = sitofp i32 %conv5 to double
+  %9 = load double* %b.addr, align 8
+  %cmp7 = fcmp une double %conv6, %9
+  %conv8 = zext i1 %cmp7 to i32
+  store i32 %conv8, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv9 = zext i32 %10 to i64
+  %or = or i64 %conv9, -4503599627370496
+  %or10 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or10 to i8*
+  %o11 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o11, align 8
+  br label %sw.epilog
+
+sw.bb12:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load double* %b.addr, align 8
+  %cmp14 = fcmp une double %13, %14
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i13, align 4
+  %15 = load i32* %i13, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb12, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_gtDouble(%union.UnionType* %a, double %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i13 = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb12
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %conv5 = trunc i64 %8 to i32
+  %conv6 = sitofp i32 %conv5 to double
+  %9 = load double* %b.addr, align 8
+  %cmp7 = fcmp ogt double %conv6, %9
+  %conv8 = zext i1 %cmp7 to i32
+  store i32 %conv8, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv9 = zext i32 %10 to i64
+  %or = or i64 %conv9, -4503599627370496
+  %or10 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or10 to i8*
+  %o11 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o11, align 8
+  br label %sw.epilog
+
+sw.bb12:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load double* %b.addr, align 8
+  %cmp14 = fcmp ogt double %13, %14
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i13, align 4
+  %15 = load i32* %i13, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb12, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_ltDouble(%union.UnionType* %a, double %b) #0 {
+entry:
+  %a.addr = alloca %union.UnionType*, align 8
+  %b.addr = alloca double, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i13 = alloca i32, align 4
+  store %union.UnionType* %a, %union.UnionType** %a.addr, align 8
+  store double %b, double* %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %a.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %a.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb12
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load %union.UnionType** %a.addr, align 8
+  %o4 = bitcast %union.UnionType* %6 to i8**
+  %7 = load i8** %o4, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %conv5 = trunc i64 %8 to i32
+  %conv6 = sitofp i32 %conv5 to double
+  %9 = load double* %b.addr, align 8
+  %cmp7 = fcmp olt double %conv6, %9
+  %conv8 = zext i1 %cmp7 to i32
+  store i32 %conv8, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv9 = zext i32 %10 to i64
+  %or = or i64 %conv9, -4503599627370496
+  %or10 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or10 to i8*
+  %o11 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o11, align 8
+  br label %sw.epilog
+
+sw.bb12:                                          ; preds = %do.body
+  %12 = load %union.UnionType** %a.addr, align 8
+  %d = bitcast %union.UnionType* %12 to double*
+  %13 = load double* %d, align 8
+  %14 = load double* %b.addr, align 8
+  %cmp14 = fcmp olt double %13, %14
+  %conv15 = zext i1 %cmp14 to i32
+  store i32 %conv15, i32* %i13, align 4
+  %15 = load i32* %i13, align 4
+  %conv16 = zext i32 %15 to i64
+  %or17 = or i64 %conv16, -4503599627370496
+  %or18 = or i64 %or17, 281474976710656
+  %16 = inttoptr i64 %or18 to i8*
+  %o19 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o19, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb12, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_addDouble2(double %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca double, align 8
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  store double %a, double* %a.addr, align 8
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb6
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load double* %a.addr, align 8
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o4 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o4, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %conv5 = sitofp i64 %9 to double
+  %add = fadd double %6, %conv5
+  %d = bitcast %union.UnionType* %ret to double*
+  store double %add, double* %d, align 8
+  br label %sw.epilog
+
+sw.bb6:                                           ; preds = %do.body
+  %10 = load double* %a.addr, align 8
+  %11 = load %union.UnionType** %b.addr, align 8
+  %d7 = bitcast %union.UnionType* %11 to double*
+  %12 = load double* %d7, align 8
+  %add8 = fadd double %10, %12
+  %d9 = bitcast %union.UnionType* %ret to double*
+  store double %add8, double* %d9, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb6, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_subDouble2(double %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca double, align 8
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  store double %a, double* %a.addr, align 8
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb6
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load double* %a.addr, align 8
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o4 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o4, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %conv5 = sitofp i64 %9 to double
+  %add = fadd double %6, %conv5
+  %d = bitcast %union.UnionType* %ret to double*
+  store double %add, double* %d, align 8
+  br label %sw.epilog
+
+sw.bb6:                                           ; preds = %do.body
+  %10 = load double* %a.addr, align 8
+  %11 = load %union.UnionType** %b.addr, align 8
+  %d7 = bitcast %union.UnionType* %11 to double*
+  %12 = load double* %d7, align 8
+  %add8 = fadd double %10, %12
+  %d9 = bitcast %union.UnionType* %ret to double*
+  store double %add8, double* %d9, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb6, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_mulDouble2(double %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca double, align 8
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  store double %a, double* %a.addr, align 8
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb7
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load double* %a.addr, align 8
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o4 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o4, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %conv5 = sitofp i64 %9 to double
+  %mul6 = fmul double %6, %conv5
+  %d = bitcast %union.UnionType* %ret to double*
+  store double %mul6, double* %d, align 8
+  br label %sw.epilog
+
+sw.bb7:                                           ; preds = %do.body
+  %10 = load double* %a.addr, align 8
+  %11 = load %union.UnionType** %b.addr, align 8
+  %d8 = bitcast %union.UnionType* %11 to double*
+  %12 = load double* %d8, align 8
+  %mul9 = fmul double %10, %12
+  %d10 = bitcast %union.UnionType* %ret to double*
+  store double %mul9, double* %d10, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb7, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_divDouble2(double %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca double, align 8
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  store double %a, double* %a.addr, align 8
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb6
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load double* %a.addr, align 8
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o4 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o4, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %conv5 = sitofp i64 %9 to double
+  %div = fdiv double %6, %conv5
+  %d = bitcast %union.UnionType* %ret to double*
+  store double %div, double* %d, align 8
+  br label %sw.epilog
+
+sw.bb6:                                           ; preds = %do.body
+  %10 = load double* %a.addr, align 8
+  %11 = load %union.UnionType** %b.addr, align 8
+  %d7 = bitcast %union.UnionType* %11 to double*
+  %12 = load double* %d7, align 8
+  %div8 = fdiv double %10, %12
+  %d9 = bitcast %union.UnionType* %ret to double*
+  store double %div8, double* %d9, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb6, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_eqDouble2(double %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca double, align 8
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store double %a, double* %a.addr, align 8
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load double* %a.addr, align 8
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o4 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o4, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %conv5 = sitofp i64 %9 to double
+  %cmp6 = fcmp oeq double %6, %conv5
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load double* %a.addr, align 8
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %cmp13 = fcmp oeq double %12, %14
+  %conv14 = zext i1 %cmp13 to i32
+  store i32 %conv14, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv15 = zext i32 %15 to i64
+  %or16 = or i64 %conv15, -4503599627370496
+  %or17 = or i64 %or16, 281474976710656
+  %16 = inttoptr i64 %or17 to i8*
+  %o18 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o18, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_neDouble2(double %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca double, align 8
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store double %a, double* %a.addr, align 8
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load double* %a.addr, align 8
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o4 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o4, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %conv5 = sitofp i64 %9 to double
+  %cmp6 = fcmp une double %6, %conv5
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load double* %a.addr, align 8
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %cmp13 = fcmp une double %12, %14
+  %conv14 = zext i1 %cmp13 to i32
+  store i32 %conv14, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv15 = zext i32 %15 to i64
+  %or16 = or i64 %conv15, -4503599627370496
+  %or17 = or i64 %or16, 281474976710656
+  %16 = inttoptr i64 %or17 to i8*
+  %o18 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o18, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_gtDouble2(double %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca double, align 8
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store double %a, double* %a.addr, align 8
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load double* %a.addr, align 8
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o4 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o4, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %conv5 = sitofp i64 %9 to double
+  %cmp6 = fcmp ogt double %6, %conv5
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load double* %a.addr, align 8
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %cmp13 = fcmp ogt double %12, %14
+  %conv14 = zext i1 %cmp13 to i32
+  store i32 %conv14, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv15 = zext i32 %15 to i64
+  %or16 = or i64 %conv15, -4503599627370496
+  %or17 = or i64 %or16, 281474976710656
+  %16 = inttoptr i64 %or17 to i8*
+  %o18 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o18, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define %union.UnionType* @Object_ltDouble2(double %a, %union.UnionType* %b) #0 {
+entry:
+  %a.addr = alloca double, align 8
+  %b.addr = alloca %union.UnionType*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %i = alloca i32, align 4
+  %i12 = alloca i32, align 4
+  store double %a, double* %a.addr, align 8
+  store %union.UnionType* %b, %union.UnionType** %b.addr, align 8
+  br label %do.body
+
+do.body:                                          ; preds = %entry
+  %0 = load %union.UnionType** %b.addr, align 8
+  %o = bitcast %union.UnionType* %0 to i8**
+  %1 = load i8** %o, align 8
+  %2 = ptrtoint i8* %1 to i64
+  %and = and i64 %2, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv1 = sext i32 %conv to i64
+  %3 = load %union.UnionType** %b.addr, align 8
+  %o2 = bitcast %union.UnionType* %3 to i8**
+  %4 = load i8** %o2, align 8
+  %5 = ptrtoint i8* %4 to i64
+  %and3 = and i64 %5, 4222124650659840
+  %shr = lshr i64 %and3, 48
+  %mul = mul i64 %conv1, %shr
+  switch i64 %mul, label %sw.default [
+    i64 1, label %sw.bb
+    i64 0, label %sw.bb11
+  ]
+
+sw.bb:                                            ; preds = %do.body
+  %6 = load double* %a.addr, align 8
+  %7 = load %union.UnionType** %b.addr, align 8
+  %o4 = bitcast %union.UnionType* %7 to i8**
+  %8 = load i8** %o4, align 8
+  %9 = ptrtoint i8* %8 to i64
+  %conv5 = sitofp i64 %9 to double
+  %cmp6 = fcmp olt double %6, %conv5
+  %conv7 = zext i1 %cmp6 to i32
+  store i32 %conv7, i32* %i, align 4
+  %10 = load i32* %i, align 4
+  %conv8 = zext i32 %10 to i64
+  %or = or i64 %conv8, -4503599627370496
+  %or9 = or i64 %or, 281474976710656
+  %11 = inttoptr i64 %or9 to i8*
+  %o10 = bitcast %union.UnionType* %ret to i8**
+  store i8* %11, i8** %o10, align 8
+  br label %sw.epilog
+
+sw.bb11:                                          ; preds = %do.body
+  %12 = load double* %a.addr, align 8
+  %13 = load %union.UnionType** %b.addr, align 8
+  %d = bitcast %union.UnionType* %13 to double*
+  %14 = load double* %d, align 8
+  %cmp13 = fcmp olt double %12, %14
+  %conv14 = zext i1 %cmp13 to i32
+  store i32 %conv14, i32* %i12, align 4
+  %15 = load i32* %i12, align 4
+  %conv15 = zext i32 %15 to i64
+  %or16 = or i64 %conv15, -4503599627370496
+  %or17 = or i64 %or16, 281474976710656
+  %16 = inttoptr i64 %or17 to i8*
+  %o18 = bitcast %union.UnionType* %ret to i8**
+  store i8* %16, i8** %o18, align 8
+  br label %sw.epilog
+
+sw.default:                                       ; preds = %do.body
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %sw.default, %sw.bb11, %sw.bb
+  br label %do.end
+
+do.end:                                           ; preds = %sw.epilog
+  ret %union.UnionType* %ret
+}
+
+; Function Attrs: nounwind ssp uwtable
+define i32 @Object_isTrue(i64 %a.coerce) #0 {
 entry:
   %a = alloca %union.UnionType, align 8
   %ret = alloca i32, align 4
@@ -1759,3 +4521,12 @@ sw.epilog:                                        ; preds = %sw.default, %sw.bb6
   %9 = load i32* %ret, align 4
   ret i32 %9
 }
+
+attributes #0 = { nounwind ssp uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #2 = { nounwind }
+attributes #3 = { noreturn "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #4 = { nounwind readnone }
+attributes #5 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #6 = { inlinehint nounwind ssp uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #7 = { noreturn }

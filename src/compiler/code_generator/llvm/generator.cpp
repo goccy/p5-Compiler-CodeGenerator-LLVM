@@ -363,7 +363,7 @@ void LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperat
 			llvm::Value *one = ConstantInt::get(int_type, 1);
 			llvm::Value *object = generateCastCode(builder, Enum::Runtime::Object, v->value);
 			llvm::Value *new_value = createNaNBoxingInt(builder, builder->CreateAdd(value, one, "inc"));
-			builder->CreateStore(new_value, builder->CreateStructGEP(object, 1));
+			builder->CreateStore(builder->CreateLoad(new_value), builder->CreateStructGEP(object, 1));
 			cur_type = Enum::Runtime::Int;
 		} else {
 			llvm::Value *casted_value = builder->CreateSIToFP(value, double_type);
@@ -371,7 +371,7 @@ void LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperat
 			llvm::Value *one = ConstantFP::get(double_type, 1.0);
 			llvm::Value *object = generateCastCode(builder, Enum::Runtime::Object, v->value);
 			llvm::Value *new_value = createNaNBoxingDouble(builder, builder->CreateFAdd(casted_value, one, "inc"));
-			builder->CreateStore(new_value, builder->CreateStructGEP(object, 1));
+			builder->CreateStore(builder->CreateLoad(new_value), builder->CreateStructGEP(object, 1));
 			cur_type = Enum::Runtime::Double;
 		}
 		break;
@@ -381,7 +381,7 @@ void LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperat
 			llvm::Value *one = ConstantInt::get(int_type, 1);
 			llvm::Value *object = generateCastCode(builder, Enum::Runtime::Object, v->value);
 			llvm::Value *new_value = createNaNBoxingInt(builder, builder->CreateSub(value, one, "dec"));
-			builder->CreateStore(new_value, builder->CreateStructGEP(object, 1));
+			builder->CreateStore(builder->CreateLoad(new_value), builder->CreateStructGEP(object, 1));
 			cur_type = Enum::Runtime::Int;
 		} else {
 			llvm::Value *casted_value = builder->CreateSIToFP(value, double_type);
@@ -389,7 +389,7 @@ void LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperat
 			llvm::Value *one = ConstantFP::get(double_type, 1.0);
 			llvm::Value *object = generateCastCode(builder, Enum::Runtime::Object, v->value);
 			llvm::Value *new_value = createNaNBoxingDouble(builder, builder->CreateFSub(casted_value, one, "dec"));
-			builder->CreateStore(new_value, builder->CreateStructGEP(object, 1));
+			builder->CreateStore(builder->CreateLoad(new_value), builder->CreateStructGEP(object, 1));
 			cur_type = Enum::Runtime::Double;
 		}
 		break;
@@ -450,7 +450,7 @@ llvm::Value *LLVM::generateCastCode(IRBuilder<> *builder, Enum::Runtime::Type ty
 		ret = builder->CreateLoad(builder->CreateBitCast(value, double_ptr_type));
 		break;
 	case Enum::Runtime::Array: {
-		llvm::Value *ivalue = builder->CreatePtrToInt(value, int_type);
+		llvm::Value *ivalue = builder->CreateLoad(builder->CreateBitCast(value, int_ptr_type));
 		llvm::Value *nan = ConstantInt::get(int_type, NaN);
 		llvm::Value *array_tag = ConstantInt::get(int_type, ARRAY_TAG);
 		llvm::Value *result = builder->CreateXor(ivalue, builder->CreateOr(nan, array_tag));
@@ -681,8 +681,8 @@ llvm::Value *LLVM::generateOperatorCodeWithObject(IRBuilder<> *builder,
 {
 	llvm::Value *ret = NULL;
 	string fname = "Object_" + string(func_name);
+	vector<llvm::Type *> arg_types;
 	if (left_type == Enum::Runtime::Value && right_type == Enum::Runtime::Value) {
-		vector<llvm::Type *> arg_types;
 		arg_types.push_back(union_ptr_type);
 		arg_types.push_back(union_ptr_type);
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
@@ -690,35 +690,31 @@ llvm::Value *LLVM::generateOperatorCodeWithObject(IRBuilder<> *builder,
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Object", ftype);
 		ret = builder->CreateCall2(f, left_value, right_value, "object");
 	} else if (left_type == Enum::Runtime::Value && right_type == Enum::Runtime::Int) {
-		vector<llvm::Type *> arg_types;
-		arg_types.push_back(value_type);
+		arg_types.push_back(union_ptr_type);
 		arg_types.push_back(int_type);
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-		FunctionType *ftype = llvm::FunctionType::get(value_type, arg_types_ref, false);
+		FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Int", ftype);
 		ret = builder->CreateCall2(f, left_value, right_value, "object");
 	} else if (left_type == Enum::Runtime::Int && right_type == Enum::Runtime::Value) {
-		vector<llvm::Type *> arg_types;
 		arg_types.push_back(int_type);
-		arg_types.push_back(value_type);
+		arg_types.push_back(union_ptr_type);
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-		FunctionType *ftype = llvm::FunctionType::get(value_type, arg_types_ref, false);
+		FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Int2", ftype);
 		ret = builder->CreateCall2(f, left_value, right_value, "object");
 	} else if (left_type == Enum::Runtime::Double && right_type == Enum::Runtime::Value) {
-		vector<llvm::Type *> arg_types;
 		arg_types.push_back(double_type);
-		arg_types.push_back(value_type);
+		arg_types.push_back(union_ptr_type);
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-		FunctionType *ftype = llvm::FunctionType::get(value_type, arg_types_ref, false);
+		FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Double2", ftype);
 		ret = builder->CreateCall2(f, left_value, right_value, "object");
 	} else if (left_type == Enum::Runtime::Value && right_type == Enum::Runtime::Double) {
-		vector<llvm::Type *> arg_types;
-		arg_types.push_back(value_type);
+		arg_types.push_back(union_ptr_type);
 		arg_types.push_back(double_type);
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-		FunctionType *ftype = llvm::FunctionType::get(value_type, arg_types_ref, false);
+		FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Double", ftype);
 		ret = builder->CreateCall2(f, left_value, right_value, "object");
 	}
@@ -740,7 +736,7 @@ llvm::Value *LLVM::generateListCode(IRBuilder<> *builder, ListNode *node)
 		list.push_back(v);
 	}
 	size_t size = list.size();
-	llvm::Value *elems = builder->CreateAlloca(value_type, ConstantInt::get(int_type, size), "elems");
+	llvm::Value *elems = builder->CreateAlloca(union_type, ConstantInt::get(int_type, size), "elems");
 	for (size_t i = 0; i < size; i++) {
 		CodeGenerator::Value *v = list.at(i);
 		llvm::Value *value = v->value;
@@ -748,9 +744,10 @@ llvm::Value *LLVM::generateListCode(IRBuilder<> *builder, ListNode *node)
 		llvm::Value *idx = ConstantInt::get(int_type, i);
 		if (type == Enum::Runtime::Object) {
 			Token *tk = v->tk;
-			builder->CreateStore(vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent)->value, builder->CreateGEP(elems, idx));
+			llvm::Value *value = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent)->value;
+			builder->CreateStore(builder->CreateLoad(value), builder->CreateGEP(elems, idx));
 		} else {
-			builder->CreateStore(value, builder->CreateGEP(elems, idx));
+			builder->CreateStore(builder->CreateLoad(value), builder->CreateGEP(elems, idx));
 		}
 	}
 	cur_type = Enum::Runtime::Array;
@@ -973,7 +970,7 @@ Constant *LLVM::getBuiltinFunction(IRBuilder<> *builder, string name)
 		//ftype->getParamType(0)->dump();
 		ret = module->getOrInsertFunction(name, ftype);
 	} else if (name == "shift" || name == "push") {
-		FunctionType *ftype = llvm::FunctionType::get(value_type, array_ptr_type, false);
+		FunctionType *ftype = llvm::FunctionType::get(union_ptr_type, array_ptr_type, false);
 		ret = module->getOrInsertFunction(name, ftype);
 		cur_type = Enum::Runtime::Value;
 	} else if (name == "puts") {
