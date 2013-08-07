@@ -9,6 +9,8 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/PassManager.h"
+#include "llvm/Transforms/Scalar.h"
 
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/SourceMgr.h"

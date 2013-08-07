@@ -96,12 +96,13 @@ sub g {
 
 say g(3);
 
+=hoge
 my ($a, $b, $c) = (1, 2, 3);
 say $a;
 say $b;
 say $c;
 
-=hoge
+
 sub function_argument_sample {
     my ($a, $b, $c) = @_;
     say $a;

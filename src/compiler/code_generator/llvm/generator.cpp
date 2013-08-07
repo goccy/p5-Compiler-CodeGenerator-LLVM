@@ -97,6 +97,13 @@ const char *LLVM::gen(AST *ast)
 	traverse(&builder, ast);
 
 	builder.CreateRetVoid();
+	PassManager pm;
+	pm.add(createPromoteMemoryToRegisterPass());
+	//pm.add(createTailCallEliminationPass());
+	//pm.add(createMemCpyOptPass());
+	//pm.add(createCodeGenPreparePass());
+	pm.run(*module);
+	
 	//write();
 	//module->dump();
 	AssemblyAnnotationWriter writer;
@@ -283,7 +290,7 @@ void LLVM::generateFunctionCode(IRBuilder<> *builder, FunctionNode *node)
 	Function *main_func = func;
 	cur_func = func;
 	cur_func_name = node->tk->data.c_str();
-	func->setCallingConv(CallingConv::C);
+	func->setCallingConv(CallingConv::Fast);
 	BasicBlock *entry = BasicBlock::Create(module->getContext(), "entrypoint", func);
 	builder->SetInsertPoint(entry);
 
@@ -692,7 +699,7 @@ llvm::Value *LLVM::generateOperatorCodeWithObject(IRBuilder<> *builder,
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
 		FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Object", ftype);
-		llvm::Value *result = builder->CreateCall2(f, left_value, right_value, "object");
+		CallInst *result = builder->CreateCall2(f, left_value, right_value, "object");
 		llvm::Value *storage = builder->CreateAlloca(union_type, 0, "union_storage");
 		llvm::Value *dvalue = builder->CreateStructGEP(storage, 0, "cast_to_double_ptr");
 		llvm::Value *casted_value = builder->CreateBitCast(dvalue, int_ptr_type, "cast_to_int_ptr");
@@ -704,7 +711,7 @@ llvm::Value *LLVM::generateOperatorCodeWithObject(IRBuilder<> *builder,
 		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
 		FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
 		llvm::Constant *f = module->getOrInsertFunction(fname + "Int", ftype);
-		llvm::Value *result = builder->CreateCall2(f, left_value, right_value, "object");
+		CallInst *result = builder->CreateCall2(f, left_value, right_value, "object");
 		llvm::Value *storage = builder->CreateAlloca(union_type, 0, "union_storage");
 		llvm::Value *dvalue = builder->CreateStructGEP(storage, 0, "cast_to_double_ptr");
 		llvm::Value *casted_value = builder->CreateBitCast(dvalue, int_ptr_type, "cast_to_int_ptr");
@@ -1003,7 +1010,9 @@ llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNo
 		ret = builder->CreateCall(func, vargs);
 	} else {
 		llvm::Value *func = fmgr.getFunction("main", node->tk->data.c_str());
-		llvm::Value *result = builder->CreateCall(func, vargs, "function_rvalue");
+		CallInst *result = builder->CreateCall(func, vargs, "function_rvalue");
+		result->setCallingConv(CallingConv::Fast);
+		result->setTailCall(true);
 		llvm::Value *storage = builder->CreateAlloca(union_type, 0, "union_storage");
 		llvm::Value *dvalue = builder->CreateStructGEP(storage, 0, "cast_to_double_ptr");
 		llvm::Value *casted_value = builder->CreateBitCast(dvalue, int_ptr_type, "cast_to_int_ptr");
