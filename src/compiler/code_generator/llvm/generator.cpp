@@ -751,6 +751,28 @@ llvm::Value *LLVM::generateOperatorCodeWithObject(IRBuilder<> *builder,
 	return ret;
 }
 
+void LLVM::generateListDefinitionCode(IRBuilder<> *builder, ListNode *node)
+{
+	Node *data = node->data;
+	vector<CodeGenerator::Value *> list;
+	if (data->tk->info.type == TokenType::Comma) {
+		generateCommaCode(builder, dynamic_cast<BranchNode *>(data), &list);
+	} else {
+		CodeGenerator::Value *v = new CodeGenerator::Value();
+		v->value = generateValueCode(builder, data);
+		v->type = cur_type;
+		v->tk = data->tk;
+		list.push_back(v);
+	}
+	size_t size = list.size();
+	for (size_t i = 0; i < size; i++) {
+		CodeGenerator::Value *v = list.at(i);
+		llvm::Value *value = v->value;
+		Enum::Runtime::Type type = v->type;
+		Token *tk = v->tk;
+	}
+}
+
 llvm::Value *LLVM::generateListCode(IRBuilder<> *builder, ListNode *node)
 {
 	Node *data = node->data;

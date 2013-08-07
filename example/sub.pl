@@ -16,7 +16,7 @@ open my $fh, '>', 'sub.ll';
 print $fh $llvm_ir;
 close $fh;
 print "generated\n";
-my $generator = Compiler::CodeGenerator::LLVM->new();
+$generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
@@ -96,11 +96,18 @@ sub g {
 
 say g(3);
 
-sub fib {
-    if ($_[0] < 2) {
-        return 1;
-    }
-    return fib($_[0] - 1) + fib($_[0] - 2);
+my ($a, $b, $c) = (1, 2, 3);
+say $a;
+say $b;
+say $c;
+
+=hoge
+sub function_argument_sample {
+    my ($a, $b, $c) = @_;
+    say $a;
+    say $b;
+    say $c;
 }
 
-say(fib(35));
+function_argument_sample(1, 2, 3);
+=cut

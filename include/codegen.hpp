@@ -185,6 +185,7 @@ public:
 	llvm::Value *generateOperatorCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateOperatorCodeWithObject(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, const char *fname);
 	llvm::Value *generateListCode(llvm::IRBuilder<> *builder, ListNode *node);
+	void generateListDefinitionCode(llvm::IRBuilder<> *builder, ListNode *node);
 	llvm::Value *generateValueCode(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *generateFunctionCallCode(llvm::IRBuilder<> *builder, FunctionCallNode *node);
 	llvm::Value *generateArrayAccessCode(llvm::IRBuilder<> *builder, ArrayNode *node);

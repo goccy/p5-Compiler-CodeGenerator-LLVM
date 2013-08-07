@@ -12,34 +12,20 @@ my $ast = $parser->parse($tokens);
 Compiler::Parser::AST::Renderer->new->render($ast);
 my $generator = Compiler::CodeGenerator::LLVM->new();
 my $llvm_ir = $generator->generate($ast);
-open my $fh, '>', 'loop.ll';
+open my $fh, '>', 'fib.ll';
 print $fh $llvm_ir;
 close $fh;
+print "generated\n";
 $generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
-for (my $i = 0; $i < 10; $i++) {
-    say $i;
-}
 
-my $j = 0;
-while ($j < 10) {
-    say $j;
-    $j++;
-}
-
-my @a = (1, 2, 3, 4);
-say @a;
-say "=============";
-
-foreach my $itr (@a) {
-    say $itr;
-}
-
-for (my $i = 1; $i < 10; $i++) {
-    for (my $j = 1; $j < 10; $j++) {
-        print $i * $j, "  ";
+sub fib {
+    if ($_[0] < 2) {
+        return 1;
     }
-    say "";
+    return fib($_[0] - 1) + fib($_[0] - 2);
 }
+
+say(fib(35));
