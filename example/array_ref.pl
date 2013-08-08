@@ -12,23 +12,16 @@ my $ast = $parser->parse($tokens);
 Compiler::Parser::AST::Renderer->new->render($ast);
 my $generator = Compiler::CodeGenerator::LLVM->new();
 my $llvm_ir = $generator->generate($ast);
-open my $fh, '>', 'array.ll';
+open my $fh, '>', 'array_ref.ll';
 print $fh $llvm_ir;
 close $fh;
 $generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
-my @a = (1, 2, 3, 4);
-say @a;
-say push @a, 5;
-say @a;
-my $b = shift @a;
-say @a;
-say $b;
-say $a[0];
-$a[0] = 3;
-say @a;
-
-#my @c = map { $_ * 2; } @a;
-#say @c;
+my $a = [1, 2, 3, 4];
+say $a;
+say @$a;
+say $a->[0];
+$a->[0] = 3;
+say @$a;

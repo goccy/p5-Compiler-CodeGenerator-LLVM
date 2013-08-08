@@ -462,6 +462,9 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 			builder->CreateStore(builder->CreateLoad(elem), body);
 		}
 		ret = value;
+	} else if (TYPE_match(node->left, ArrayNode)) {
+		llvm::Value *elem = generateArrayAccessCode(builder, dynamic_cast<ArrayNode *>(node->left));
+		builder->CreateStore(builder->CreateLoad(value), elem);
 	} else {
 		Token *tk = node->left->tk;
 		CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
@@ -861,6 +864,13 @@ llvm::Value *LLVM::generateArrayAccessCode(IRBuilder<> *builder, ArrayNode *node
 		Function::ArgumentListType::iterator it = args.begin();
 		Argument *arg = &*it;
 		ret = getArrayElement(builder, arg, idx);
+	} else {
+		string name = node->tk->data;
+		name[0] = '@';
+		CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), name.c_str(), node->tk->finfo.indent);
+		assert(v && "array is not defined");
+		llvm::Value *array = generateCastCode(builder, Enum::Runtime::Array, v->value);
+		ret = getArrayElement(builder, array, idx);
 	}
 	cur_type = Enum::Runtime::Value;
 	return ret;
