@@ -1,13 +1,15 @@
 #include "runtime_api.h"
+UnionType u;
 
-void print_object(Object *o)
+void print_object(UnionType _o)
 {
-	switch (o->type) {
+	void *o = _o.o;
+	switch (TYPE(o)) {
 	case Int:
-		printf("%ld", to_Int(o));
+		printf("%d", to_Int(o));
 		break;
 	case Double:
-		printf("%lf", to_Double(o));
+		fprintf(stderr, "%f", _o.d);
 		break;
 	case String:
 		printf("%s", to_String(o));
@@ -15,9 +17,11 @@ void print_object(Object *o)
 	case Array:
 		print(to_Array(o));
 		break;
-	case ObjectType:
-		print_object(to_Object(o));
+	case ObjectType: {
+		Object *object = to_Object(o);
+		print_object(object->v);
 		break;
+	}
 	default:
 		break;
 	}
@@ -38,46 +42,51 @@ void say(ArrayObject *array)
 	printf("\n");
 }
 
-Object *shift(ArrayObject *args)
+void debug_print(UnionType o)
 {
-	Object *ret = NULL;
+	fprintf(stderr, "===== debug_print ======\n");
+	print_object(o);
+	fprintf(stderr, "=============\n");
+}
+
+UnionType shift(ArrayObject *args)
+{
+	UnionType ret;
 	size_t size = args->size;
-	if (size > 1) return NULL;
+	if (size > 1) return ret;
 	if (size == 1) {
-		Object *o = args->list[0];
-		TYPE_CHECK(o, Array);
-		ArrayObject *array = to_Array(o);
+		UnionType o = args->list[0];
+		TYPE_CHECK(o.o, Array);
+		ArrayObject *array = to_Array(o.o);
 		ret = array->list[0];
 		array->size--;
-		memmove(array->list, array->list + 1, array->size * sizeof(void *));
+		memmove(array->list, array->list + 1, array->size * sizeof(Value));
 	} else {
 		fprintf(stderr, "fetch from function argument\n");
 	}
 	return ret;
 }
 
-Object *push(ArrayObject *args)
+UnionType push(ArrayObject *args)
 {
 	size_t size = args->size;
-	Object *ret = NULL;
+	UnionType ret;
 	if (size != 2) {
 		fprintf(stderr, "Type Error!: near by push\n");
 	} else {
-		Object *array = args->list[0];
-		Object *value = args->list[1];
-		TYPE_CHECK(array, Array);
-		ArrayObject *base = to_Array(array);
+		UnionType array = args->list[0];
+		UnionType value = args->list[1];
+		TYPE_CHECK(array.o, Array);
+		ArrayObject *base = to_Array(array.o);
 		void *tmp;
-		if (!(tmp = malloc(sizeof(Object) * (base->size + 1)))) {
+		if (!(tmp = malloc(sizeof(Value) * (base->size + 1)))) {
 			fprintf(stderr, "ERROR!!: cannot allocated memory\n");
 		} else {
-			memcpy(tmp, base->list, sizeof(Object) * base->size);
-			base->list = (Object **)tmp;
+			memcpy(tmp, base->list, sizeof(Value) * base->size);
+			base->list = (UnionType *)tmp;
 			base->list[base->size] = value;
 			base->size++;
-			ret = (Object *)malloc(sizeof(Object));
-			ret->type = Int;
-			ret->v.ivalue = base->size;
+			ret.o = INT_init(base->size);
 		}
 	}
 	return ret;
@@ -100,343 +109,301 @@ Object *map(ArrayObject *args)
 }
 */
 
-Object *Object_addObject(Object *_a, Object *_b)
+Object *new_Object(void)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
+	return (Object *)malloc(sizeof(Object));
+}
+
+UnionType Object_addObject(UnionType *a, UnionType *b)
+{
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, +);
 	return ret;
 }
 
-Object *Object_subObject(Object *_a, Object *_b)
+UnionType Object_subObject(UnionType *a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, -);
 	return ret;
 }
 
-Object *Object_mulObject(Object *_a, Object *_b)
+UnionType Object_mulObject(UnionType *a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, *);
 	return ret;
 }
 
-Object *Object_divObject(Object *_a, Object *_b)
+UnionType Object_divObject(UnionType *a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
+	UnionType ret;
 	setResultByObjectObject(ret, a, b, /);
 	return ret;
 }
 
-Object *Object_eqObject(Object *_a, Object *_b)
+UnionType Object_eqObject(UnionType *a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
-	setResultByObjectObject(ret, a, b, ==);
+	UnionType ret;
+	setCmpResultByObjectObject(ret, a, b, ==);
 	return ret;
 }
 
-Object *Object_neObject(Object *_a, Object *_b)
+UnionType Object_neObject(UnionType *a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
-	setResultByObjectObject(ret, a, b, !=);
+	UnionType ret;
+	setCmpResultByObjectObject(ret, a, b, !=);
 	return ret;
 }
 
-Object *Object_gtObject(Object *_a, Object *_b)
+UnionType Object_gtObject(UnionType *a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
-	setResultByObjectObject(ret, a, b, >);
+	UnionType ret;
+	setCmpResultByObjectObject(ret, a, b, >);
 	return ret;
 }
 
-Object *Object_ltObject(Object *_a, Object *_b)
+UnionType Object_ltObject(UnionType *a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	Object *b = to_Object(_b);
-	setResultByObjectObject(ret, a, b, <);
+	UnionType ret;
+	setCmpResultByObjectObject(ret, a, b, <);
 	return ret;
 }
 
-Object *Object_addInt(Object *_a, int b)
+UnionType Object_addInt(UnionType *a, int b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
+	UnionType ret;
 	setResultByObjectInt(ret, a, b, +);
 	return ret;
 }
 
-Object *Object_subInt(Object *_a, int b)
+UnionType Object_subInt(UnionType *a, int b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
+	UnionType ret;
 	setResultByObjectInt(ret, a, b, -);
 	return ret;
 }
 
-Object *Object_mulInt(Object *_a, int b)
+UnionType Object_mulInt(UnionType *a, int b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
+	UnionType ret;
 	setResultByObjectInt(ret, a, b, *);
 	return ret;
 }
 
-Object *Object_divInt(Object *_a, int b)
+UnionType Object_divInt(UnionType *a, int b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
+	UnionType ret;
 	setResultByObjectInt(ret, a, b, /);
 	return ret;
 }
 
-Object *Object_eqInt(Object *_a, int b)
+UnionType Object_eqInt(UnionType *a, int b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	setResultByObjectInt(ret, a, b, ==);
+	UnionType ret;
+	setCmpResultByObjectInt(ret, a, b, ==);
 	return ret;
 }
 
-Object *Object_neInt(Object *_a, int b)
+UnionType Object_neInt(UnionType *a, int b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	setResultByObjectInt(ret, a, b, !=);
+	UnionType ret;
+	setCmpResultByObjectInt(ret, a, b, !=);
 	return ret;
 }
 
-Object *Object_gtInt(Object *_a, int b)
+UnionType Object_gtInt(UnionType *a, int b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	setResultByObjectInt(ret, a, b, >);
+	UnionType ret;
+	setCmpResultByObjectInt(ret, a, b, >);
 	return ret;
 }
 
-Object *Object_ltInt(Object *_a, int b)
+UnionType Object_ltInt(UnionType *a, int b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = (_a->type == ObjectType) ? to_Object(_a) : _a;
-	setResultByObjectInt(ret, a, b, <);
+	UnionType ret;
+	setCmpResultByObjectInt(ret, a, b, <);
 	return ret;
 }
 
-Object *Object_addInt2(int a, Object *_b)
+UnionType Object_addInt2(int a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
+	UnionType ret;
 	setResultByIntObject(ret, a, b, +);
 	return ret;
 }
 
-Object *Object_subInt2(int a, Object *_b)
+UnionType Object_subInt2(int a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
+	UnionType ret;
 	setResultByIntObject(ret, a, b, -);
 	return ret;
 }
 
-Object *Object_mulInt2(int a, Object *_b)
+UnionType Object_mulInt2(int a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
+	UnionType ret;
 	setResultByIntObject(ret, a, b, *);
 	return ret;
 }
 
-Object *Object_divInt2(int a, Object *_b)
+UnionType Object_divInt2(int a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
+	UnionType ret;
 	setResultByIntObject(ret, a, b, /);
 	return ret;
 }
 
-Object *Object_eqInt2(int a, Object *_b)
+UnionType Object_eqInt2(int a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
-	setResultByIntObject(ret, a, b, ==);
+	UnionType ret;
+	setCmpResultByIntObject(ret, a, b, ==);
 	return ret;
 }
 
-Object *Object_neInt2(int a, Object *_b)
+UnionType Object_neInt2(int a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
-	setResultByIntObject(ret, a, b, !=);
+	UnionType ret;
+	setCmpResultByIntObject(ret, a, b, !=);
 	return ret;
 }
 
-Object *Object_gtInt2(int a, Object *_b)
+UnionType Object_gtInt2(int a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
-	setResultByIntObject(ret, a, b, >);
+	UnionType ret;
+	setCmpResultByIntObject(ret, a, b, >);
 	return ret;
 }
 
-Object *Object_ltInt2(int a, Object *_b)
+UnionType Object_ltInt2(int a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
-	setResultByIntObject(ret, a, b, <);
+	UnionType ret;
+	setCmpResultByIntObject(ret, a, b, <);
 	return ret;
 }
 
-Object *Object_addDouble(Object *_a, double b)
+UnionType Object_addDouble(UnionType *a, double b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
+	UnionType ret;
 	setResultByObjectDouble(ret, a, b, +);
 	return ret;
 }
 
-Object *Object_subDouble(Object *_a, double b)
+UnionType Object_subDouble(UnionType *a, double b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
+	UnionType ret;
 	setResultByObjectDouble(ret, a, b, -);
 	return ret;
 }
 
-Object *Object_mulDouble(Object *_a, double b)
+UnionType Object_mulDouble(UnionType *a, double b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
+	UnionType ret;
 	setResultByObjectDouble(ret, a, b, *);
 	return ret;
 }
 
-Object *Object_divDouble(Object *_a, double b)
+UnionType Object_divDouble(UnionType *a, double b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
+	UnionType ret;
 	setResultByObjectDouble(ret, a, b, /);
 	return ret;
 }
 
-Object *Object_eqDouble(Object *_a, double b)
+UnionType Object_eqDouble(UnionType *a, double b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	setResultByObjectDouble(ret, a, b, ==);
+	UnionType ret;
+	setCmpResultByObjectDouble(ret, a, b, ==);
 	return ret;
 }
 
-Object *Object_neDouble(Object *_a, double b)
+UnionType Object_neDouble(UnionType *a, double b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	setResultByObjectDouble(ret, a, b, !=);
+	UnionType ret;
+	setCmpResultByObjectDouble(ret, a, b, !=);
 	return ret;
 }
 
-Object *Object_gtDouble(Object *_a, double b)
+UnionType Object_gtDouble(UnionType *a, double b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	setResultByObjectDouble(ret, a, b, >);
+	UnionType ret;
+	setCmpResultByObjectDouble(ret, a, b, >);
 	return ret;
 }
 
-Object *Object_ltDouble(Object *_a, double b)
+UnionType Object_ltDouble(UnionType *a, double b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *a = to_Object(_a);
-	setResultByObjectDouble(ret, a, b, <);
+	UnionType ret;
+	setCmpResultByObjectDouble(ret, a, b, <);
 	return ret;
 }
 
-Object *Object_addDouble2(double a, Object *_b)
+UnionType Object_addDouble2(double a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
+	UnionType ret;
 	setResultByDoubleObject(ret, a, b, +);
 	return ret;
 }
 
-Object *Object_subDouble2(double a, Object *_b)
+UnionType Object_subDouble2(double a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
+	UnionType ret;
 	setResultByDoubleObject(ret, a, b, +);
 	return ret;
 }
 
-Object *Object_mulDouble2(double a, Object *_b)
+UnionType Object_mulDouble2(double a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
+	UnionType ret;
 	setResultByDoubleObject(ret, a, b, *);
 	return ret;
 }
 
-Object *Object_divDouble2(double a, Object *_b)
+UnionType Object_divDouble2(double a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
+	UnionType ret;
 	setResultByDoubleObject(ret, a, b, /);
 	return ret;
 }
 
-Object *Object_eqDouble2(double a, Object *_b)
+UnionType Object_eqDouble2(double a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
-	setResultByDoubleObject(ret, a, b, ==);
+	UnionType ret;
+	setCmpResultByDoubleObject(ret, a, b, ==);
 	return ret;
 }
 
-Object *Object_neDouble2(double a, Object *_b)
+UnionType Object_neDouble2(double a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
-	setResultByDoubleObject(ret, a, b, !=);
+	UnionType ret;
+	setCmpResultByDoubleObject(ret, a, b, !=);
 	return ret;
 }
 
-Object *Object_gtDouble2(double a, Object *_b)
+UnionType Object_gtDouble2(double a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
-	setResultByDoubleObject(ret, a, b, >);
+	UnionType ret;
+	setCmpResultByDoubleObject(ret, a, b, >);
 	return ret;
 }
 
-Object *Object_ltDouble2(double a, Object *_b)
+UnionType Object_ltDouble2(double a, UnionType *b)
 {
-	Object *ret = (Object *)malloc(sizeof(Object));
-	Object *b = to_Object(_b);
-	setResultByDoubleObject(ret, a, b, <);
+	UnionType ret;
+	setCmpResultByDoubleObject(ret, a, b, <);
 	return ret;
 }
 
-int Object_isTrue(Object *a)
+int Object_isTrue(UnionType a)
 {
 	int ret = 0;
-	switch (a->type) {
+	void *o = a.o;
+	switch (TYPE(o)) {
 	case Int:
-		ret = a->v.ivalue != 0;
+		ret = (to_Int(o) != 0);
 		break;
 	case Double:
-		ret = a->v.dvalue != 0;
+		ret = (a.d != 0);
 		break;
 	default:
 		break;

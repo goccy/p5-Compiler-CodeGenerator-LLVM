@@ -16,7 +16,6 @@ open my $fh, '>', 'condition.ll';
 print $fh $llvm_ir;
 close $fh;
 $generator->debug_run($ast);
-
 __DATA__
 
 my $a = 1 + 1;

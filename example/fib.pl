@@ -12,19 +12,20 @@ my $ast = $parser->parse($tokens);
 Compiler::Parser::AST::Renderer->new->render($ast);
 my $generator = Compiler::CodeGenerator::LLVM->new();
 my $llvm_ir = $generator->generate($ast);
-open my $fh, '>', 'array.ll';
+open my $fh, '>', 'fib.ll';
 print $fh $llvm_ir;
 close $fh;
+print "generated\n";
 $generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
-my @a = (1, 2, 3, 4);
-say @a;
-say push @a, 5;
-say @a;
-my $b = shift @a;
-say @a;
-say $b;
-#my @c = map { $_ * 2; } @a;
-#say @c;
+
+sub fib {
+    if ($_[0] < 2) {
+        return 1;
+    }
+    return fib($_[0] - 1) + fib($_[0] - 2);
+}
+
+say(fib(35));

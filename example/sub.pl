@@ -16,74 +16,102 @@ open my $fh, '>', 'sub.ll';
 print $fh $llvm_ir;
 close $fh;
 print "generated\n";
+$generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
 
 sub f {
+    my $d = 4.5;
     my $a = $_[0];
     my $b = $_[1];
+    my $c = $a + $b;
     say $a;
     say $b;
 
+    # Object op Object
     say $a + $b;
-    say $a + 2;
-    say 2 + $b;
-    say $a + 2.1;
-    say 2.1 + $b;
-
     say $a - $b;
-    say $b - 1;
-    say 1 - $b;
-    say $b - 1.2;
-    say 1.2 - $b;
-
     say $a * $b;
-    say $b * 2;
-    say 2 * $b;
-    say $b * 1.2;
-    say 1.2 * $b;
-
     say $a / $b;
-    say $b / 1;
-    say 1 / $b;
-    say $b / 1.2;
-    say 1.2 / $b;
-
     say $a < $b;
-    say $a < 1;
-    say $a < 1.2;
-    say 1 < $a;
-    say 1.1 < $a;
-
     say $a > $b;
-    say $a > 1;
-    say $a > 1.2;
-    say 1 > $a;
-    say 1.1 > $a;
-
     say $a == $b;
-    say $a == 1;
-    say $a == 1.2;
-    say 1 == $a;
-    say 1.1 == $a;
-
     say $a != $b;
+
+    # Object op Int
+    say $a + 2;
+    say $b - 1;
+    say $b * 2;
+    say $b / 1;
+    say $a < 1;
+    say $a > 1;
+    say $a == 1;
     say $a != 1;
-    say $a != 1.2;
+
+    # Int op Object
+    say 2 + $b;
+    say 1 - $b;
+    say 2 * $b;
+    say 1 / $b;
+    say 1 < $a;
+    say 1 > $a;
+    say 1 == $a;
     say 1 != $a;
+
+    # Object op Double
+    say $a < 1.2;
+    say $a > 1.2;
+    say $a + 2.1;
+    say $b - 1.2;
+    say $b * 1.2;
+    say $b / 1.2;
+    say $a == 1.2;
+    say $a != 1.2;
+
+    # Double op Object
+    say 2.1 + $b;
+    say 1.2 - $b;
+    say 1.2 * $b;
+    say 1.2 / $b;
+    say 1.1 < $a;
+    say 1.1 > $a;
+    say 1.1 == $a;
     say 1.1 != $a;
 
-    return 3;
+    say $c;
+
+    return $d;
 }
 
-say(f(1, 2));
+say(f(1, 2.3));
 
-sub fib {
-    if ($_[0] < 2) {
-        return 1;
-    }
-    return 1;#fib($_[0] - 1) + fib($_[0] - 2);
+sub h {
+    $_[0] + 2;
 }
 
-say(fib(10));
+sub g {
+    h($_[0] + 1);
+}
+
+say g(3);
+
+sub function_argument_array_sample {
+    my ($a, $b, $c) = @_;
+    say $a;
+    say $b;
+    say $c;
+    say @_;
+}
+
+function_argument_array_sample(1, 2, 3);
+
+sub function_argument_shift_sample {
+    my $a = shift;
+    my $b = shift;
+    say $a;
+    say $b;
+    say @_;
+}
+
+function_argument_shift_sample(1, 2, 3, 4);

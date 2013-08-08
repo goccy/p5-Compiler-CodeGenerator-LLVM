@@ -16,10 +16,14 @@ open my $fh, '>', 'operator.ll';
 print $fh $llvm_ir;
 close $fh;
 
+$generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
+say 1;
+say 2;
 say 1 + 2 == 3;
+say 1.2;
 say 1.2 + 2.3 == 3.5;
 say 2.1 + 2 == 4.1;
 say 1 - 2 == -1;
@@ -37,6 +41,7 @@ say 0 & 1;
 
 my $a = 1;
 my $b = 2;
+say $a;
 say $a + 2;
 say 2 + $b;
 say $a + 2.1;
