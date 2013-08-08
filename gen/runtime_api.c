@@ -49,11 +49,11 @@ void debug_print(UnionType o)
 	fprintf(stderr, "=============\n");
 }
 
-UnionType *shift(ArrayObject *args)
+UnionType shift(ArrayObject *args)
 {
 	UnionType ret;
 	size_t size = args->size;
-	if (size > 1) return &ret;
+	if (size > 1) return ret;
 	if (size == 1) {
 		UnionType o = args->list[0];
 		TYPE_CHECK(o.o, Array);
@@ -64,10 +64,10 @@ UnionType *shift(ArrayObject *args)
 	} else {
 		fprintf(stderr, "fetch from function argument\n");
 	}
-	return &ret;
+	return ret;
 }
 
-UnionType *push(ArrayObject *args)
+UnionType push(ArrayObject *args)
 {
 	size_t size = args->size;
 	UnionType ret;
@@ -89,7 +89,7 @@ UnionType *push(ArrayObject *args)
 			ret.o = INT_init(base->size);
 		}
 	}
-	return &ret;
+	return ret;
 }
 
 /*

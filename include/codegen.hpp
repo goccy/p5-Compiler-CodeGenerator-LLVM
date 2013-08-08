@@ -148,11 +148,14 @@ public:
 	llvm::Type *union_type;
 	llvm::Type *union_ptr_type;
 	llvm::Function *cur_func;
+	llvm::Function *main_func;
 	llvm::Value *cur_args;
+	llvm::Value *last_evaluated_value; /* for function that hasn't return statement */
 	std::string cur_func_name;
 	llvm::BasicBlock *main_entry;
 	VariableManager vmgr;
 	FunctionManager fmgr;
+	bool has_return_statement;
 
 	LLVM(void);
 	void write(void);
@@ -180,6 +183,7 @@ public:
 	void generateWhileStmtCode(llvm::IRBuilder<> *builder, WhileStmtNode *node);
 	void generateFunctionCode(llvm::IRBuilder<> *builder, FunctionNode *node);
 	void generateReturnCode(llvm::IRBuilder<> *builder, ReturnNode *node);
+	void generateLastEvaluatedReturnCode(llvm::IRBuilder<> *builder);
 	void generateSingleTermOperatorCode(llvm::IRBuilder<> *builder, SingleTermOperatorNode *node);
     void generateCommaCode(llvm::IRBuilder<> *builder, BranchNode *node, std::vector<CodeGenerator::Value *> *list);
 	llvm::Value *generateAssignCode(llvm::IRBuilder<> *builder, BranchNode *node);
@@ -188,7 +192,7 @@ public:
 	llvm::Value *generateOperatorCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateOperatorCodeWithObject(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, const char *fname);
 	llvm::Value *generateListCode(llvm::IRBuilder<> *builder, ListNode *node);
-	void generateListDefinitionCode(llvm::IRBuilder<> *builder, ListNode *node);
+	std::vector<CodeGenerator::Value *> *generateListDefinitionCode(llvm::IRBuilder<> *builder, ListNode *node);
 	llvm::Value *generateValueCode(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *generateFunctionCallCode(llvm::IRBuilder<> *builder, FunctionCallNode *node);
 	llvm::Value *generateArrayAccessCode(llvm::IRBuilder<> *builder, ArrayNode *node);

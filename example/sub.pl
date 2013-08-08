@@ -87,28 +87,31 @@ sub f {
 say(f(1, 2.3));
 
 sub h {
-    return $_[0] + 2;
+    $_[0] + 2;
 }
 
 sub g {
-    return h($_[0] + 1);
+    h($_[0] + 1);
 }
 
 say g(3);
 
-=hoge
-my ($a, $b, $c) = (1, 2, 3);
-say $a;
-say $b;
-say $c;
-
-
-sub function_argument_sample {
+sub function_argument_array_sample {
     my ($a, $b, $c) = @_;
     say $a;
     say $b;
     say $c;
+    say @_;
 }
 
-function_argument_sample(1, 2, 3);
-=cut
+function_argument_array_sample(1, 2, 3);
+
+sub function_argument_shift_sample {
+    my $a = shift;
+    my $b = shift;
+    say $a;
+    say $b;
+    say @_;
+}
+
+function_argument_shift_sample(1, 2, 3, 4);
