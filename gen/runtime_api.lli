@@ -9,20 +9,22 @@ target triple = "x86_64-apple-macosx10.7.0"
 %struct._Object = type { i32, %union.UnionType }
 %struct._Array = type { i32, %union.UnionType*, i64 }
 
+@__stdoutp = external global %struct.__sFILE*
 @.str = private unnamed_addr constant [3 x i8] c"%d\00", align 1
-@__stderrp = external global %struct.__sFILE*
 @.str1 = private unnamed_addr constant [3 x i8] c"%f\00", align 1
 @.str2 = private unnamed_addr constant [3 x i8] c"%s\00", align 1
-@.str3 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
-@.str4 = private unnamed_addr constant [26 x i8] c"===== debug_print ======\0A\00", align 1
-@.str5 = private unnamed_addr constant [15 x i8] c"=============\0A\00", align 1
+@.str3 = private unnamed_addr constant [10 x i8] c"ARRAY(%p)\00", align 1
+@.str4 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
+@__stderrp = external global %struct.__sFILE*
+@.str5 = private unnamed_addr constant [26 x i8] c"===== debug_print ======\0A\00", align 1
+@.str6 = private unnamed_addr constant [15 x i8] c"=============\0A\00", align 1
 @__func__.shift = private unnamed_addr constant [6 x i8] c"shift\00", align 1
-@.str6 = private unnamed_addr constant [18 x i8] c"gen/runtime_api.c\00", align 1
-@.str7 = private unnamed_addr constant [21 x i8] c"0 && \22Type Error!\5Cn\22\00", align 1
-@.str8 = private unnamed_addr constant [30 x i8] c"fetch from function argument\0A\00", align 1
-@.str9 = private unnamed_addr constant [27 x i8] c"Type Error!: near by push\0A\00", align 1
+@.str7 = private unnamed_addr constant [18 x i8] c"gen/runtime_api.c\00", align 1
+@.str8 = private unnamed_addr constant [21 x i8] c"0 && \22Type Error!\5Cn\22\00", align 1
+@.str9 = private unnamed_addr constant [30 x i8] c"fetch from function argument\0A\00", align 1
+@.str10 = private unnamed_addr constant [27 x i8] c"Type Error!: near by push\0A\00", align 1
 @__func__.push = private unnamed_addr constant [5 x i8] c"push\00", align 1
-@.str10 = private unnamed_addr constant [34 x i8] c"ERROR!!: cannot allocated memory\0A\00", align 1
+@.str11 = private unnamed_addr constant [34 x i8] c"ERROR!!: cannot allocated memory\0A\00", align 1
 @u = common global %union.UnionType zeroinitializer, align 8
 
 ; Function Attrs: nounwind ssp uwtable
@@ -53,60 +55,67 @@ entry:
     i64 0, label %sw.bb4
     i64 2, label %sw.bb6
     i64 3, label %sw.bb8
-    i64 5, label %sw.bb10
+    i64 4, label %sw.bb10
+    i64 7, label %sw.bb12
   ]
 
 sw.bb:                                            ; preds = %entry
-  %6 = load i8** %o, align 8
-  %7 = ptrtoint i8* %6 to i64
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i64 %7)
+  %6 = load %struct.__sFILE** @__stdoutp, align 8
+  %7 = load i8** %o, align 8
+  %8 = ptrtoint i8* %7 to i64
+  %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %6, i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i64 %8)
   br label %sw.epilog
 
 sw.bb4:                                           ; preds = %entry
-  %8 = load %struct.__sFILE** @__stderrp, align 8
+  %9 = load %struct.__sFILE** @__stdoutp, align 8
   %d = bitcast %union.UnionType* %_o to double*
-  %9 = load double* %d, align 8
-  %call5 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %8, i8* getelementptr inbounds ([3 x i8]* @.str1, i32 0, i32 0), double %9)
+  %10 = load double* %d, align 8
+  %call5 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %9, i8* getelementptr inbounds ([3 x i8]* @.str1, i32 0, i32 0), double %10)
   br label %sw.epilog
 
 sw.bb6:                                           ; preds = %entry
-  %10 = load i8** %o, align 8
-  %11 = ptrtoint i8* %10 to i64
-  %xor = xor i64 %11, -3940649673949184
-  %12 = inttoptr i64 %xor to i8*
-  %call7 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8]* @.str2, i32 0, i32 0), i8* %12)
+  %11 = load %struct.__sFILE** @__stdoutp, align 8
+  %12 = load i8** %o, align 8
+  %13 = ptrtoint i8* %12 to i64
+  %xor = xor i64 %13, -3940649673949184
+  %14 = inttoptr i64 %xor to i8*
+  %call7 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %11, i8* getelementptr inbounds ([3 x i8]* @.str2, i32 0, i32 0), i8* %14)
   br label %sw.epilog
 
 sw.bb8:                                           ; preds = %entry
-  %13 = load i8** %o, align 8
-  %14 = ptrtoint i8* %13 to i64
-  %xor9 = xor i64 %14, -3659174697238528
-  %15 = inttoptr i64 %xor9 to %struct._Array*
-  call void @print(%struct._Array* %15)
+  %15 = load i8** %o, align 8
+  %16 = ptrtoint i8* %15 to i64
+  %xor9 = xor i64 %16, -3659174697238528
+  %17 = inttoptr i64 %xor9 to %struct._Array*
+  call void @print(%struct._Array* %17)
   br label %sw.epilog
 
 sw.bb10:                                          ; preds = %entry
-  %16 = load i8** %o, align 8
-  %17 = ptrtoint i8* %16 to i64
-  %xor11 = xor i64 %17, -3096224743817216
-  %18 = inttoptr i64 %xor11 to %struct._Object*
-  store %struct._Object* %18, %struct._Object** %object, align 8
-  %19 = load %struct._Object** %object, align 8
-  %v = getelementptr inbounds %struct._Object* %19, i32 0, i32 1
-  %coerce.dive12 = getelementptr %union.UnionType* %v, i32 0, i32 0
-  %20 = bitcast double* %coerce.dive12 to i64*
-  %21 = load i64* %20, align 1
-  call void @print_object(i64 %21)
+  %18 = load %struct.__sFILE** @__stdoutp, align 8
+  %19 = load i8** %o, align 8
+  %call11 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %18, i8* getelementptr inbounds ([10 x i8]* @.str3, i32 0, i32 0), i8* %19)
+  br label %sw.epilog
+
+sw.bb12:                                          ; preds = %entry
+  %20 = load i8** %o, align 8
+  %21 = ptrtoint i8* %20 to i64
+  %xor13 = xor i64 %21, -2533274790395904
+  %22 = inttoptr i64 %xor13 to %struct._Object*
+  store %struct._Object* %22, %struct._Object** %object, align 8
+  %23 = load %struct._Object** %object, align 8
+  %v = getelementptr inbounds %struct._Object* %23, i32 0, i32 1
+  %coerce.dive14 = getelementptr %union.UnionType* %v, i32 0, i32 0
+  %24 = bitcast double* %coerce.dive14 to i64*
+  %25 = load i64* %24, align 1
+  call void @print_object(i64 %25)
   br label %sw.epilog
 
 sw.default:                                       ; preds = %entry
   br label %sw.epilog
 
-sw.epilog:                                        ; preds = %sw.default, %sw.bb10, %sw.bb8, %sw.bb6, %sw.bb4, %sw.bb
+sw.epilog:                                        ; preds = %sw.default, %sw.bb12, %sw.bb10, %sw.bb8, %sw.bb6, %sw.bb4, %sw.bb
   ret void
 }
-
-declare i32 @printf(i8*, ...) #1
 
 declare i32 @fprintf(%struct.__sFILE*, i8*, ...) #1
 
@@ -160,7 +169,8 @@ entry:
   store %struct._Array* %array, %struct._Array** %array.addr, align 8
   %0 = load %struct._Array** %array.addr, align 8
   call void @print(%struct._Array* %0)
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([2 x i8]* @.str3, i32 0, i32 0))
+  %1 = load %struct.__sFILE** @__stdoutp, align 8
+  %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %1, i8* getelementptr inbounds ([2 x i8]* @.str4, i32 0, i32 0))
   ret void
 }
 
@@ -172,13 +182,13 @@ entry:
   %0 = bitcast double* %coerce.dive to i64*
   store i64 %o.coerce, i64* %0, align 1
   %1 = load %struct.__sFILE** @__stderrp, align 8
-  %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %1, i8* getelementptr inbounds ([26 x i8]* @.str4, i32 0, i32 0))
+  %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %1, i8* getelementptr inbounds ([26 x i8]* @.str5, i32 0, i32 0))
   %coerce.dive1 = getelementptr %union.UnionType* %o, i32 0, i32 0
   %2 = bitcast double* %coerce.dive1 to i64*
   %3 = load i64* %2, align 1
   call void @print_object(i64 %3)
   %4 = load %struct.__sFILE** @__stderrp, align 8
-  %call2 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %4, i8* getelementptr inbounds ([15 x i8]* @.str5, i32 0, i32 0))
+  %call2 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %4, i8* getelementptr inbounds ([15 x i8]* @.str6, i32 0, i32 0))
   ret void
 }
 
@@ -239,7 +249,7 @@ do.body:                                          ; preds = %if.then3
   br i1 %cmp9, label %if.then11, label %if.end12
 
 if.then11:                                        ; preds = %do.body
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.shift, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str6, i32 0, i32 0), i32 59, i8* getelementptr inbounds ([21 x i8]* @.str7, i32 0, i32 0)) #7
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.shift, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str7, i32 0, i32 0), i32 62, i8* getelementptr inbounds ([21 x i8]* @.str8, i32 0, i32 0)) #7
   unreachable
 
 if.end12:                                         ; preds = %do.body
@@ -317,7 +327,7 @@ cond.end:                                         ; preds = %cond.false, %cond.t
 
 if.else:                                          ; preds = %if.end
   %47 = load %struct.__sFILE** @__stderrp, align 8
-  %call31 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %47, i8* getelementptr inbounds ([30 x i8]* @.str8, i32 0, i32 0))
+  %call31 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %47, i8* getelementptr inbounds ([30 x i8]* @.str9, i32 0, i32 0))
   br label %if.end32
 
 if.end32:                                         ; preds = %if.else, %cond.end
@@ -385,7 +395,7 @@ entry:
 
 if.then:                                          ; preds = %entry
   %3 = load %struct.__sFILE** @__stderrp, align 8
-  %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %3, i8* getelementptr inbounds ([27 x i8]* @.str9, i32 0, i32 0))
+  %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %3, i8* getelementptr inbounds ([27 x i8]* @.str10, i32 0, i32 0))
   br label %if.end38
 
 if.else:                                          ; preds = %entry
@@ -423,7 +433,7 @@ do.body:                                          ; preds = %if.else
   br i1 %cmp8, label %if.then10, label %if.end
 
 if.then10:                                        ; preds = %do.body
-  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__.push, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str6, i32 0, i32 0), i32 79, i8* getelementptr inbounds ([21 x i8]* @.str7, i32 0, i32 0)) #7
+  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__.push, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str7, i32 0, i32 0), i32 82, i8* getelementptr inbounds ([21 x i8]* @.str8, i32 0, i32 0)) #7
   unreachable
 
 if.end:                                           ; preds = %do.body
@@ -448,7 +458,7 @@ do.end:                                           ; preds = %if.end
 
 if.then15:                                        ; preds = %do.end
   %21 = load %struct.__sFILE** @__stderrp, align 8
-  %call16 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %21, i8* getelementptr inbounds ([34 x i8]* @.str10, i32 0, i32 0))
+  %call16 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %21, i8* getelementptr inbounds ([34 x i8]* @.str11, i32 0, i32 0))
   br label %if.end37
 
 if.else17:                                        ; preds = %do.end

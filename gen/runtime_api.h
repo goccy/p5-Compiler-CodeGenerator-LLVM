@@ -9,7 +9,9 @@ typedef enum {
 	Int,
 	String,
 	Array,
+	ArrayRef,
 	Hash,
+	HashRef,
 	ObjectType,
 	BlessedObject,
 	Unknown
@@ -30,6 +32,11 @@ typedef struct _Object {
 	Value v;
 } Object;
 
+typedef struct _ArrayRef {
+	int type;
+	Value v;
+} ArrayRefObject;
+
 typedef struct _Array {
 	int type;
 	Value *list;
@@ -39,11 +46,14 @@ typedef struct _Array {
 #define NaN       (0xFFF0000000000000)
 #define MASK      (0x00000000FFFFFFFF)
 #define _TYPE      (0x000F000000000000)
-#define INT_TAG    (uint64_t)(0x0001000000000000)
-#define STRING_TAG (uint64_t)(0x0002000000000000)
-#define ARRAY_TAG  (uint64_t)(0x0003000000000000)
-#define HASH_TAG   (uint64_t)(0x0004000000000000)
-#define OBJECT_TAG (uint64_t)(0x0005000000000000)
+#define INT_TAG        (uint64_t)(0x0001000000000000)
+#define STRING_TAG     (uint64_t)(0x0002000000000000)
+#define ARRAY_TAG      (uint64_t)(0x0003000000000000)
+#define ARRAY_REF_TAG  (uint64_t)(0x0004000000000000)
+#define HASH_TAG       (uint64_t)(0x0005000000000000)
+#define HASH_REF_TAG   (uint64_t)(0x0006000000000000)
+#define OBJECT_TAG     (uint64_t)(0x0007000000000000)
+#define BLESSED_OBJECT_TAG (uint64_t)(0x0008000000000000)
 
 #define TYPE(data) ((((uint64_t)data & NaN) == NaN) * (((uint64_t)data & _TYPE) >> 48))
 

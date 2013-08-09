@@ -28,13 +28,15 @@
 namespace Enum {
 namespace Runtime {
 typedef enum {
-	Int,
 	Double,
+	Int,
 	String,
 	Array,
+	ArrayRef,
 	Hash,
-	BlessedObject,
+	HashRef,
 	Object,
+	BlessedObject,
 	Value,
 	Unknown
 } Type;
@@ -45,11 +47,14 @@ typedef enum {
 #define MASK      (0x00000000FFFFFFFF)
 #define _TYPE      (0x000F000000000000)
 
-#define INT_TAG    (uint64_t)(0x0001000000000000)
-#define STRING_TAG (uint64_t)(0x0002000000000000)
-#define ARRAY_TAG  (uint64_t)(0x0003000000000000)
-#define HASH_TAG   (uint64_t)(0x0004000000000000)
-#define OBJECT_TAG (uint64_t)(0x0005000000000000)
+#define INT_TAG        (uint64_t)(0x0001000000000000)
+#define STRING_TAG     (uint64_t)(0x0002000000000000)
+#define ARRAY_TAG      (uint64_t)(0x0003000000000000)
+#define ARRAY_REF_TAG  (uint64_t)(0x0004000000000000)
+#define HASH_TAG       (uint64_t)(0x0005000000000000)
+#define HASH_REF_TAG   (uint64_t)(0x0006000000000000)
+#define OBJECT_TAG     (uint64_t)(0x0007000000000000)
+#define BLESSED_OBJECT_TAG (uint64_t)(0x0008000000000000)
 
 #define INT_init(data) (void *)(uint64_t)((data & MASK) | NaN | INT_TAG)
 #define DOUBLE_init(data) (void *)&data
@@ -69,8 +74,7 @@ typedef enum {
 
 namespace Runtime {
 
-//typedef union {
-typedef struct _Value {
+typedef union {
 	int ivalue;
 	double dvalue;
 	char *svalue;
@@ -147,6 +151,8 @@ public:
 	llvm::Type *array_ptr_type;
 	llvm::Type *union_type;
 	llvm::Type *union_ptr_type;
+	llvm::Type *array_ref_type;
+	llvm::Type *array_ref_ptr_type;
 	llvm::Function *cur_func;
 	llvm::Function *main_func;
 	llvm::Value *cur_args;
@@ -172,8 +178,11 @@ public:
 	llvm::Value *createNaNBoxingDouble(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingString(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingArray(llvm::IRBuilder<> *builder, llvm::Value *value);
+	llvm::Value *createNaNBoxingArrayRef(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingObject(llvm::IRBuilder<> *builder, llvm::Value *value);
+	llvm::Value *createNaNBoxingPtr(llvm::IRBuilder<> *builder, llvm::Value *value, uint64_t tag);
 	llvm::Value *createArray(llvm::IRBuilder<> *builder, llvm::Value *list, size_t size);
+	llvm::Value *createArrayRef(llvm::IRBuilder<> *builder, llvm::Value *boxed_array);
 	llvm::Value *createArgumentArray(llvm::IRBuilder<> *builder, FunctionCallNode *node);// llvm::Value *list, size_t size);
 	void setIteratorValue(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *getArrayElement(llvm::IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx);
@@ -197,10 +206,14 @@ public:
 	llvm::Value *generateOperatorCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateOperatorCodeWithObject(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, const char *fname);
 	llvm::Value *generateListCode(llvm::IRBuilder<> *builder, ListNode *node);
+	llvm::Value *generateArrayRefCode(llvm::IRBuilder<> *builder, ArrayRefNode *node);
+	llvm::Value *generateDereferenceCode(llvm::IRBuilder<> *builder, DereferenceNode *node);
+	llvm::Value *generateArrayRefToArrayCode(llvm::IRBuilder<> *builder, llvm::Value *array_ref);
 	std::vector<CodeGenerator::Value *> *generateListDefinitionCode(llvm::IRBuilder<> *builder, ListNode *node);
 	llvm::Value *generateValueCode(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *generateFunctionCallCode(llvm::IRBuilder<> *builder, FunctionCallNode *node);
 	llvm::Value *generateArrayAccessCode(llvm::IRBuilder<> *builder, ArrayNode *node);
+	llvm::Value *generateArrayRefAccessCode(llvm::IRBuilder<> *builder, llvm::Value *array_ref, llvm::Value *idx);
 	llvm::Constant *getBuiltinFunction(llvm::IRBuilder<> *builder, std::string function_name);
 };
 

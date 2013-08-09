@@ -6,16 +6,19 @@ void print_object(UnionType _o)
 	void *o = _o.o;
 	switch (TYPE(o)) {
 	case Int:
-		printf("%d", to_Int(o));
+		fprintf(stdout, "%d", to_Int(o));
 		break;
 	case Double:
-		fprintf(stderr, "%f", _o.d);
+		fprintf(stdout, "%f", _o.d);
 		break;
 	case String:
-		printf("%s", to_String(o));
+		fprintf(stdout, "%s", to_String(o));
 		break;
 	case Array:
 		print(to_Array(o));
+		break;
+	case ArrayRef:
+		fprintf(stdout, "ARRAY(%p)", o);
 		break;
 	case ObjectType: {
 		Object *object = to_Object(o);
@@ -39,7 +42,7 @@ void print(ArrayObject *array)
 void say(ArrayObject *array)
 {
 	print(array);
-	printf("\n");
+	fprintf(stdout, "\n");
 }
 
 void debug_print(UnionType o)

@@ -20,8 +20,11 @@ $generator->debug_run($ast);
 
 __DATA__
 my $a = [1, 2, 3, 4];
+my $b = $a;
 say $a;
+say $b;
 say @$a;
 say $a->[0];
+say $a->[1];
 $a->[0] = 3;
 say @$a;
