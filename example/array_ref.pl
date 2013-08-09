@@ -19,12 +19,25 @@ $generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
-my $a = [1, 2, 3, 4];
+my $a = [1, [5, 6, 7] , 3, 4];
 my $b = $a;
 say $a;
 say $b;
 say @$a;
+
 say $a->[0];
-say $a->[1];
 $a->[0] = 3;
 say @$a;
+
+say $a->[1];
+my $c = $a->[1];
+say $c;
+say @$c;
+
+say $c->[0];
+$c->[0] = 10;
+say @$c;
+
+my $d = $a->[1];
+say @$d;
+say $a->[1]->[0];

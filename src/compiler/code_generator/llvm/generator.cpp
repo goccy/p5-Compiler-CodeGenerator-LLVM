@@ -468,7 +468,6 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 		llvm::Value *elem = generateArrayAccessCode(builder, dynamic_cast<ArrayNode *>(node->left));
 		builder->CreateStore(builder->CreateLoad(value), elem);
 	} else if (node->left->tk->info.type == TokenType::Pointer) {
-		asm("int3");
 		llvm::Value *elem = generateOperatorCode(builder, dynamic_cast<BranchNode *>(node->left));
 		builder->CreateStore(builder->CreateLoad(value), elem);
 	} else {
@@ -510,7 +509,15 @@ llvm::Value *LLVM::generateDereferenceCode(IRBuilder<> *builder, DereferenceNode
 		string orig_name = name.substr(1);
 		CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), orig_name.c_str(), node->tk->finfo.indent);
 		assert(v && "value is not defined");
-		ret = generateArrayRefToArrayCode(builder, v->value);
+		llvm::Value *boxed_array_ref = NULL;
+		if (v->type != Enum::Runtime::ArrayRef) {
+			/* v->value is Object */
+			llvm::Value *object = generateCastCode(builder, Enum::Runtime::Object, v->value);
+			boxed_array_ref = builder->CreateStructGEP(object, 1);
+		} else {
+			boxed_array_ref = v->value;
+		}
+		ret = generateArrayRefToArrayCode(builder, boxed_array_ref);
 		cur_type = Enum::Runtime::Array;
 	}
 	return ret;
@@ -771,8 +778,18 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 		break;
 	}
 	case Pointer:
-		if (left_type == Enum::Runtime::ArrayRef) {
+		if (right_type == Enum::Runtime::ArrayRef) {
+			if (left_type == Enum::Runtime::Value) {
+				/* left is ArrayRef */
+				left = generateCastCode(builder, Enum::Runtime::ArrayRef, left);
+			} else if (left_type != Enum::Runtime::ArrayRef) {
+				assert(0 && "ERROR: type error!!!");
+			}
 			ret = generateArrayRefAccessCode(builder, left, right);
+		} else if (right_type == Enum::Runtime::HashRef) {
+			assert(0 && "Sorry, hash reference is still not supported");
+		} else {
+			assert(0 && "ERROR: type error!!!");
 		}
 		break;
 	default:
@@ -925,8 +942,11 @@ llvm::Value *LLVM::generateArrayAccessCode(IRBuilder<> *builder, ArrayNode *node
 	return ret;
 }
 
-llvm::Value *LLVM::generateArrayRefAccessCode(IRBuilder<> *builder, llvm::Value *array_ref, llvm::Value *idx)
+llvm::Value *LLVM::generateArrayRefAccessCode(IRBuilder<> *builder, llvm::Value *array_ref, llvm::Value *_idx)
 {
+	llvm::Value *boxed_idx_array = builder->CreateStructGEP(_idx, 1);
+	llvm::Value *idx_array = generateCastCode(builder, Enum::Runtime::Array, boxed_idx_array);
+	llvm::Value *idx = generateCastCode(builder, Enum::Runtime::Int, getArrayElement(builder, idx_array, ConstantInt::get(int_type, 0)));
 	llvm::Value *boxed_array = builder->CreateStructGEP(array_ref, 1);
 	llvm::Value *array = generateCastCode(builder, Enum::Runtime::Array, boxed_array);
 	llvm::Value *ret = getArrayElement(builder, array, idx);
