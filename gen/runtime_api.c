@@ -4,6 +4,7 @@ UnionType u;
 void print_object(UnionType _o)
 {
 	void *o = _o.o;
+	//fprintf(stderr, "type = [%d]\n", TYPE(o));
 	switch (TYPE(o)) {
 	case Int:
 		fprintf(stdout, "%d", to_Int(o));
@@ -12,13 +13,16 @@ void print_object(UnionType _o)
 		fprintf(stdout, "%f", _o.d);
 		break;
 	case String:
-		fprintf(stdout, "%s", to_String(o));
+		fprintf(stdout, "%s", (to_String(o))->s);
 		break;
 	case Array:
 		print(to_Array(o));
 		break;
 	case ArrayRef:
 		fprintf(stdout, "ARRAY(%p)", o);
+		break;
+	case Hash:
+		print_hash(to_Hash(o));
 		break;
 	case ObjectType: {
 		Object *object = to_Object(o);
@@ -27,6 +31,17 @@ void print_object(UnionType _o)
 	}
 	default:
 		break;
+	}
+}
+
+void print_hash(HashObject *hash)
+{
+	size_t key_n = hash->size;
+	size_t i = 0;
+	for (i = 0; i < key_n; i++) {
+		StringObject *key = hash->keys[i];
+		fprintf(stdout, "%s", key->s);
+		print_object(hash->table[key->hash]);
 	}
 }
 
@@ -111,6 +126,77 @@ Object *map(ArrayObject *args)
 	return ret;
 }
 */
+
+UnionType undef;
+void new_Undef(void)
+{
+	UndefObject *o = (UndefObject *)calloc(sizeof(UndefObject), 1);
+	undef.o = UNDEF_init(o);
+}
+
+UnionType *base_hash_table;
+void init_table(void)
+{
+	UnionType *table = (UnionType *)calloc(sizeof(UnionType), HASH_TABLE_SIZE);
+	size_t i;
+	for (i = 0; i < HASH_TABLE_SIZE; i++) {
+		table[i] = undef;
+	}
+	base_hash_table = table;
+}
+
+void global_init(void)
+{
+	new_Undef();
+	init_table();
+}
+
+/**
+ * An implementation of the djb2 hash function by Dan Bernstein.
+ */
+unsigned long make_hash(char* _str, size_t len)
+{
+	char* str = _str;
+	unsigned long hash = 5381;
+	while (len--) {
+		/* hash * 33 + c */
+		hash = ((hash << 5) + hash) + *str++;
+	}
+	return hash;
+}
+
+UnionType new_String(char *str)
+{
+	UnionType ret;
+	StringObject *o = (StringObject *)calloc(sizeof(StringObject), 1);
+	o->header = String;
+	o->s = str;
+	o->len = strlen(str);
+	o->hash = make_hash(str, o->len) % HASH_TABLE_SIZE;
+	ret.o = STRING_init(o);
+	return ret;
+}
+
+UnionType new_Hash(ArrayObject *array)
+{
+	UnionType ret;
+	HashObject *hash = (HashObject *)calloc(sizeof(HashObject), 1);
+	hash->table = (UnionType *)calloc(sizeof(UnionType), HASH_TABLE_SIZE);
+	memcpy(hash->table, base_hash_table, sizeof(UnionType) * HASH_TABLE_SIZE);
+	hash->keys = (StringObject **)calloc(sizeof(void *), HASH_TABLE_SIZE);
+	size_t size = array->size;
+	int key_n = 0;
+	size_t i = 0;
+	UnionType *list = array->list;
+	for (i = 0; i < size; i += 2, key_n++) {
+		StringObject *key = to_String(list[i].o);
+		hash->table[key->hash] = list[i + 1];
+		hash->keys[key_n] = key;
+	}
+	hash->size = key_n;
+	ret.o = HASH_init(hash);
+	return ret;
+}
 
 Object *new_Object(void)
 {

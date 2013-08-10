@@ -12,27 +12,23 @@ my $ast = $parser->parse($tokens);
 Compiler::Parser::AST::Renderer->new->render($ast);
 my $generator = Compiler::CodeGenerator::LLVM->new();
 my $llvm_ir = $generator->generate($ast);
-open my $fh, '>', 'condition.ll';
+open my $fh, '>', 'hash.ll';
 print $fh $llvm_ir;
 close $fh;
+$generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
+
 __DATA__
+my %a = (a => 1, b => 2);
+say %a;
 
-my $a = 1 + 1;
-$a = $a + 1;
-say $a;
-say $a == 2;
+=hoge
+say $a{a};
+say $a{b};
 
-if ($a != 2) {
-    say "true";
-} elsif ($a == 2) {
-    say "elsif";
-} else {
-    say "else";
-}
+$a{a} = 3;
+say %a;
 
-say 1 && 2.2 && 3 && 4.2; # 4.2
-say 0 && 2; # 0
-say 1 || 2; # 1
-say 0 || 2; # 2
-
+my @b = %a;
+say @b;
+=cut

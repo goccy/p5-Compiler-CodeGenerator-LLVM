@@ -20,6 +20,7 @@ void LLVM::createRuntimeTypes(void)
 {
 	LLVMContext &ctx = getGlobalContext();
 	vector<Type *> fields;
+	void_type = llvm::Type::getVoidTy(ctx);
 	int_type = IntegerType::get(ctx, 64);
 	int32_type = IntegerType::get(ctx, 32);
 	double_type = Type::getDoubleTy(ctx);
@@ -92,6 +93,11 @@ const char *LLVM::gen(AST *ast)
 	builder.CreateStore(one, double_ptr);
 	llvm::Value *void_ptr = builder.CreateBitCast(u, void_ptr_type);
 	Constant *func = getBuiltinFunction(&builder, "debug_print");
+
+	FunctionType *ftype = llvm::FunctionType::get(void_type, false);
+	llvm::Constant *f = module->getOrInsertFunction("global_init", ftype);
+	builder.CreateCall(f);
+
 
 	traverse(&builder, ast);
 
@@ -475,7 +481,18 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 		CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
 		if (!v) {
 			llvm::Value *o = NULL;
-			if (cur_type == Enum::Runtime::Array || cur_type == Enum::Runtime::ArrayRef) {
+			TokenType::Type type = tk->info.type;
+			if (value_type == Enum::Runtime::Array && (type == TokenType::LocalHashVar)) {
+				vector<llvm::Type *> arg_types;
+				arg_types.push_back(array_ptr_type);
+				llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+				FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
+				llvm::Constant *f = module->getOrInsertFunction("new_Hash", ftype);
+				llvm::Value *array = generateCastCode(builder, value_type, value);
+				CallInst *result = builder->CreateCall(f, array, "hash");
+				o = generateReceiveUnionValueCode(builder, result);
+				cur_type = Enum::Runtime::Hash;
+			} else if (cur_type == Enum::Runtime::Array || cur_type == Enum::Runtime::ArrayRef) {
 				o = value;
 			} else {
 				llvm::Value *tmp = builder->CreateAlloca(object_type, 0, node->left->tk->data.c_str());
@@ -899,7 +916,7 @@ void LLVM::generateCommaCode(IRBuilder<> *builder, BranchNode *node, vector<Code
 {
 	BranchNode *branch = dynamic_cast<BranchNode *>(node);
 	Node *left = branch->left;
-	if (left->tk->info.type == TokenType::Comma) {
+	if (left->tk->info.type == TokenType::Comma || left->tk->info.type == TokenType::Arrow) {
 		generateCommaCode(builder, dynamic_cast<BranchNode *>(branch->left), list);
 	} else {
 		CodeGenerator::Value *value = new CodeGenerator::Value();
@@ -910,7 +927,7 @@ void LLVM::generateCommaCode(IRBuilder<> *builder, BranchNode *node, vector<Code
 	}
 	if (!branch->right) return;
 	Node *right = branch->right;
-	if (right->tk->info.type == TokenType::Comma) {
+	if (right->tk->info.type == TokenType::Comma || right->tk->info.type == TokenType::Arrow) {
 		generateCommaCode(builder, dynamic_cast<BranchNode *>(branch->right), list);
 	} else {
 		CodeGenerator::Value *value = new CodeGenerator::Value();
@@ -924,7 +941,8 @@ void LLVM::generateCommaCode(IRBuilder<> *builder, BranchNode *node, vector<Code
 llvm::Value *LLVM::generateArrayAccessCode(IRBuilder<> *builder, ArrayNode *node)
 {
 	llvm::Value *ret = NULL;
-	llvm::Value *idx = generateCastedValueCode(builder, node->idx);
+	ArrayRefNode *idx_node = dynamic_cast<ArrayRefNode *>(node->idx);
+	llvm::Value *idx = generateCastedValueCode(builder, idx_node->data);
 	if (node->tk->type == TokenType::SpecificValue) {
 		Function::ArgumentListType &args = cur_func->getArgumentList();
 		Function::ArgumentListType::iterator it = args.begin();
@@ -981,9 +999,15 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 	}
 	if (ret) return ret;
 	switch (tk->info.type) {
-	case String: {
-		llvm::Value *result = builder->CreateGlobalStringPtr(tk->data.c_str());
-		ret = createNaNBoxingString(builder, result);
+	case Key: case String: {
+		vector<llvm::Type *> arg_types;
+		arg_types.push_back(void_ptr_type);
+		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+		FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
+		llvm::Constant *f = module->getOrInsertFunction("new_String", ftype);
+		llvm::Value *str = builder->CreateGlobalStringPtr(tk->data.c_str());
+		CallInst *result = builder->CreateCall(f, str, "string");
+		ret = generateReceiveUnionValueCode(builder, result);
 		cur_type = Enum::Runtime::String;
 		break;
 	}
@@ -1031,6 +1055,12 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 		break;
 	}
 	case GlobalArrayVar: case ArrayVar: {
+		CodeGenerator::Value *var = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
+		ret = var->value;
+		cur_type = var->type;
+		break;
+	}
+	case HashVar: {
 		CodeGenerator::Value *var = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent);
 		ret = var->value;
 		cur_type = var->type;
@@ -1090,9 +1120,9 @@ llvm::Value *LLVM::createArgumentArray(IRBuilder<> *builder, FunctionCallNode *n
 		llvm::Value *args = builder->CreateAlloca(union_type, ConstantInt::get(int_type, 1), "args");
 		llvm::Value *value = generateValueCode(builder, arg);
 		llvm::Value *idx = ConstantInt::get(int_type, 0);
-		if (cur_type == Enum::Runtime::Object || cur_type == Enum::Runtime::Array) {
+		if (cur_type == Enum::Runtime::Object || cur_type == Enum::Runtime::Array || cur_type == Enum::Runtime::Hash) {
 			Token *tk = arg->tk;
-			if (tk->type == TokenType::Var || tk->type == TokenType::ArrayVar) {
+			if (tk->type == TokenType::Var || tk->type == TokenType::ArrayVar || tk->type == TokenType::HashVar) {
 				llvm::Value *elem = vmgr.getVariable(cur_func_name.c_str(), tk->data.c_str(), tk->finfo.indent)->value;
 				builder->CreateStore(builder->CreateLoad(elem, "elem"), builder->CreateGEP(args, idx, "get_idx"));
 			} else {

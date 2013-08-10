@@ -14,7 +14,7 @@ typedef enum {
 	HashRef,
 	ObjectType,
 	BlessedObject,
-	Unknown
+	Undefined
 } Type;
 
 typedef union {
@@ -32,10 +32,16 @@ typedef struct _Object {
 	Value v;
 } Object;
 
-typedef struct _ArrayRef {
-	int type;
-	Value v;
-} ArrayRefObject;
+typedef struct _Undef {
+	int header;
+} UndefObject;
+
+typedef struct _String {
+	int header;
+	char *s;
+	size_t len;
+	unsigned long hash;
+} StringObject;
 
 typedef struct _Array {
 	int type;
@@ -43,17 +49,32 @@ typedef struct _Array {
 	size_t size;
 } ArrayObject;
 
-#define NaN       (0xFFF0000000000000)
-#define MASK      (0x00000000FFFFFFFF)
-#define _TYPE      (0x000F000000000000)
-#define INT_TAG        (uint64_t)(0x0001000000000000)
-#define STRING_TAG     (uint64_t)(0x0002000000000000)
-#define ARRAY_TAG      (uint64_t)(0x0003000000000000)
-#define ARRAY_REF_TAG  (uint64_t)(0x0004000000000000)
-#define HASH_TAG       (uint64_t)(0x0005000000000000)
-#define HASH_REF_TAG   (uint64_t)(0x0006000000000000)
-#define OBJECT_TAG     (uint64_t)(0x0007000000000000)
+typedef struct _ArrayRef {
+	int type;
+	Value v;
+} ArrayRefObject;
+
+typedef struct _Hash {
+	int header;
+	Value *table;
+	StringObject **keys;
+	size_t size;
+} HashObject;
+
+#define NaN                (0xFFF0000000000000)
+#define MASK               (0x00000000FFFFFFFF)
+#define _TYPE              (0x000F000000000000)
+#define INT_TAG            (uint64_t)(0x0001000000000000)
+#define STRING_TAG         (uint64_t)(0x0002000000000000)
+#define ARRAY_TAG          (uint64_t)(0x0003000000000000)
+#define ARRAY_REF_TAG      (uint64_t)(0x0004000000000000)
+#define HASH_TAG           (uint64_t)(0x0005000000000000)
+#define HASH_REF_TAG       (uint64_t)(0x0006000000000000)
+#define OBJECT_TAG         (uint64_t)(0x0007000000000000)
 #define BLESSED_OBJECT_TAG (uint64_t)(0x0008000000000000)
+#define UNDEF_TAG          (uint64_t)(0x0009000000000000)
+
+#define HASH_TABLE_SIZE 512
 
 #define TYPE(data) ((((uint64_t)data & NaN) == NaN) * (((uint64_t)data & _TYPE) >> 48))
 
@@ -63,12 +84,15 @@ typedef struct _Array {
 #define ARRAY_init(data) (void *)((uint64_t)data | NaN | ARRAY_TAG)
 #define HASH_init(data) (void *)((uint64_t)data | NaN | HASH_TAG)
 #define OBJECT_init(data) (void *)((uint64_t)data | NaN | OBJECT_TAG)
+#define UNDEF_init(data) (void *)((uint64_t)data | NaN | UNDEF_TAG)
 
 #define to_Int(o) ((intptr_t)o)
 #define to_Double(o) (*(double *)o)
-#define to_String(o) (char *)((uint64_t)o ^ (NaN | STRING_TAG))
+#define to_String(o) (StringObject *)((uint64_t)o ^ (NaN | STRING_TAG))
 #define to_Object(o) (Object *)((uint64_t)o ^ (NaN | OBJECT_TAG))
 #define to_Array(o) (ArrayObject *)((uint64_t)o ^ (NaN | ARRAY_TAG))
+#define to_Hash(o) (HashObject *)((uint64_t)o ^ (NaN | HASH_TAG))
+
 #define TYPE_CHECK(o, T) do {					\
 		if (TYPE(o) != T) {						\
 			assert(0 && "Type Error!\n");		\
@@ -76,6 +100,7 @@ typedef struct _Array {
 	} while (0)
 
 void print(ArrayObject *array);
+void print_hash(HashObject *hash);
 
 #define SET(ret, a, b, op) do {					\
 		switch (TYPE(b->o)) {					\

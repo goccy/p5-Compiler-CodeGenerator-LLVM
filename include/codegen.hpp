@@ -37,8 +37,8 @@ typedef enum {
 	HashRef,
 	Object,
 	BlessedObject,
-	Value,
-	Unknown
+	Undefined,
+	Value
 } Type;
 };
 };
@@ -47,14 +47,18 @@ typedef enum {
 #define MASK      (0x00000000FFFFFFFF)
 #define _TYPE      (0x000F000000000000)
 
-#define INT_TAG        (uint64_t)(0x0001000000000000)
-#define STRING_TAG     (uint64_t)(0x0002000000000000)
-#define ARRAY_TAG      (uint64_t)(0x0003000000000000)
-#define ARRAY_REF_TAG  (uint64_t)(0x0004000000000000)
-#define HASH_TAG       (uint64_t)(0x0005000000000000)
-#define HASH_REF_TAG   (uint64_t)(0x0006000000000000)
-#define OBJECT_TAG     (uint64_t)(0x0007000000000000)
+#define NaN                (0xFFF0000000000000)
+#define MASK               (0x00000000FFFFFFFF)
+#define _TYPE              (0x000F000000000000)
+#define INT_TAG            (uint64_t)(0x0001000000000000)
+#define STRING_TAG         (uint64_t)(0x0002000000000000)
+#define ARRAY_TAG          (uint64_t)(0x0003000000000000)
+#define ARRAY_REF_TAG      (uint64_t)(0x0004000000000000)
+#define HASH_TAG           (uint64_t)(0x0005000000000000)
+#define HASH_REF_TAG       (uint64_t)(0x0006000000000000)
+#define OBJECT_TAG         (uint64_t)(0x0007000000000000)
 #define BLESSED_OBJECT_TAG (uint64_t)(0x0008000000000000)
+#define UNDEF_TAG          (uint64_t)(0x0009000000000000)
 
 #define INT_init(data) (void *)(uint64_t)((data & MASK) | NaN | INT_TAG)
 #define DOUBLE_init(data) (void *)&data
@@ -143,6 +147,7 @@ public:
 	llvm::Type *boolean_type;
 	llvm::Type *value_type;
 	llvm::Type *value_ptr_type;
+	llvm::Type *void_type;
 	llvm::Type *void_ptr_type;
 	llvm::Type *object_type;
 	llvm::Type *object_ptr_type;
