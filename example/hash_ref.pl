@@ -19,7 +19,7 @@ $generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
-my $a = { a => 1, b => 2 };
+my $a = { a => 1, b => { d => 2 }, c => 2 };
 say $a;
 say %$a;
 
@@ -32,3 +32,5 @@ say %$a;
 
 my @b = %$a;
 say @b;
+
+say $a->{b}->{d};

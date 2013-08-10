@@ -979,7 +979,7 @@ llvm::Value *LLVM::generateListCode(IRBuilder<> *builder, ListNode *node)
 {
 	Node *data = node->data;
 	vector<CodeGenerator::Value *> list;
-	if (data->tk->info.type == TokenType::Comma) {
+	if (data->tk->info.type == TokenType::Comma || data->tk->info.type == TokenType::Arrow) {
 		generateCommaCode(builder, dynamic_cast<BranchNode *>(data), &list);
 	} else {
 		CodeGenerator::Value *v = new CodeGenerator::Value();
