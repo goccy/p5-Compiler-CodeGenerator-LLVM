@@ -162,6 +162,8 @@ public:
 	llvm::Type *union_ptr_type;
 	llvm::Type *array_ref_type;
 	llvm::Type *array_ref_ptr_type;
+	llvm::Type *hash_ref_type;
+	llvm::Type *hash_ref_ptr_type;
 	llvm::Function *cur_func;
 	llvm::Function *main_func;
 	llvm::Value *cur_args;
@@ -192,10 +194,12 @@ public:
 	llvm::Value *createNaNBoxingString(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingArray(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingArrayRef(llvm::IRBuilder<> *builder, llvm::Value *value);
+	llvm::Value *createNaNBoxingHashRef(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingObject(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingPtr(llvm::IRBuilder<> *builder, llvm::Value *value, uint64_t tag);
 	llvm::Value *createArray(llvm::IRBuilder<> *builder, llvm::Value *list, size_t size);
 	llvm::Value *createArrayRef(llvm::IRBuilder<> *builder, llvm::Value *boxed_array);
+	llvm::Value *createHashRef(llvm::IRBuilder<> *builder, llvm::Value *boxed_array);
 	llvm::Value *createArgumentArray(llvm::IRBuilder<> *builder, FunctionCallNode *node);// llvm::Value *list, size_t size);
 	void setIteratorValue(llvm::IRBuilder<> *builder, Node *node);
 	void traverse(llvm::IRBuilder<> *builder, AST *ast);
@@ -219,14 +223,17 @@ public:
 	llvm::Value *generateOperatorCodeWithObject(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, const char *fname);
 	llvm::Value *generateListCode(llvm::IRBuilder<> *builder, ListNode *node);
 	llvm::Value *generateArrayRefCode(llvm::IRBuilder<> *builder, ArrayRefNode *node);
+	llvm::Value *generateHashRefCode(llvm::IRBuilder<> *builder, HashRefNode *node);
 	llvm::Value *generateDereferenceCode(llvm::IRBuilder<> *builder, DereferenceNode *node);
 	llvm::Value *generateArrayRefToArrayCode(llvm::IRBuilder<> *builder, llvm::Value *array_ref);
+	llvm::Value *generateHashRefToHashCode(llvm::IRBuilder<> *builder, llvm::Value *hash_ref);
 	std::vector<CodeGenerator::Value *> *generateListDefinitionCode(llvm::IRBuilder<> *builder, ListNode *node);
 	llvm::Value *generateValueCode(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *generateFunctionCallCode(llvm::IRBuilder<> *builder, FunctionCallNode *node);
 	llvm::Value *generateArrayAccessCode(llvm::IRBuilder<> *builder, ArrayNode *node);
 	llvm::Value *generateHashAccessCode(llvm::IRBuilder<> *builder, HashNode *node);
 	llvm::Value *generateArrayRefAccessCode(llvm::IRBuilder<> *builder, llvm::Value *array_ref, llvm::Value *idx);
+	llvm::Value *generateHashRefAccessCode(llvm::IRBuilder<> *builder, llvm::Value *hash_ref, llvm::Value *key);
 	llvm::Constant *getBuiltinFunction(llvm::IRBuilder<> *builder, std::string function_name);
 };
 

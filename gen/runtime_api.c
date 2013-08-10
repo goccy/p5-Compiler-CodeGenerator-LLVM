@@ -24,6 +24,9 @@ void print_object(UnionType _o)
 	case Hash:
 		print_hash(to_Hash(o));
 		break;
+	case HashRef:
+		fprintf(stdout, "HASH(%p)", o);
+		break;
 	case ObjectType: {
 		Object *object = to_Object(o);
 		print_object(object->v);

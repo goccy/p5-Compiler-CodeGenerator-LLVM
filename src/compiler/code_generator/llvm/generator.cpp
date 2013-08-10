@@ -37,7 +37,9 @@ void LLVM::createRuntimeTypes(void)
 	fields.push_back(union_type);
 	object_type = StructType::create(ArrayRef<Type *>(fields), "Object", false);
 	array_ref_type = StructType::create(ArrayRef<Type *>(fields), "ArrayRef", false);
+	hash_ref_type = StructType::create(ArrayRef<Type *>(fields), "HashRef", false);
 	array_ref_ptr_type = PointerType::get(array_ref_type, 0);
+	hash_ref_ptr_type = PointerType::get(hash_ref_type, 0);
 
 	fields.clear();
 
@@ -524,7 +526,9 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 					   (type == TokenType::ArrayVar || type == TokenType::LocalArrayVar)) {
 				llvm::Value *result = generateHashToArrayCode(builder, value);
 				o = generateReceiveUnionValueCode(builder, result);
-			} else if (cur_type == Enum::Runtime::Array || cur_type == Enum::Runtime::ArrayRef) {
+			} else if (cur_type == Enum::Runtime::Array ||
+					   cur_type == Enum::Runtime::ArrayRef ||
+					   cur_type == Enum::Runtime::HashRef) {
 				o = value;
 			} else {
 				llvm::Value *tmp = builder->CreateAlloca(object_type, 0, node->left->tk->data.c_str());
@@ -580,8 +584,30 @@ llvm::Value *LLVM::generateDereferenceCode(IRBuilder<> *builder, DereferenceNode
 		}
 		ret = generateArrayRefToArrayCode(builder, boxed_array_ref);
 		cur_type = Enum::Runtime::Array;
+	} else if (expr->tk->info.type == TokenType::ShortHashDereference) {
+		string name = expr->tk->data;
+		string orig_name = name.substr(1);
+		CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), orig_name.c_str(), node->tk->finfo.indent);
+		assert(v && "value is not defined");
+		llvm::Value *boxed_hash_ref = NULL;
+		if (v->type != Enum::Runtime::HashRef) {
+			/* v->value is Object */
+			llvm::Value *object = generateCastCode(builder, Enum::Runtime::Object, v->value);
+			boxed_hash_ref = builder->CreateStructGEP(object, 1);
+		} else {
+			boxed_hash_ref = v->value;
+		}
+		ret = generateHashRefToHashCode(builder, boxed_hash_ref);
+		cur_type = Enum::Runtime::Hash;
 	}
 	return ret;
+}
+
+llvm::Value *LLVM::generateHashRefToHashCode(IRBuilder<> *builder, llvm::Value *boxed_hash_ref)
+{
+	llvm::Value *hash_ref = generateCastCode(builder, Enum::Runtime::HashRef, boxed_hash_ref);
+	llvm::Value *boxed_hash = builder->CreateStructGEP(hash_ref, 1);
+	return boxed_hash;
 }
 
 llvm::Value *LLVM::generateArrayRefToArrayCode(IRBuilder<> *builder, llvm::Value *boxed_array_ref)
@@ -589,6 +615,22 @@ llvm::Value *LLVM::generateArrayRefToArrayCode(IRBuilder<> *builder, llvm::Value
 	llvm::Value *array_ref = generateCastCode(builder, Enum::Runtime::ArrayRef, boxed_array_ref);
 	llvm::Value *boxed_array = builder->CreateStructGEP(array_ref, 1);
 	return boxed_array;
+}
+
+llvm::Value *LLVM::generateHashRefCode(IRBuilder<> *builder, HashRefNode *node)
+{
+	llvm::Value *boxed_array = generateListCode(builder, (ListNode *)node);
+	llvm::Value *array = generateCastCode(builder, Enum::Runtime::Array, boxed_array);
+	vector<llvm::Type *> arg_types;
+	arg_types.push_back(array_ptr_type);
+	llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+	FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
+	llvm::Constant *f = module->getOrInsertFunction("new_Hash", ftype);
+	CallInst *result = builder->CreateCall(f, array, "hash");
+	llvm::Value *boxed_hash = generateReceiveUnionValueCode(builder, result);
+	llvm::Value *hash_ref = createHashRef(builder, boxed_hash);
+	cur_type = Enum::Runtime::HashRef;
+	return createNaNBoxingHashRef(builder, hash_ref);
 }
 
 llvm::Value *LLVM::generateArrayRefCode(IRBuilder<> *builder, ArrayRefNode *node)
@@ -623,6 +665,9 @@ llvm::Value *LLVM::generateCastCode(IRBuilder<> *builder, Enum::Runtime::Type ty
 		break;
 	case Enum::Runtime::ArrayRef:
 		ret = generatePtrCastCode(builder, value, ARRAY_REF_TAG, array_ref_ptr_type);
+		break;
+	case Enum::Runtime::HashRef:
+		ret = generatePtrCastCode(builder, value, HASH_REF_TAG, hash_ref_ptr_type);
 		break;
 	case Enum::Runtime::Object:
 		ret = generatePtrCastCode(builder, value, OBJECT_TAG, object_ptr_type);
@@ -848,7 +893,13 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 			}
 			ret = generateArrayRefAccessCode(builder, left, right);
 		} else if (right_type == Enum::Runtime::HashRef) {
-			assert(0 && "Sorry, hash reference is still not supported");
+			if (left_type == Enum::Runtime::Value) {
+				/* left is HashRef */
+				left = generateCastCode(builder, Enum::Runtime::HashRef, left);
+			} else if (left_type != Enum::Runtime::HashRef) {
+				assert(0 && "ERROR: type error!!!");
+			}
+			ret = generateHashRefAccessCode(builder, left, right);
 		} else {
 			assert(0 && "ERROR: type error!!!");
 		}
@@ -1031,6 +1082,18 @@ llvm::Value *LLVM::generateArrayRefAccessCode(IRBuilder<> *builder, llvm::Value 
 	return ret;
 }
 
+llvm::Value *LLVM::generateHashRefAccessCode(IRBuilder<> *builder, llvm::Value *hash_ref, llvm::Value *key_hash_ref)
+{
+	llvm::Value *key_hash = generateCastCode(builder, Enum::Runtime::Hash, builder->CreateStructGEP(key_hash_ref, 1));
+	llvm::Value *keys = builder->CreateLoad(builder->CreateStructGEP(key_hash, 2));
+	llvm::Value *key_str_object = builder->CreateBitCast(builder->CreateLoad(builder->CreateGEP(keys, ConstantInt::get(int_type, 0))), string_ptr_type);
+	llvm::Value *idx = builder->CreateLoad(builder->CreateStructGEP(key_str_object, 3));
+	llvm::Value *hash = generateCastCode(builder, Enum::Runtime::Hash, builder->CreateStructGEP(hash_ref, 1));
+	llvm::Value *ret = getArrayElement(builder, hash, idx);
+	cur_type = Enum::Runtime::Value;
+	return ret;
+}
+
 llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 {
 	using namespace TokenType;
@@ -1056,7 +1119,7 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 	} else if (TYPE_match(node, HashNode)) {
 		ret = generateHashAccessCode(builder, dynamic_cast<HashNode *>(node));
 	} else if (TYPE_match(node, HashRefNode)) {
-		assert(0 && "Sorry, hash reference is still not supported");
+		ret = generateHashRefCode(builder, dynamic_cast<HashRefNode *>(node));
 	}
 	if (ret) return ret;
 	switch (tk->info.type) {
@@ -1103,6 +1166,9 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 		} else {
 			switch (var->type) {
 			case Enum::Runtime::ArrayRef:
+				ret = var->value;
+				break;
+			case Enum::Runtime::HashRef:
 				ret = var->value;
 				break;
 			default: {
@@ -1298,6 +1364,11 @@ llvm::Value *LLVM::createNaNBoxingArrayRef(IRBuilder<> *builder, llvm::Value *_v
 	return createNaNBoxingPtr(builder, _value, ARRAY_REF_TAG);
 }
 
+llvm::Value *LLVM::createNaNBoxingHashRef(IRBuilder<> *builder, llvm::Value *_value)
+{
+	return createNaNBoxingPtr(builder, _value, HASH_REF_TAG);
+}
+
 llvm::Value *LLVM::createNaNBoxingObject(IRBuilder<> *builder, llvm::Value *_value)
 {
 	return createNaNBoxingPtr(builder, _value, OBJECT_TAG);
@@ -1334,6 +1405,16 @@ llvm::Value *LLVM::createArrayRef(IRBuilder<> *builder, llvm::Value *boxed_array
 	builder->CreateStore(ConstantInt::get(int32_type, Enum::Runtime::ArrayRef), array_type);
 	builder->CreateStore(builder->CreateLoad(boxed_array), array_body);
 	return array_ref;
+}
+
+llvm::Value *LLVM::createHashRef(IRBuilder<> *builder, llvm::Value *boxed_hash)
+{
+	llvm::Value *hash_ref = builder->CreateAlloca(hash_ref_type, 0, "hash_ref");
+	llvm::Value *hash_type = builder->CreateStructGEP(hash_ref, 0, "hash_ref_type");
+	llvm::Value *hash_body = builder->CreateStructGEP(hash_ref, 1, "hash_ref_body");
+	builder->CreateStore(ConstantInt::get(int32_type, Enum::Runtime::HashRef), hash_type);
+	builder->CreateStore(builder->CreateLoad(boxed_hash), hash_body);
+	return hash_ref;
 }
 
 void LLVM::debug_run(AST *ast)

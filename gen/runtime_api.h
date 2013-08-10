@@ -61,6 +61,11 @@ typedef struct _Hash {
 	size_t size;
 } HashObject;
 
+typedef struct _HashRef {
+	int type;
+	Value v;
+} HashRefObject;
+
 #define NaN                (0xFFF0000000000000)
 #define MASK               (0x00000000FFFFFFFF)
 #define _TYPE              (0x000F000000000000)
@@ -92,6 +97,7 @@ typedef struct _Hash {
 #define to_Object(o) (Object *)((uint64_t)o ^ (NaN | OBJECT_TAG))
 #define to_Array(o) (ArrayObject *)((uint64_t)o ^ (NaN | ARRAY_TAG))
 #define to_Hash(o) (HashObject *)((uint64_t)o ^ (NaN | HASH_TAG))
+#define to_HashRef(o) (HashRefObject *)((uint64_t)o ^ (NaN | HASH_REF_TAG))
 
 #define TYPE_CHECK(o, T) do {					\
 		if (TYPE(o) != T) {						\
