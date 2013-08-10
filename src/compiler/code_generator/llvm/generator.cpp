@@ -69,6 +69,13 @@ void LLVM::createRuntimeTypes(void)
 	fields.push_back(int_type);
 	string_type = StructType::create(ArrayRef<Type *>(fields), "StringObject");
 	string_ptr_type = PointerType::get(string_type, 0);
+
+	fields.clear();
+
+	fields.push_back(Type::getInt32Ty(ctx));
+	fields.push_back(PointerType::get(llvm::FunctionType::get(int_type, array_ptr_type, false), 0));
+	code_ref_type = StructType::create(ArrayRef<Type *>(fields), "CodeRefObject");
+	code_ref_ptr_type = PointerType::get(code_ref_type, 0);
 }
 
 bool LLVM::linkModule(llvm::Module *dest, string file_name)
@@ -439,9 +446,24 @@ void LLVM::generateWhileStmtCode(IRBuilder<> *builder, WhileStmtNode *node)
 	builder->SetInsertPoint(after_block);
 }
 
-void LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperatorNode *node)
+llvm::Value *LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperatorNode *node)
 {
 	using namespace TokenType;
+	llvm::Value *ret = NULL;
+	if (node->tk->info.type == TokenType::CodeRef) {
+		Node *expr = node->expr;
+		switch (expr->tk->info.type) {
+		case Call: {
+			llvm::Value *code = fmgr.getFunction("main", expr->tk->data.c_str());
+			llvm::Value *code_ref = createCodeRef(builder, code);
+			ret = createNaNBoxingCodeRef(builder, code_ref);
+			break;
+		}
+		default:
+			break;
+		}
+	}
+	if (ret) return ret;
 	llvm::Value *value = generateCastedValueCode(builder, node->expr);
 	Token *tk = node->expr->tk;
 	Enum::Runtime::Type type = cur_type;
@@ -477,6 +499,7 @@ void LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTermOperat
 	default:
 		break;
 	}
+	return ret;
 }
 
 llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
@@ -603,6 +626,31 @@ llvm::Value *LLVM::generateDereferenceCode(IRBuilder<> *builder, DereferenceNode
 	return ret;
 }
 
+llvm::Value *LLVM::generateCodeDereferenceCode(IRBuilder<> *builder, DereferenceNode *code_node, Node *args_node)
+{
+	string name = code_node->tk->data;
+	string orig_name = name.substr(1);
+	CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), orig_name.c_str(), code_node->tk->finfo.indent);
+	assert(v && "value is not defined");
+	llvm::Value *boxed_code_ref = NULL;
+	if (v->type != Enum::Runtime::CodeRef) {
+		/* v->value is Object */
+		llvm::Value *object = generateCastCode(builder, Enum::Runtime::Object, v->value);
+		boxed_code_ref = builder->CreateStructGEP(object, 1);
+	} else {
+		boxed_code_ref = v->value;
+	}
+	llvm::Value *code_ref = generateCastCode(builder, Enum::Runtime::CodeRef, boxed_code_ref);
+	llvm::Value *code = builder->CreateLoad(builder->CreateStructGEP(code_ref, 1));
+	llvm::Value *_args = builder->CreateAlloca(union_type, ConstantInt::get(int_type, 1), "args");
+	llvm::Value *idx = ConstantInt::get(int_type, 0);
+	llvm::Value *value = generateValueCode(builder, args_node);
+	builder->CreateStore(builder->CreateLoad(value, "elem"), builder->CreateGEP(_args, idx, "get_idx"));
+	llvm::Value *args = createArray(builder, _args, 1);
+	llvm::Value *result = builder->CreateCall(code, args);
+	return generateReceiveUnionValueCode(builder, result);
+}
+
 llvm::Value *LLVM::generateHashRefToHashCode(IRBuilder<> *builder, llvm::Value *boxed_hash_ref)
 {
 	llvm::Value *hash_ref = generateCastCode(builder, Enum::Runtime::HashRef, boxed_hash_ref);
@@ -668,6 +716,9 @@ llvm::Value *LLVM::generateCastCode(IRBuilder<> *builder, Enum::Runtime::Type ty
 		break;
 	case Enum::Runtime::HashRef:
 		ret = generatePtrCastCode(builder, value, HASH_REF_TAG, hash_ref_ptr_type);
+		break;
+	case Enum::Runtime::CodeRef:
+		ret = generatePtrCastCode(builder, value, CODE_REF_TAG, code_ref_ptr_type);
 		break;
 	case Enum::Runtime::Object:
 		ret = generatePtrCastCode(builder, value, OBJECT_TAG, object_ptr_type);
@@ -1101,7 +1152,11 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 	Token *tk = node->tk;
 	switch (tk->info.kind) {
 	case TokenKind::Operator:
-		ret = generateOperatorCode(builder, dynamic_cast<BranchNode *>(node));
+		if (TYPE_match(node, BranchNode)) {
+			ret = generateOperatorCode(builder, dynamic_cast<BranchNode *>(node));
+		} else if (TYPE_match(node, SingleTermOperatorNode)) {
+			ret = generateSingleTermOperatorCode(builder, dynamic_cast<SingleTermOperatorNode *>(node));
+		}
 		break;
 	default:
 		break;
@@ -1214,10 +1269,19 @@ llvm::Value *LLVM::getArgumentArray(IRBuilder<> *)
 
 llvm::Value *LLVM::createArgumentArray(IRBuilder<> *builder, FunctionCallNode *node)
 {
-	size_t size = node->args->size();
-	assert(size == 1 && "argument size error");
-	Node *arg = node->args->at(0);
 	llvm::Value *ret = NULL;
+	size_t size = node->args->size();
+	if (size == 2 && node->args->at(0)->tk->info.type == TokenType::ShortCodeDereference) {
+		llvm::Value *args = builder->CreateAlloca(union_type, ConstantInt::get(int_type, 1), "args");
+		llvm::Value *idx = ConstantInt::get(int_type, 0);
+		llvm::Value *value = generateCodeDereferenceCode(builder, dynamic_cast<DereferenceNode *>(node->args->at(0)), node->args->at(1));
+		builder->CreateStore(builder->CreateLoad(value, "elem"), builder->CreateGEP(args, idx, "get_idx"));
+		ret = createArray(builder, args, 1);
+	} else {
+		assert(size == 1 && "argument size error");
+	}
+	if (ret) return ret;
+	Node *arg = node->args->at(0);
 	if (TYPE_match(arg, ListNode)) {
 		ret = generateCastCode(builder, Enum::Runtime::Array, generateListCode(builder, dynamic_cast<ListNode *>(arg)));
 	} else if (arg->tk->info.type == TokenType::Comma) {
@@ -1369,6 +1433,11 @@ llvm::Value *LLVM::createNaNBoxingHashRef(IRBuilder<> *builder, llvm::Value *_va
 	return createNaNBoxingPtr(builder, _value, HASH_REF_TAG);
 }
 
+llvm::Value *LLVM::createNaNBoxingCodeRef(IRBuilder<> *builder, llvm::Value *_value)
+{
+	return createNaNBoxingPtr(builder, _value, CODE_REF_TAG);
+}
+
 llvm::Value *LLVM::createNaNBoxingObject(IRBuilder<> *builder, llvm::Value *_value)
 {
 	return createNaNBoxingPtr(builder, _value, OBJECT_TAG);
@@ -1415,6 +1484,16 @@ llvm::Value *LLVM::createHashRef(IRBuilder<> *builder, llvm::Value *boxed_hash)
 	builder->CreateStore(ConstantInt::get(int32_type, Enum::Runtime::HashRef), hash_type);
 	builder->CreateStore(builder->CreateLoad(boxed_hash), hash_body);
 	return hash_ref;
+}
+
+llvm::Value *LLVM::createCodeRef(IRBuilder<> *builder, llvm::Value *code)
+{
+	llvm::Value *code_ref = builder->CreateAlloca(code_ref_type, 0, "code_ref");
+	llvm::Value *code_type = builder->CreateStructGEP(code_ref, 0, "code_ref_type");
+	llvm::Value *code_body = builder->CreateStructGEP(code_ref, 1, "code_ref_body");
+	builder->CreateStore(ConstantInt::get(int32_type, Enum::Runtime::CodeRef), code_type);
+	builder->CreateStore(code, code_body);
+	return code_ref;
 }
 
 void LLVM::debug_run(AST *ast)

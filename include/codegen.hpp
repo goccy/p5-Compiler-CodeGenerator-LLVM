@@ -37,6 +37,7 @@ typedef enum {
 	HashRef,
 	Object,
 	BlessedObject,
+	CodeRef,
 	Undefined,
 	Value
 } Type;
@@ -58,7 +59,8 @@ typedef enum {
 #define HASH_REF_TAG       (uint64_t)(0x0006000000000000)
 #define OBJECT_TAG         (uint64_t)(0x0007000000000000)
 #define BLESSED_OBJECT_TAG (uint64_t)(0x0008000000000000)
-#define UNDEF_TAG          (uint64_t)(0x0009000000000000)
+#define CODE_REF_TAG       (uint64_t)(0x0009000000000000)
+#define UNDEF_TAG          (uint64_t)(0x000a000000000000)
 
 #define INT_init(data) (void *)(uint64_t)((data & MASK) | NaN | INT_TAG)
 #define DOUBLE_init(data) (void *)&data
@@ -164,6 +166,8 @@ public:
 	llvm::Type *array_ref_ptr_type;
 	llvm::Type *hash_ref_type;
 	llvm::Type *hash_ref_ptr_type;
+	llvm::Type *code_ref_type;
+	llvm::Type *code_ref_ptr_type;
 	llvm::Function *cur_func;
 	llvm::Function *main_func;
 	llvm::Value *cur_args;
@@ -195,10 +199,12 @@ public:
 	llvm::Value *createNaNBoxingArray(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingArrayRef(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingHashRef(llvm::IRBuilder<> *builder, llvm::Value *value);
+	llvm::Value *createNaNBoxingCodeRef(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingObject(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingPtr(llvm::IRBuilder<> *builder, llvm::Value *value, uint64_t tag);
 	llvm::Value *createArray(llvm::IRBuilder<> *builder, llvm::Value *list, size_t size);
 	llvm::Value *createArrayRef(llvm::IRBuilder<> *builder, llvm::Value *boxed_array);
+	llvm::Value *createCodeRef(llvm::IRBuilder<> *builder, llvm::Value *code);
 	llvm::Value *createHashRef(llvm::IRBuilder<> *builder, llvm::Value *boxed_array);
 	llvm::Value *createArgumentArray(llvm::IRBuilder<> *builder, FunctionCallNode *node);// llvm::Value *list, size_t size);
 	void setIteratorValue(llvm::IRBuilder<> *builder, Node *node);
@@ -214,8 +220,8 @@ public:
 	void generateFunctionCode(llvm::IRBuilder<> *builder, FunctionNode *node);
 	void generateReturnCode(llvm::IRBuilder<> *builder, ReturnNode *node);
 	void generateLastEvaluatedReturnCode(llvm::IRBuilder<> *builder);
-	void generateSingleTermOperatorCode(llvm::IRBuilder<> *builder, SingleTermOperatorNode *node);
     void generateCommaCode(llvm::IRBuilder<> *builder, BranchNode *node, std::vector<CodeGenerator::Value *> *list);
+	llvm::Value *generateSingleTermOperatorCode(llvm::IRBuilder<> *builder, SingleTermOperatorNode *node);
 	llvm::Value *generateAssignCode(llvm::IRBuilder<> *builder, BranchNode *node);
 	llvm::Value *generateBinaryOperatorCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, llvm::Instruction::BinaryOps op, llvm::Instruction::BinaryOps fop, const char *fname);
 	llvm::Value *generateBinaryOperatorCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left_value, Enum::Runtime::Type right_type, llvm::Value *right_value, llvm::CmpInst::Predicate op, llvm::CmpInst::Predicate fop, const char *fname);
@@ -225,6 +231,7 @@ public:
 	llvm::Value *generateArrayRefCode(llvm::IRBuilder<> *builder, ArrayRefNode *node);
 	llvm::Value *generateHashRefCode(llvm::IRBuilder<> *builder, HashRefNode *node);
 	llvm::Value *generateDereferenceCode(llvm::IRBuilder<> *builder, DereferenceNode *node);
+	llvm::Value *generateCodeDereferenceCode(llvm::IRBuilder<> *builder, DereferenceNode *node, Node *args);
 	llvm::Value *generateArrayRefToArrayCode(llvm::IRBuilder<> *builder, llvm::Value *array_ref);
 	llvm::Value *generateHashRefToHashCode(llvm::IRBuilder<> *builder, llvm::Value *hash_ref);
 	std::vector<CodeGenerator::Value *> *generateListDefinitionCode(llvm::IRBuilder<> *builder, ListNode *node);

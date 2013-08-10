@@ -14,6 +14,7 @@ typedef enum {
 	HashRef,
 	ObjectType,
 	BlessedObject,
+	CodeRef,
 	Undefined
 } Type;
 
@@ -66,6 +67,13 @@ typedef struct _HashRef {
 	Value v;
 } HashRefObject;
 
+typedef UnionType(*Code)(ArrayObject*);
+
+typedef struct _CodeRef {
+	int header;
+	Code code;
+} CodeRefObject;
+
 #define NaN                (0xFFF0000000000000)
 #define MASK               (0x00000000FFFFFFFF)
 #define _TYPE              (0x000F000000000000)
@@ -77,7 +85,8 @@ typedef struct _HashRef {
 #define HASH_REF_TAG       (uint64_t)(0x0006000000000000)
 #define OBJECT_TAG         (uint64_t)(0x0007000000000000)
 #define BLESSED_OBJECT_TAG (uint64_t)(0x0008000000000000)
-#define UNDEF_TAG          (uint64_t)(0x0009000000000000)
+#define CODE_REF_TAG       (uint64_t)(0x0009000000000000)
+#define UNDEF_TAG          (uint64_t)(0x000a000000000000)
 
 #define HASH_TABLE_SIZE 512
 
