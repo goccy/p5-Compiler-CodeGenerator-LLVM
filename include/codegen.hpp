@@ -149,11 +149,15 @@ public:
 	llvm::Type *value_ptr_type;
 	llvm::Type *void_type;
 	llvm::Type *void_ptr_type;
+	llvm::Type *string_type;
+	llvm::Type *string_ptr_type;
 	llvm::Type *object_type;
 	llvm::Type *object_ptr_type;
 	llvm::Type *object_double_ptr_type;
 	llvm::Type *array_type;
 	llvm::Type *array_ptr_type;
+	llvm::Type *hash_type;
+	llvm::Type *hash_ptr_type;
 	llvm::Type *union_type;
 	llvm::Type *union_ptr_type;
 	llvm::Type *array_ref_type;
@@ -176,9 +180,13 @@ public:
 	llvm::Value *getArgumentArray(llvm::IRBuilder<> *builder);
 	llvm::Value *generateReceiveUnionValueCode(llvm::IRBuilder<> *builder, llvm::Value *result);
 	llvm::Value *generateUnionToIntCode(llvm::IRBuilder<> *builder, llvm::Value *result);
+	llvm::Value *getHashValue(llvm::IRBuilder<> *builder, llvm::Value *hash, llvm::Value *key);
 	llvm::Value *getArraySize(llvm::IRBuilder<> *builder, llvm::Value *array);
+	llvm::Value *getArrayElement(llvm::IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx);
 	llvm::Value *generateCastedValueCode(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *generateCastCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type type, llvm::Value *value);
+	llvm::Value *generatePtrCastCode(llvm::IRBuilder<> *builder, llvm::Value *value, uint64_t tag, llvm::Type *type);
+	llvm::Value *generateHashToArrayCode(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingInt(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingDouble(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingString(llvm::IRBuilder<> *builder, llvm::Value *value);
@@ -190,7 +198,6 @@ public:
 	llvm::Value *createArrayRef(llvm::IRBuilder<> *builder, llvm::Value *boxed_array);
 	llvm::Value *createArgumentArray(llvm::IRBuilder<> *builder, FunctionCallNode *node);// llvm::Value *list, size_t size);
 	void setIteratorValue(llvm::IRBuilder<> *builder, Node *node);
-	llvm::Value *getArrayElement(llvm::IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx);
 	void traverse(llvm::IRBuilder<> *builder, AST *ast);
 	bool linkModule(llvm::Module *dest, std::string filename);
 	void generateCode(llvm::IRBuilder<> *builder, Node *node);
@@ -218,6 +225,7 @@ public:
 	llvm::Value *generateValueCode(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *generateFunctionCallCode(llvm::IRBuilder<> *builder, FunctionCallNode *node);
 	llvm::Value *generateArrayAccessCode(llvm::IRBuilder<> *builder, ArrayNode *node);
+	llvm::Value *generateHashAccessCode(llvm::IRBuilder<> *builder, HashNode *node);
 	llvm::Value *generateArrayRefAccessCode(llvm::IRBuilder<> *builder, llvm::Value *array_ref, llvm::Value *idx);
 	llvm::Constant *getBuiltinFunction(llvm::IRBuilder<> *builder, std::string function_name);
 };

@@ -22,13 +22,12 @@ __DATA__
 my %a = (a => 1, b => 2);
 say %a;
 
-=hoge
 say $a{a};
 say $a{b};
+say $a{c};
 
 $a{a} = 3;
 say %a;
 
 my @b = %a;
 say @b;
-=cut

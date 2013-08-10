@@ -198,6 +198,26 @@ UnionType new_Hash(ArrayObject *array)
 	return ret;
 }
 
+UnionType Hash_to_array(HashObject *hash)
+{
+	UnionType ret;
+	ArrayObject *array = (ArrayObject *)calloc(sizeof(ArrayObject), 1);
+	size_t key_n = hash->size;
+	size_t array_size = key_n * 2;
+	array->list = (UnionType *)calloc(sizeof(UnionType), array_size);
+	array->size = array_size;
+	size_t i = 0;
+	for (i = 0; i < key_n; i++) {
+		StringObject *key = hash->keys[i];
+		UnionType boxed_key;
+		boxed_key.o = STRING_init(key);
+		array->list[i * 2] = boxed_key;
+		array->list[i * 2 + 1] = hash->table[key->hash];
+	}
+	ret.o = ARRAY_init(array);
+	return ret;
+}
+
 Object *new_Object(void)
 {
 	return (Object *)malloc(sizeof(Object));

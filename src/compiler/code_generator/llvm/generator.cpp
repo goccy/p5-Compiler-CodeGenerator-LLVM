@@ -49,6 +49,24 @@ void LLVM::createRuntimeTypes(void)
 	fields.push_back(Type::getInt64Ty(ctx));
 	array_type = StructType::create(ArrayRef<Type *>(fields), "ArrayObject");
 	array_ptr_type = PointerType::get(array_type, 0);
+
+	fields.clear();
+
+	fields.push_back(Type::getInt32Ty(ctx));
+	fields.push_back(PointerType::get(union_type, 0));
+	fields.push_back(PointerType::get(void_ptr_type, 0));
+	fields.push_back(int_type);
+	hash_type = StructType::create(ArrayRef<Type *>(fields), "HashObject");
+	hash_ptr_type = PointerType::get(hash_type, 0);
+
+	fields.clear();
+
+	fields.push_back(Type::getInt32Ty(ctx));
+	fields.push_back(void_ptr_type);
+	fields.push_back(int_type);
+	fields.push_back(int_type);
+	string_type = StructType::create(ArrayRef<Type *>(fields), "StringObject");
+	string_ptr_type = PointerType::get(string_type, 0);
 }
 
 bool LLVM::linkModule(llvm::Module *dest, string file_name)
@@ -198,6 +216,13 @@ llvm::Value *LLVM::getArrayElement(IRBuilder<> *builder, llvm::Value *array, llv
 {
 	llvm::Value *list = builder->CreateLoad(builder->CreateStructGEP(array, 1, "fetch_list"), "load_list");
 	return builder->CreateGEP(list, idx, "get_elem");
+}
+
+llvm::Value *LLVM::getHashValue(IRBuilder<> *builder, llvm::Value *hash, llvm::Value *key)
+{
+	llvm::Value *table = builder->CreateLoad(builder->CreateStructGEP(hash, 1, "fetch_table"), "load_table");
+	llvm::Value *key_hash = builder->CreateLoad(builder->CreateStructGEP(key, 3, "fetch_key_hash"), "load_key_hash");
+	return builder->CreateGEP(table, key_hash, "get_hvalue");
 }
 
 void LLVM::generateIfStmtCode(IRBuilder<> *builder, IfStmtNode *node)
@@ -473,6 +498,9 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 	} else if (TYPE_match(node->left, ArrayNode)) {
 		llvm::Value *elem = generateArrayAccessCode(builder, dynamic_cast<ArrayNode *>(node->left));
 		builder->CreateStore(builder->CreateLoad(value), elem);
+	} else if (TYPE_match(node->left, HashNode)) {
+		llvm::Value *elem = generateHashAccessCode(builder, dynamic_cast<HashNode *>(node->left));
+		builder->CreateStore(builder->CreateLoad(value), elem);
 	} else if (node->left->tk->info.type == TokenType::Pointer) {
 		llvm::Value *elem = generateOperatorCode(builder, dynamic_cast<BranchNode *>(node->left));
 		builder->CreateStore(builder->CreateLoad(value), elem);
@@ -492,6 +520,10 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 				CallInst *result = builder->CreateCall(f, array, "hash");
 				o = generateReceiveUnionValueCode(builder, result);
 				cur_type = Enum::Runtime::Hash;
+			} else if (value_type == Enum::Runtime::Hash &&
+					   (type == TokenType::ArrayVar || type == TokenType::LocalArrayVar)) {
+				llvm::Value *result = generateHashToArrayCode(builder, value);
+				o = generateReceiveUnionValueCode(builder, result);
 			} else if (cur_type == Enum::Runtime::Array || cur_type == Enum::Runtime::ArrayRef) {
 				o = value;
 			} else {
@@ -515,6 +547,18 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 		ret = v->value;
 	}
 	return ret;
+}
+
+llvm::Value *LLVM::generateHashToArrayCode(IRBuilder<> *builder, llvm::Value *value)
+{
+	vector<llvm::Type *> arg_types;
+	arg_types.push_back(hash_ptr_type);
+	llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+	FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
+	llvm::Constant *f = module->getOrInsertFunction("Hash_to_array", ftype);
+	llvm::Value *hash = generateCastCode(builder, Enum::Runtime::Hash, value);
+	CallInst *result = builder->CreateCall(f, hash, "hash_to_array");
+	return result;
 }
 
 llvm::Value *LLVM::generateDereferenceCode(IRBuilder<> *builder, DereferenceNode *node)
@@ -557,7 +601,7 @@ llvm::Value *LLVM::generateArrayRefCode(IRBuilder<> *builder, ArrayRefNode *node
 
 llvm::Value *LLVM::generateCastCode(IRBuilder<> *builder, Enum::Runtime::Type type, llvm::Value *value)
 {
-	/* union* -> i64 or double or Object* or ArrayObject* */
+	/* union* -> i64 or double or Object* or ArrayObject* or some pointer types */
 	llvm::Value *ret = value;
 	switch (type) {
 	case Enum::Runtime::Int: {
@@ -568,34 +612,34 @@ llvm::Value *LLVM::generateCastCode(IRBuilder<> *builder, Enum::Runtime::Type ty
 	case Enum::Runtime::Double:
 		ret = builder->CreateLoad(builder->CreateBitCast(value, double_ptr_type));
 		break;
-	case Enum::Runtime::Array: {
-		llvm::Value *ivalue = builder->CreateLoad(builder->CreateBitCast(value, int_ptr_type));
-		llvm::Value *nan = ConstantInt::get(int_type, NaN);
-		llvm::Value *array_tag = ConstantInt::get(int_type, ARRAY_TAG);
-		llvm::Value *result = builder->CreateXor(ivalue, builder->CreateOr(nan, array_tag));
-		ret = builder->CreateIntToPtr(result, array_ptr_type);
+	case Enum::Runtime::String:
+		ret = generatePtrCastCode(builder, value, STRING_TAG, string_ptr_type);
 		break;
-	}
-	case Enum::Runtime::ArrayRef: {
-		llvm::Value *ivalue = builder->CreateLoad(builder->CreateBitCast(value, int_ptr_type));
-		llvm::Value *nan = ConstantInt::get(int_type, NaN);
-		llvm::Value *array_ref_tag = ConstantInt::get(int_type, ARRAY_REF_TAG);
-		llvm::Value *result = builder->CreateXor(ivalue, builder->CreateOr(nan, array_ref_tag));
-		ret = builder->CreateIntToPtr(result, array_ref_ptr_type);
+	case Enum::Runtime::Array:
+		ret = generatePtrCastCode(builder, value, ARRAY_TAG, array_ptr_type);
 		break;
-	}
-	case Enum::Runtime::Object: {
-		llvm::Value *ivalue = builder->CreateLoad(builder->CreateBitCast(value, int_ptr_type));
-		llvm::Value *nan = ConstantInt::get(int_type, NaN);
-		llvm::Value *object_tag = ConstantInt::get(int_type, OBJECT_TAG);
-		llvm::Value *result = builder->CreateXor(ivalue, builder->CreateOr(nan, object_tag));
-		ret = builder->CreateIntToPtr(result, object_ptr_type);
+	case Enum::Runtime::Hash:
+		ret = generatePtrCastCode(builder, value, HASH_TAG, hash_ptr_type);
 		break;
-	}
+	case Enum::Runtime::ArrayRef:
+		ret = generatePtrCastCode(builder, value, ARRAY_REF_TAG, array_ref_ptr_type);
+		break;
+	case Enum::Runtime::Object:
+		ret = generatePtrCastCode(builder, value, OBJECT_TAG, object_ptr_type);
+		break;
 	default:
 		break;
 	}
 	return ret;
+}
+
+llvm::Value *LLVM::generatePtrCastCode(IRBuilder<> *builder, llvm::Value *value, uint64_t _tag, llvm::Type *to_type)
+{
+	llvm::Value *ivalue = builder->CreateLoad(builder->CreateBitCast(value, int_ptr_type));
+	llvm::Value *nan = ConstantInt::get(int_type, NaN);
+	llvm::Value *tag = ConstantInt::get(int_type, _tag);
+	llvm::Value *result = builder->CreateXor(ivalue, builder->CreateOr(nan, tag));
+	return builder->CreateIntToPtr(result, to_type);
 }
 
 llvm::Value *LLVM::generateBinaryOperatorCode(IRBuilder<> *builder, Enum::Runtime::Type left_type, llvm::Value *left, Enum::Runtime::Type right_type, llvm::Value *right, Instruction::BinaryOps op, Instruction::BinaryOps fop, const char *fname)
@@ -960,6 +1004,21 @@ llvm::Value *LLVM::generateArrayAccessCode(IRBuilder<> *builder, ArrayNode *node
 	return ret;
 }
 
+llvm::Value *LLVM::generateHashAccessCode(IRBuilder<> *builder, HashNode *node)
+{
+	llvm::Value *ret = NULL;
+	HashRefNode *key_node = dynamic_cast<HashRefNode *>(node->key);
+	llvm::Value *key = generateCastedValueCode(builder, key_node->data);
+	string name = node->tk->data;
+	name[0] = '%';
+	CodeGenerator::Value *v = vmgr.getVariable(cur_func_name.c_str(), name.c_str(), node->tk->finfo.indent);
+	assert(v && "array is not defined");
+	llvm::Value *hash = generateCastCode(builder, Enum::Runtime::Hash, v->value);
+	ret = getHashValue(builder, hash, key); //TODO: not supported conflict of hash value
+	cur_type = Enum::Runtime::Value;
+	return ret;
+}
+
 llvm::Value *LLVM::generateArrayRefAccessCode(IRBuilder<> *builder, llvm::Value *array_ref, llvm::Value *_idx)
 {
 	llvm::Value *boxed_idx_array = builder->CreateStructGEP(_idx, 1);
@@ -994,6 +1053,8 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 		ret = generateArrayAccessCode(builder, dynamic_cast<ArrayNode *>(node));
 	} else if (TYPE_match(node, ArrayRefNode)) {
 		ret = generateArrayRefCode(builder, dynamic_cast<ArrayRefNode *>(node));
+	} else if (TYPE_match(node, HashNode)) {
+		ret = generateHashAccessCode(builder, dynamic_cast<HashNode *>(node));
 	} else if (TYPE_match(node, HashRefNode)) {
 		assert(0 && "Sorry, hash reference is still not supported");
 	}

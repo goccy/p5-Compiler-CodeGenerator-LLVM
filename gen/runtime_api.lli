@@ -936,6 +936,115 @@ for.end:                                          ; preds = %for.cond
 }
 
 ; Function Attrs: nounwind ssp uwtable
+define i64 @Hash_to_array(%struct._Hash* %hash) #0 {
+entry:
+  %retval = alloca %union.UnionType, align 8
+  %hash.addr = alloca %struct._Hash*, align 8
+  %ret = alloca %union.UnionType, align 8
+  %array = alloca %struct._Array*, align 8
+  %key_n = alloca i64, align 8
+  %array_size = alloca i64, align 8
+  %i = alloca i64, align 8
+  %key = alloca %struct._String*, align 8
+  %boxed_key = alloca %union.UnionType, align 8
+  store %struct._Hash* %hash, %struct._Hash** %hash.addr, align 8
+  %call = call i8* @calloc(i64 24, i64 1)
+  %0 = bitcast i8* %call to %struct._Array*
+  store %struct._Array* %0, %struct._Array** %array, align 8
+  %1 = load %struct._Hash** %hash.addr, align 8
+  %size = getelementptr inbounds %struct._Hash* %1, i32 0, i32 3
+  %2 = load i64* %size, align 8
+  store i64 %2, i64* %key_n, align 8
+  %3 = load i64* %key_n, align 8
+  %mul = mul i64 %3, 2
+  store i64 %mul, i64* %array_size, align 8
+  %4 = load i64* %array_size, align 8
+  %call1 = call i8* @calloc(i64 8, i64 %4)
+  %5 = bitcast i8* %call1 to %union.UnionType*
+  %6 = load %struct._Array** %array, align 8
+  %list = getelementptr inbounds %struct._Array* %6, i32 0, i32 1
+  store %union.UnionType* %5, %union.UnionType** %list, align 8
+  %7 = load i64* %array_size, align 8
+  %8 = load %struct._Array** %array, align 8
+  %size2 = getelementptr inbounds %struct._Array* %8, i32 0, i32 2
+  store i64 %7, i64* %size2, align 8
+  store i64 0, i64* %i, align 8
+  store i64 0, i64* %i, align 8
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %9 = load i64* %i, align 8
+  %10 = load i64* %key_n, align 8
+  %cmp = icmp ult i64 %9, %10
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %11 = load i64* %i, align 8
+  %12 = load %struct._Hash** %hash.addr, align 8
+  %keys = getelementptr inbounds %struct._Hash* %12, i32 0, i32 2
+  %13 = load %struct._String*** %keys, align 8
+  %arrayidx = getelementptr inbounds %struct._String** %13, i64 %11
+  %14 = load %struct._String** %arrayidx, align 8
+  store %struct._String* %14, %struct._String** %key, align 8
+  %15 = load %struct._String** %key, align 8
+  %16 = ptrtoint %struct._String* %15 to i64
+  %or = or i64 %16, -4503599627370496
+  %or3 = or i64 %or, 562949953421312
+  %17 = inttoptr i64 %or3 to i8*
+  %o = bitcast %union.UnionType* %boxed_key to i8**
+  store i8* %17, i8** %o, align 8
+  %18 = load i64* %i, align 8
+  %mul4 = mul i64 %18, 2
+  %19 = load %struct._Array** %array, align 8
+  %list5 = getelementptr inbounds %struct._Array* %19, i32 0, i32 1
+  %20 = load %union.UnionType** %list5, align 8
+  %arrayidx6 = getelementptr inbounds %union.UnionType* %20, i64 %mul4
+  %21 = bitcast %union.UnionType* %arrayidx6 to i8*
+  %22 = bitcast %union.UnionType* %boxed_key to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %21, i8* %22, i64 8, i32 8, i1 false)
+  %23 = load i64* %i, align 8
+  %mul7 = mul i64 %23, 2
+  %add = add i64 %mul7, 1
+  %24 = load %struct._Array** %array, align 8
+  %list8 = getelementptr inbounds %struct._Array* %24, i32 0, i32 1
+  %25 = load %union.UnionType** %list8, align 8
+  %arrayidx9 = getelementptr inbounds %union.UnionType* %25, i64 %add
+  %26 = load %struct._String** %key, align 8
+  %hash10 = getelementptr inbounds %struct._String* %26, i32 0, i32 3
+  %27 = load i64* %hash10, align 8
+  %28 = load %struct._Hash** %hash.addr, align 8
+  %table = getelementptr inbounds %struct._Hash* %28, i32 0, i32 1
+  %29 = load %union.UnionType** %table, align 8
+  %arrayidx11 = getelementptr inbounds %union.UnionType* %29, i64 %27
+  %30 = bitcast %union.UnionType* %arrayidx9 to i8*
+  %31 = bitcast %union.UnionType* %arrayidx11 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %30, i8* %31, i64 8, i32 8, i1 false)
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %32 = load i64* %i, align 8
+  %inc = add i64 %32, 1
+  store i64 %inc, i64* %i, align 8
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  %33 = load %struct._Array** %array, align 8
+  %34 = ptrtoint %struct._Array* %33 to i64
+  %or12 = or i64 %34, -4503599627370496
+  %or13 = or i64 %or12, 844424930131968
+  %35 = inttoptr i64 %or13 to i8*
+  %o14 = bitcast %union.UnionType* %ret to i8**
+  store i8* %35, i8** %o14, align 8
+  %36 = bitcast %union.UnionType* %retval to i8*
+  %37 = bitcast %union.UnionType* %ret to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %36, i8* %37, i64 8, i32 8, i1 false)
+  %coerce.dive = getelementptr %union.UnionType* %retval, i32 0, i32 0
+  %38 = bitcast double* %coerce.dive to i64*
+  %39 = load i64* %38, align 1
+  ret i64 %39
+}
+
+; Function Attrs: nounwind ssp uwtable
 define %struct._Object* @new_Object() #0 {
 entry:
   %call = call i8* @malloc(i64 16)
