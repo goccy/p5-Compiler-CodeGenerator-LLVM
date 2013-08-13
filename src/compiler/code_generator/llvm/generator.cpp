@@ -9,7 +9,7 @@ using namespace std;
 namespace TokenType = Enum::Token::Type;
 namespace TokenKind = Enum::Token::Kind;
 
-LLVM::LLVM(void) : last_evaluated_value(NULL)
+LLVM::LLVM(void) : last_evaluated_value(NULL), cur_pkg_name("main")
 {
 	LLVMContext &ctx = getGlobalContext();
 	module = new llvm::Module("LLVMIR", ctx);
@@ -72,10 +72,18 @@ void LLVM::createRuntimeTypes(void)
 
 	fields.clear();
 
+	code_ptr_type = PointerType::get(llvm::FunctionType::get(int_type, array_ptr_type, false), 0);
 	fields.push_back(Type::getInt32Ty(ctx));
-	fields.push_back(PointerType::get(llvm::FunctionType::get(int_type, array_ptr_type, false), 0));
+	fields.push_back(code_ptr_type);
 	code_ref_type = StructType::create(ArrayRef<Type *>(fields), "CodeRefObject");
 	code_ref_ptr_type = PointerType::get(code_ref_type, 0);
+
+	fields.push_back(Type::getInt32Ty(ctx));
+	fields.push_back(union_type);
+	fields.push_back(hash_ptr_type);
+	fields.push_back(void_ptr_type);
+	blessed_object_type = StructType::create(ArrayRef<Type *>(fields), "BlessedObject");
+	blessed_object_ptr_type = PointerType::get(blessed_object_type, 0);
 }
 
 bool LLVM::linkModule(llvm::Module *dest, string file_name)
@@ -99,6 +107,8 @@ const char *LLVM::gen(AST *ast)
 	union_type = module->getTypeByName("union.UnionType");
 	union_ptr_type = PointerType::get(union_type, 0);
 	createRuntimeTypes();
+	generateGetMethodByName();
+	generateFetchObject();
 
 	IRBuilder<> builder(ctx);
 	llvm::FunctionType *mainFuncType = llvm::FunctionType::get(int_type, true);
@@ -192,9 +202,32 @@ void LLVM::generateCode(IRBuilder<> *builder, Node *node)
 	} else if (TYPE_match(node, ReturnNode)) {
 		generateReturnCode(builder, dynamic_cast<ReturnNode *>(node));
 		has_return_statement = true;
+	} else if (TYPE_match(node, PackageNode)) {
+		generatePackageCode(builder, dynamic_cast<PackageNode *>(node));
 	} else {
 		assert(0 && "Sorry, still not supported");
 	}
+}
+
+void LLVM::generateGetMethodByName(void)
+{
+	vector<llvm::Type *> arg_types;
+	arg_types.push_back(blessed_object_ptr_type);
+	arg_types.push_back(void_ptr_type);
+	llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+	FunctionType *ftype = llvm::FunctionType::get(code_ptr_type, arg_types_ref, false);
+	get_method_by_name = module->getOrInsertFunction("get_method_by_name", ftype);
+}
+
+void LLVM::generateFetchObject(void)
+{
+	FunctionType *ftype = llvm::FunctionType::get(object_ptr_type, false);
+	fetch_object = module->getOrInsertFunction("fetch_object", ftype);
+}
+
+void LLVM::generatePackageCode(IRBuilder<> *builder, PackageNode *node)
+{
+	cur_pkg_name = node->tk->data;
 }
 
 BasicBlock *LLVM::generateBlockCode(IRBuilder<> *builder, BasicBlock *block, BasicBlock *merge_block, Node *node)
@@ -352,7 +385,19 @@ void LLVM::generateFunctionCode(IRBuilder<> *builder, FunctionNode *node)
 		GlobalValue::ExternalLinkage,
 		node->tk->data.c_str(), module
 	);
-	fmgr.setFunction("main", node->tk->data.c_str(), func);
+	fmgr.setFunction(cur_pkg_name.c_str(), node->tk->data.c_str(), func);
+
+	vector<llvm::Type *> arg_types;
+	arg_types.push_back(void_ptr_type);
+	arg_types.push_back(void_ptr_type);
+	arg_types.push_back(PointerType::get(ftype, 0));
+	llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+	FunctionType *_ftype = llvm::FunctionType::get(void_type, arg_types_ref, false);
+	llvm::Constant *f = module->getOrInsertFunction("store_method_by_pkg_name", _ftype);
+	llvm::Value *pkg = builder->CreateGlobalStringPtr(cur_pkg_name.c_str());
+	llvm::Value *mtd = builder->CreateGlobalStringPtr(node->tk->data.c_str());
+	builder->CreateCall3(f, pkg, mtd, func);
+
 	main_func = func;
 	cur_func = func;
 	cur_func_name = node->tk->data.c_str();
@@ -454,7 +499,7 @@ llvm::Value *LLVM::generateSingleTermOperatorCode(IRBuilder<> *builder, SingleTe
 		Node *expr = node->expr;
 		switch (expr->tk->info.type) {
 		case Call: {
-			llvm::Value *code = fmgr.getFunction("main", expr->tk->data.c_str());
+			llvm::Value *code = fmgr.getFunction(cur_pkg_name.c_str(), expr->tk->data.c_str());
 			llvm::Value *code_ref = createCodeRef(builder, code);
 			ret = createNaNBoxingCodeRef(builder, code_ref);
 			break;
@@ -551,7 +596,8 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 				o = generateReceiveUnionValueCode(builder, result);
 			} else if (cur_type == Enum::Runtime::Array ||
 					   cur_type == Enum::Runtime::ArrayRef ||
-					   cur_type == Enum::Runtime::HashRef) {
+					   cur_type == Enum::Runtime::HashRef ||
+					   cur_type == Enum::Runtime::BlessedObject) {
 				o = value;
 			} else {
 				llvm::Value *tmp = builder->CreateAlloca(object_type, 0, node->left->tk->data.c_str());
@@ -723,10 +769,72 @@ llvm::Value *LLVM::generateCastCode(IRBuilder<> *builder, Enum::Runtime::Type ty
 	case Enum::Runtime::Object:
 		ret = generatePtrCastCode(builder, value, OBJECT_TAG, object_ptr_type);
 		break;
+	case Enum::Runtime::BlessedObject:
+		ret = generatePtrCastCode(builder, value, BLESSED_OBJECT_TAG, blessed_object_ptr_type);
+		break;
 	default:
 		break;
 	}
 	return ret;
+}
+
+llvm::Value *LLVM::generateDynamicCastCode(IRBuilder<> *builder, Enum::Runtime::Type type, llvm::Value *value)
+{
+	vector<llvm::Type *> arg_types;
+	arg_types.push_back(union_ptr_type);
+	llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+	llvm::Constant *f = NULL;
+	switch (type) {
+	case Enum::Runtime::Int: {
+		FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
+		f = module->getOrInsertFunction("dynamic_int_cast_code", ftype);
+		break;
+	}
+	case Enum::Runtime::Double: {
+		FunctionType *ftype = llvm::FunctionType::get(double_type, arg_types_ref, false);
+		f = module->getOrInsertFunction("dynamic_double_cast_code", ftype);
+		break;
+	}
+	case Enum::Runtime::String: {
+		FunctionType *ftype = llvm::FunctionType::get(string_ptr_type, arg_types_ref, false);
+		f = module->getOrInsertFunction("dynamic_string_cast_code", ftype);
+		break;
+	}
+	case Enum::Runtime::Array: {
+		FunctionType *ftype = llvm::FunctionType::get(array_ptr_type, arg_types_ref, false);
+		f = module->getOrInsertFunction("dynamic_array_cast_code", ftype);
+		break;
+	}
+	case Enum::Runtime::Hash: {
+		FunctionType *ftype = llvm::FunctionType::get(hash_ptr_type, arg_types_ref, false);
+		f = module->getOrInsertFunction("dynamic_hash_cast_code", ftype);
+		break;
+	}
+	case Enum::Runtime::ArrayRef: {
+		FunctionType *ftype = llvm::FunctionType::get(array_ref_ptr_type, arg_types_ref, false);
+		f = module->getOrInsertFunction("dynamic_array_ref_cast_code", ftype);
+		break;
+	}
+	case Enum::Runtime::HashRef: {
+		FunctionType *ftype = llvm::FunctionType::get(hash_ref_ptr_type, arg_types_ref, false);
+		f = module->getOrInsertFunction("dynamic_hash_ref_cast_code", ftype);
+		break;
+	}
+	case Enum::Runtime::CodeRef: {
+		FunctionType *ftype = llvm::FunctionType::get(code_ref_ptr_type, arg_types_ref, false);
+		f = module->getOrInsertFunction("dynamic_code_ref_cast_code", ftype);
+		break;
+	}
+	case Enum::Runtime::BlessedObject: {
+		FunctionType *ftype = llvm::FunctionType::get(blessed_object_ptr_type, arg_types_ref, false);
+		f = module->getOrInsertFunction("dynamic_blessed_object_cast_code", ftype);
+		break;
+	}
+	default:
+		break;
+	}
+	cur_type = type;
+	return builder->CreateCall(f, value, "dynamic_casted_value");
 }
 
 llvm::Value *LLVM::generatePtrCastCode(IRBuilder<> *builder, llvm::Value *value, uint64_t _tag, llvm::Type *to_type)
@@ -784,11 +892,11 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 	using namespace TokenType;
 	llvm::Value *left_value = generateValueCode(builder, node->left);
 	Enum::Runtime::Type left_type = cur_type;
-	llvm::Value *right_value = generateValueCode(builder, node->right);
-	Enum::Runtime::Type right_type = cur_type;
+	llvm::Value *right_value = (node->right->tk->info.type != Method) ? generateValueCode(builder, node->right) : NULL;
+	Enum::Runtime::Type right_type = (node->right->tk->info.type != Method) ? cur_type : Enum::Runtime::Undefined;
 	llvm::Value *ret = NULL;
-	llvm::Value *left = generateCastCode(builder, left_type, left_value);
-	llvm::Value *right = generateCastCode(builder, right_type, right_value);
+	llvm::Value *left = (left_value) ? generateCastCode(builder, left_type, left_value) : NULL;
+	llvm::Value *right = (right_value) ? generateCastCode(builder, right_type, right_value) : NULL;
 	switch (node->tk->info.type) {
 	case Add:
 		ret = generateBinaryOperatorCode(builder, left_type, left, right_type, right, Instruction::Add, Instruction::FAdd, "add");
@@ -945,12 +1053,53 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 			ret = generateArrayRefAccessCode(builder, left, right);
 		} else if (right_type == Enum::Runtime::HashRef) {
 			if (left_type == Enum::Runtime::Value) {
-				/* left is HashRef */
-				left = generateCastCode(builder, Enum::Runtime::HashRef, left);
+				/* left is HashRef or Object */
+				left = generateDynamicCastCode(builder, Enum::Runtime::HashRef, left);
+				//left = generateCastCode(builder, Enum::Runtime::HashRef, left);
 			} else if (left_type != Enum::Runtime::HashRef) {
 				assert(0 && "ERROR: type error!!!");
 			}
 			ret = generateHashRefAccessCode(builder, left, right);
+		} else if (node->right->tk->info.type == Method) {
+			if (node->left->tk->info.type == Class) {
+				const char *pkg_name = node->left->tk->data.c_str();
+				const char *mtd_name = node->right->tk->data.c_str();
+				llvm::Value *pkg = builder->CreateGlobalStringPtr(pkg_name);
+				FunctionCallNode *mtd_node = dynamic_cast<FunctionCallNode *>(node->right);
+				llvm::Value *vargs = createArgumentArray(builder, mtd_node);
+				vector<llvm::Type *> arg_types;
+				arg_types.push_back(array_ptr_type);
+				arg_types.push_back(void_ptr_type);
+				llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+				FunctionType *ftype = llvm::FunctionType::get(void_type, arg_types_ref, false);
+				llvm::Value *unshift = module->getOrInsertFunction("_unshift", ftype);
+				builder->CreateCall2(unshift, vargs, pkg);
+				llvm::Value *func = fmgr.getFunction(pkg_name, mtd_name);
+				CallInst *result = builder->CreateCall(func, vargs, "function_rvalue");
+				result->setCallingConv(CallingConv::Fast);
+				result->setTailCall(true);
+				ret = generateReceiveUnionValueCode(builder, result);
+				cur_type = Enum::Runtime::BlessedObject;//TODO Object
+			} else {
+				const char *_mtd_name = node->right->tk->data.c_str();
+				llvm::Value *mtd_name = builder->CreateGlobalStringPtr(_mtd_name);
+				CallInst *mtd = builder->CreateCall2(get_method_by_name, left, mtd_name, "method");
+				FunctionCallNode *mtd_node = dynamic_cast<FunctionCallNode *>(node->right);
+				llvm::Value *vargs = createArgumentArray(builder, mtd_node);
+				vector<llvm::Type *> arg_types;
+				arg_types.push_back(array_ptr_type);
+				arg_types.push_back(blessed_object_ptr_type);
+				llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+				FunctionType *ftype = llvm::FunctionType::get(void_type, arg_types_ref, false);
+				llvm::Value *make_method_argument = module->getOrInsertFunction("_make_method_argument", ftype);
+				builder->CreateCall2(make_method_argument, vargs, left);
+
+				CallInst *result = builder->CreateCall(mtd, vargs, "function_rvalue");
+				result->setCallingConv(CallingConv::Fast);
+				result->setTailCall(true);
+				ret = generateReceiveUnionValueCode(builder, result);
+				cur_type = Enum::Runtime::Value;
+			}
 		} else {
 			assert(0 && "ERROR: type error!!!");
 		}
@@ -1226,6 +1375,9 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 			case Enum::Runtime::HashRef:
 				ret = var->value;
 				break;
+			case Enum::Runtime::BlessedObject:
+				ret = var->value;
+				break;
 			default: {
 				llvm::Value *object = generateCastCode(builder, Enum::Runtime::Object, var->value);
 				ret = builder->CreateStructGEP(object, 1);
@@ -1347,13 +1499,13 @@ llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNo
 			vargs = createArray(builder, args, 1);
 		}
 		llvm::Value *result = builder->CreateCall(func, vargs);
-		if (name == "shift" || name == "push") {
+		if (name == "shift" || name == "push" || name == "bless") {
 			ret = generateReceiveUnionValueCode(builder, result);
 		} else {
 			ret = result;
 		}
 	} else {
-		llvm::Value *func = fmgr.getFunction("main", node->tk->data.c_str());
+		llvm::Value *func = fmgr.getFunction(cur_pkg_name.c_str(), node->tk->data.c_str());
 		CallInst *result = builder->CreateCall(func, vargs, "function_rvalue");
 		result->setCallingConv(CallingConv::Fast);
 		result->setTailCall(true);
@@ -1375,7 +1527,7 @@ Constant *LLVM::getBuiltinFunction(IRBuilder<> *builder, string name)
 		FunctionType *ftype = llvm::FunctionType::get(builder->getVoidTy(), array_ptr_type, false);
 		//ftype->getParamType(0)->dump();
 		ret = module->getOrInsertFunction(name, ftype);
-	} else if (name == "shift" || name == "push") {
+	} else if (name == "shift" || name == "push" || name == "bless") {
 		FunctionType *ftype = llvm::FunctionType::get(int_type, array_ptr_type, false);
 		ret = module->getOrInsertFunction(name, ftype);
 		cur_type = Enum::Runtime::Value;
@@ -1456,7 +1608,9 @@ llvm::Value *LLVM::createNaNBoxingPtr(IRBuilder<> *builder, llvm::Value *_value,
 
 llvm::Value *LLVM::createArray(IRBuilder<> *builder, llvm::Value *list, size_t size)
 {
-	llvm::Value *array = builder->CreateAlloca(array_type, 0, "array");
+	//llvm::Value *array = builder->CreateAlloca(array_type, 0, "array");
+	llvm::Value *object = builder->CreateCall(fetch_object);
+	llvm::Value *array = builder->CreateBitCast(object, array_ptr_type);
 	llvm::Value *array_type = builder->CreateStructGEP(array, 0, "array_type");
 	llvm::Value *array_list = builder->CreateStructGEP(array, 1, "array_list");
 	llvm::Value *array_size = builder->CreateStructGEP(array, 2, "array_size");
@@ -1478,7 +1632,9 @@ llvm::Value *LLVM::createArrayRef(IRBuilder<> *builder, llvm::Value *boxed_array
 
 llvm::Value *LLVM::createHashRef(IRBuilder<> *builder, llvm::Value *boxed_hash)
 {
-	llvm::Value *hash_ref = builder->CreateAlloca(hash_ref_type, 0, "hash_ref");
+	//llvm::Value *hash_ref = builder->CreateAlloca(hash_ref_type, 0, "hash_ref");
+	llvm::Value *object = builder->CreateCall(fetch_object);
+	llvm::Value *hash_ref = builder->CreateBitCast(object, hash_ref_ptr_type);
 	llvm::Value *hash_type = builder->CreateStructGEP(hash_ref, 0, "hash_ref_type");
 	llvm::Value *hash_body = builder->CreateStructGEP(hash_ref, 1, "hash_ref_body");
 	builder->CreateStore(ConstantInt::get(int32_type, Enum::Runtime::HashRef), hash_type);

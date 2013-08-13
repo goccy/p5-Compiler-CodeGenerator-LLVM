@@ -133,6 +133,7 @@ public:
 	PackageMap pmap;
 	FunctionManager(void);
 	void setFunction(const char *pkg_name, const char *func_name, llvm::Value *func);
+	void storeAllFunctionByPackageName(const char *pkg_name, std::vector<llvm::Value *> *func_list);
 	llvm::Value *getFunction(const char *pkg_name, const char *func_name);
 };
 
@@ -168,11 +169,17 @@ public:
 	llvm::Type *hash_ref_ptr_type;
 	llvm::Type *code_ref_type;
 	llvm::Type *code_ref_ptr_type;
+	llvm::Type *code_ptr_type;
+	llvm::Type *blessed_object_type;
+	llvm::Type *blessed_object_ptr_type;
 	llvm::Function *cur_func;
 	llvm::Function *main_func;
 	llvm::Value *cur_args;
 	llvm::Value *last_evaluated_value; /* for function that hasn't return statement */
+	llvm::Value *get_method_by_name;
+	llvm::Value *fetch_object;
 	std::string cur_func_name;
+	std::string cur_pkg_name;
 	llvm::BasicBlock *main_entry;
 	VariableManager vmgr;
 	FunctionManager fmgr;
@@ -191,6 +198,7 @@ public:
 	llvm::Value *getArrayElement(llvm::IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx);
 	llvm::Value *generateCastedValueCode(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *generateCastCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type type, llvm::Value *value);
+	llvm::Value *generateDynamicCastCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type type, llvm::Value *value);
 	llvm::Value *generatePtrCastCode(llvm::IRBuilder<> *builder, llvm::Value *value, uint64_t tag, llvm::Type *type);
 	llvm::Value *generateHashToArrayCode(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingInt(llvm::IRBuilder<> *builder, llvm::Value *value);
@@ -220,6 +228,7 @@ public:
 	void generateFunctionCode(llvm::IRBuilder<> *builder, FunctionNode *node);
 	void generateReturnCode(llvm::IRBuilder<> *builder, ReturnNode *node);
 	void generateLastEvaluatedReturnCode(llvm::IRBuilder<> *builder);
+	void generatePackageCode(llvm::IRBuilder<> *builder, PackageNode *node);
     void generateCommaCode(llvm::IRBuilder<> *builder, BranchNode *node, std::vector<CodeGenerator::Value *> *list);
 	llvm::Value *generateSingleTermOperatorCode(llvm::IRBuilder<> *builder, SingleTermOperatorNode *node);
 	llvm::Value *generateAssignCode(llvm::IRBuilder<> *builder, BranchNode *node);
@@ -242,6 +251,8 @@ public:
 	llvm::Value *generateArrayRefAccessCode(llvm::IRBuilder<> *builder, llvm::Value *array_ref, llvm::Value *idx);
 	llvm::Value *generateHashRefAccessCode(llvm::IRBuilder<> *builder, llvm::Value *hash_ref, llvm::Value *key);
 	llvm::Constant *getBuiltinFunction(llvm::IRBuilder<> *builder, std::string function_name);
+	void generateGetMethodByName(void);
+	void generateFetchObject(void);
 };
 
 };

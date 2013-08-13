@@ -12,25 +12,43 @@ my $ast = $parser->parse($tokens);
 Compiler::Parser::AST::Renderer->new->render($ast);
 my $generator = Compiler::CodeGenerator::LLVM->new();
 my $llvm_ir = $generator->generate($ast);
-open my $fh, '>', 'hash_ref.ll';
+open my $fh, '>', 'package.ll';
 print $fh $llvm_ir;
 close $fh;
+print "generated\n";
 $generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
-my $a = { a => 1, b => { d => 8 }, c => 2 };
-say $a;
-say %$a;
 
-say $a->{a};
-say $a->{b};
-say $a->{c};
+package Person;
 
-$a->{a} = 3;
-say %$a;
+sub new {
+    my ($class, $name, $age) = @_;
+    my $self = {
+        age  => $age,
+        name => $name
+    };
+    say $class;
+    say $name;
+    say $age;
+    return bless($self, $class);
+}
 
-my @b = %$a;
-say @b;
+sub get_name {
+    my $self = shift;
+    $self->{name};
+}
 
-say $a->{b}->{d};
+sub get_age {
+    my $self = shift;
+    $self->{age};
+}
+
+package main;
+
+my $person = Person->new("goccy", 26);
+
+say $person;
+say $person->get_name(1);
+say $person->get_age(1);

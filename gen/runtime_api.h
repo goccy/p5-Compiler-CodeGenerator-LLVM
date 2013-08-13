@@ -13,7 +13,7 @@ typedef enum {
 	Hash,
 	HashRef,
 	ObjectType,
-	BlessedObject,
+	BlessedObjectType,
 	CodeRef,
 	Undefined
 } Type;
@@ -31,6 +31,12 @@ typedef UnionType Value;
 typedef struct _Object {
 	int type;
 	Value v;
+	void *slot1;
+	void *slot2;
+	void *slot3;
+	void *slot4;
+	void *slot5;
+	void *slot6;
 } Object;
 
 typedef struct _Undef {
@@ -64,7 +70,7 @@ typedef struct _Hash {
 
 typedef struct _HashRef {
 	int type;
-	Value v;
+	Value v; /* boxed HashObject */
 } HashRefObject;
 
 typedef UnionType(*Code)(ArrayObject*);
@@ -73,6 +79,13 @@ typedef struct _CodeRef {
 	int header;
 	Code code;
 } CodeRefObject;
+
+typedef struct _BlessedObject {
+	int header;
+	Value members; /* boxed HashObject */
+	HashObject *mtds;
+	const char *pkg_name;
+} BlessedObject;
 
 #define NaN                (0xFFF0000000000000)
 #define MASK               (0x00000000FFFFFFFF)
@@ -98,6 +111,8 @@ typedef struct _CodeRef {
 #define ARRAY_init(data) (void *)((uint64_t)data | NaN | ARRAY_TAG)
 #define HASH_init(data) (void *)((uint64_t)data | NaN | HASH_TAG)
 #define OBJECT_init(data) (void *)((uint64_t)data | NaN | OBJECT_TAG)
+#define CODE_REF_init(data) (void *)((uint64_t)data | NaN | CODE_REF_TAG)
+#define BLESSED_OBJECT_init(data) (void *)((uint64_t)data | NaN | BLESSED_OBJECT_TAG)
 #define UNDEF_init(data) (void *)((uint64_t)data | NaN | UNDEF_TAG)
 
 #define to_Int(o) ((intptr_t)o)
@@ -107,6 +122,8 @@ typedef struct _CodeRef {
 #define to_Array(o) (ArrayObject *)((uint64_t)o ^ (NaN | ARRAY_TAG))
 #define to_Hash(o) (HashObject *)((uint64_t)o ^ (NaN | HASH_TAG))
 #define to_HashRef(o) (HashRefObject *)((uint64_t)o ^ (NaN | HASH_REF_TAG))
+#define to_CodeRef(o) (CodeRefObject *)((uint64_t)o ^ (NaN | CODE_REF_TAG))
+#define to_BlessedObject(o) (BlessedObject *)((uint64_t)o ^ (NaN | BLESSED_OBJECT_TAG))
 
 #define TYPE_CHECK(o, T) do {					\
 		if (TYPE(o) != T) {						\
