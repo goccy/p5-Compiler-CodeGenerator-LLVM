@@ -1179,9 +1179,9 @@ llvm::Value *LLVM::generateListCode(IRBuilder<> *builder, ListNode *node)
 {
 	Node *data = node->data;
 	vector<CodeGenerator::Value *> list;
-	if (data->tk->info.type == TokenType::Comma || data->tk->info.type == TokenType::Arrow) {
+	if (data && (data->tk->info.type == TokenType::Comma || data->tk->info.type == TokenType::Arrow)) {
 		generateCommaCode(builder, dynamic_cast<BranchNode *>(data), &list);
-	} else {
+	} else if (data) {
 		CodeGenerator::Value *v = new CodeGenerator::Value();
 		v->value = generateValueCode(builder, data);
 		v->type = cur_type;
@@ -1430,9 +1430,13 @@ llvm::Value *LLVM::createArgumentArray(IRBuilder<> *builder, FunctionCallNode *n
 		builder->CreateStore(builder->CreateLoad(value, "elem"), builder->CreateGEP(args, idx, "get_idx"));
 		ret = createArray(builder, args, 1);
 	} else {
-		assert(size == 1 && "argument size error");
+		assert((size == 0 || size == 1) && "argument size error");
 	}
 	if (ret) return ret;
+	if (!size) {
+		llvm::Value *args = builder->CreateAlloca(union_type, ConstantInt::get(int_type, 1), "args");
+		return createArray(builder, args, 0);
+	}
 	Node *arg = node->args->at(0);
 	if (TYPE_match(arg, ListNode)) {
 		ret = generateCastCode(builder, Enum::Runtime::Array, generateListCode(builder, dynamic_cast<ListNode *>(arg)));
@@ -1608,9 +1612,9 @@ llvm::Value *LLVM::createNaNBoxingPtr(IRBuilder<> *builder, llvm::Value *_value,
 
 llvm::Value *LLVM::createArray(IRBuilder<> *builder, llvm::Value *list, size_t size)
 {
-	//llvm::Value *array = builder->CreateAlloca(array_type, 0, "array");
-	llvm::Value *object = builder->CreateCall(fetch_object);
-	llvm::Value *array = builder->CreateBitCast(object, array_ptr_type);
+	llvm::Value *array = builder->CreateAlloca(array_type, 0, "array");
+	//llvm::Value *object = builder->CreateCall(fetch_object);
+	//llvm::Value *array = builder->CreateBitCast(object, array_ptr_type);
 	llvm::Value *array_type = builder->CreateStructGEP(array, 0, "array_type");
 	llvm::Value *array_list = builder->CreateStructGEP(array, 1, "array_list");
 	llvm::Value *array_size = builder->CreateStructGEP(array, 2, "array_size");

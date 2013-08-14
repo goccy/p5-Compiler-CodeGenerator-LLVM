@@ -29,9 +29,6 @@ sub new {
         age  => $age,
         name => $name
     };
-    say $class;
-    say $name;
-    say $age;
     return bless($self, $class);
 }
 
@@ -50,5 +47,5 @@ package main;
 my $person = Person->new("goccy", 26);
 
 say $person;
-say $person->get_name(1);
-say $person->get_age(1);
+say $person->get_name();
+say $person->get_age;
