@@ -120,6 +120,7 @@ typedef struct _BlessedObject {
 #define to_String(o) (StringObject *)((uint64_t)o ^ (NaN | STRING_TAG))
 #define to_Object(o) (Object *)((uint64_t)o ^ (NaN | OBJECT_TAG))
 #define to_Array(o) (ArrayObject *)((uint64_t)o ^ (NaN | ARRAY_TAG))
+#define to_ArrayRef(o) (ArrayRefObject *)((uint64_t)o ^ (NaN | ARRAY_REF_TAG))
 #define to_Hash(o) (HashObject *)((uint64_t)o ^ (NaN | HASH_TAG))
 #define to_HashRef(o) (HashRefObject *)((uint64_t)o ^ (NaN | HASH_REF_TAG))
 #define to_CodeRef(o) (CodeRefObject *)((uint64_t)o ^ (NaN | CODE_REF_TAG))
@@ -131,7 +132,7 @@ typedef struct _BlessedObject {
 		}										\
 	} while (0)
 
-void print(ArrayObject *array);
+UnionType print(ArrayObject *array);
 void print_hash(HashObject *hash);
 
 #define SET(ret, a, b, op) do {					\
@@ -143,7 +144,7 @@ void print_hash(HashObject *hash);
 			break;								\
 		}										\
 		case Double: {							\
-			double d = (double)(int)a op b->d;	\
+			double d = a op b->d;				\
 			ret.d = d;							\
 			break;								\
 		}										\
@@ -160,7 +161,7 @@ void print_hash(HashObject *hash);
 			break;								\
 		}										\
 		case Double: {							\
-			double d = (double)(int)a op b->d;	\
+			double d = a op b->d;				\
 			ret.o = INT_init((int)d);			\
 			break;								\
 		}										\
@@ -177,7 +178,7 @@ void print_hash(HashObject *hash);
 			break;									\
 		}											\
 		case Double:								\
-			SET(ret, to_Double(a->o), b, op);		\
+			SET(ret, a->d, b, op);					\
 			break;									\
 		default:									\
 			break;									\

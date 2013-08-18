@@ -1,5 +1,116 @@
 #include "runtime_api.h"
+#include <math.h>
+
 UnionType u;
+
+UnionType _sqrt(ArrayObject *args)
+{
+	UnionType ret;
+	UnionType arg = args->list[0];
+	arg = (TYPE(arg.o) == ObjectType) ? (to_Object(arg.o))->v : arg;
+	ret.d = sqrt(arg.d);
+	return ret;
+}
+
+UnionType _abs(ArrayObject *args)
+{
+	UnionType ret;
+	UnionType arg = args->list[0];
+	switch (TYPE(arg.o)) {
+	case Int:
+		ret.o = INT_init(abs(to_Int(arg.o)));
+		break;
+	case Double:
+		ret.d = fabs(arg.d);
+		break;
+	default:
+		assert(0 && "Type Error!!! abs's argument");
+		break;
+	}
+}
+
+UnionType _int(ArrayObject *args)
+{
+	UnionType ret;
+	UnionType arg = args->list[0];
+	switch (TYPE(arg.o)) {
+	case Int:
+		ret.o = arg.o;
+		break;
+	case Double:
+		ret.o = INT_init((int)arg.d);
+		break;
+	default:
+		assert(0 && "Type Error!!! abs's argument");
+		break;
+	}
+	return ret;
+}
+
+UnionType _rand(ArrayObject *args)
+{
+	UnionType ret;
+	UnionType arg = args->list[0];
+	switch (TYPE(arg.o)) {
+	case Int:
+		ret.o = INT_init(rand() % to_Int(arg.o));
+		break;
+	case Double:
+		ret.o = INT_init(rand() % (int)arg.d);
+		break;
+	default:
+		assert(0 && "Type Error!!! abs's argument");
+		break;
+	}
+	return ret;
+}
+
+UnionType _sin(ArrayObject *args)
+{
+	UnionType ret;
+	UnionType arg = args->list[0];
+	switch (TYPE(arg.o)) {
+	case Int:
+		ret.d = sin(to_Int(arg.o));
+		break;
+	case Double:
+		ret.d = sin(arg.d);
+		break;
+	default:
+		assert(0 && "Type Error!!! abs's argument");
+		break;
+	}
+	return ret;
+}
+
+UnionType _cos(ArrayObject *args)
+{
+	UnionType ret;
+	UnionType arg = args->list[0];
+	switch (TYPE(arg.o)) {
+	case Int:
+		ret.d = cos(to_Int(arg.o));
+		break;
+	case Double:
+		ret.d = cos(arg.d);
+		break;
+	default:
+		assert(0 && "Type Error!!! abs's argument");
+		break;
+	}
+	return ret;
+}
+
+UnionType _atan2(ArrayObject *args)
+{
+	UnionType ret;
+	UnionType arg1 = args->list[0];
+	UnionType arg2 = args->list[1];
+	double d1 = (TYPE(arg1.o) == Int) ? (double)to_Int(arg1.o) : arg1.d;
+	double d2 = (TYPE(arg2.o) == Int) ? (double)to_Int(arg2.o) : arg2.d;
+	ret.d = atan2(d1, d2);
+	return ret;
+}
 
 void print_object(UnionType _o)
 {
@@ -54,19 +165,25 @@ void print_hash(HashObject *hash)
 	}
 }
 
-void print(ArrayObject *array)
+UnionType print(ArrayObject *array)
 {
+	UnionType ret;
 	size_t size = array->size;
 	size_t i = 0;
 	for (i = 0; i < size; i++) {
 		print_object(array->list[i]);
 	}
+	ret.o = INT_init(0);
+	return ret;
 }
 
-void say(ArrayObject *array)
+UnionType say(ArrayObject *array)
 {
+	UnionType ret;
 	print(array);
 	fprintf(stdout, "\n");
+	ret.o = INT_init(0);
+	return ret;
 }
 
 void debug_print(UnionType o)
@@ -143,6 +260,11 @@ void new_Undef(void)
 	undef.o = UNDEF_init(o);
 }
 
+UnionType get_undef_value(void)
+{
+	return undef;
+}
+
 UnionType *base_hash_table;
 void init_table(void)
 {
@@ -189,10 +311,13 @@ unsigned long make_hash(char* _str, size_t len)
 UnionType new_String(char *str)
 {
 	UnionType ret;
+	//fprintf(stderr, "str = [%s]\n", str);
 	StringObject *o = (StringObject *)calloc(sizeof(StringObject), 1);
 	o->header = String;
-	o->s = str;
-	o->len = strlen(str);
+	o->len = strlen(str) + 1;
+	//o->s = str;
+	o->s = (char *)malloc(o->len);
+	memcpy(o->s, str, o->len);
 	o->hash = make_hash(str, o->len) % HASH_TABLE_SIZE;
 	ret.o = STRING_init(o);
 	return ret;
@@ -265,6 +390,8 @@ UnionType bless(ArrayObject *args)
 	TYPE_CHECK(mtds.o, Hash);
 	blessed->mtds = to_Hash(mtds.o);
 	ret.o = BLESSED_OBJECT_init(blessed);
+	//fprintf(stderr, "ret.o = [%p]\n", ret.o);
+	//fprintf(stderr, "ret type = [%d]\n", TYPE(ret.o));
 	return ret;
 }
 
@@ -372,23 +499,68 @@ UnionType Hash_to_array(HashObject *hash)
 HashRefObject *dynamic_hash_ref_cast_code(UnionType *o)
 {
 	HashRefObject *ret = NULL;
+	//fprintf(stderr, "type = [%d]\n", TYPE(o->o));
 	switch (TYPE(o->o)) {
 	case HashRef:
 		ret = to_HashRef(o->o);
 		break;
 	case ObjectType: {
 		Object *object = to_Object(o->o);
-		TYPE_CHECK(object->v.o, HashRef);
-		ret = to_HashRef(object->v.o);
+		ret = dynamic_hash_ref_cast_code(&object->v);
 		break;
 	}
 	case BlessedObjectType: {
 		BlessedObject *blessed = to_BlessedObject(o->o);
 		ret = to_HashRef(blessed->members.o);
+		//HashObject *hash = to_Hash(ret->v.o);
+		//print_hash(hash);
+		//fprintf(stdout, "\n");
 		break;
 	}
 	default:
-		//fprintf(stderr, "type = [%d]\n", TYPE(o->o));
+		fprintf(stderr, "type = [%llu]\n", TYPE(o->o));
+		break;
+	}
+	return ret;
+}
+
+ArrayRefObject *dynamic_array_ref_cast_code(UnionType *o)
+{
+	ArrayRefObject *ret = NULL;
+	//fprintf(stderr, "type = [%d]\n", TYPE(o->o));
+	switch (TYPE(o->o)) {
+	case ArrayRef:
+		ret = to_ArrayRef(o->o);
+		break;
+	case ObjectType: {
+		Object *object = to_Object(o->o);
+		ret = dynamic_array_ref_cast_code(&object->v);
+		break;
+	}
+	default:
+		fprintf(stderr, "type = [%llu]\n", TYPE(o->o));
+		break;
+	}
+	return ret;
+}
+
+BlessedObject *dynamic_blessed_object_cast_code(UnionType *o)
+{
+	BlessedObject *ret = NULL;
+	//fprintf(stderr, "type = [%d]\n", TYPE(o->o));
+	switch (TYPE(o->o)) {
+	case ObjectType: {
+		Object *object = to_Object(o->o);
+		TYPE_CHECK(object->v.o, BlessedObjectType);
+		ret = to_BlessedObject(object->v.o);
+		break;
+	}
+	case BlessedObjectType: {
+		ret = to_BlessedObject(o->o);
+		break;
+	}
+	default:
+		fprintf(stderr, "type = [%llu]\n", TYPE(o->o));
 		break;
 	}
 	return ret;
@@ -689,6 +861,22 @@ int Object_isTrue(UnionType a)
 		break;
 	case Double:
 		ret = (a.d != 0);
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
+
+int Value_isTrue(UnionType *a)
+{
+	int ret = 0;
+	switch (TYPE(a->o)) {
+	case Int:
+		ret = (to_Int(a->o) != 0);
+		break;
+	case Double:
+		ret = (a->d != 0);
 		break;
 	default:
 		break;

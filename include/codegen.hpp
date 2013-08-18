@@ -139,6 +139,7 @@ public:
 
 class LLVM {
 public:
+	llvm::LLVMContext ctx;
 	llvm::Module *module;
 	Enum::Runtime::Type cur_type;
 	llvm::Type *int_type;
@@ -178,9 +179,11 @@ public:
 	llvm::Value *last_evaluated_value; /* for function that hasn't return statement */
 	llvm::Value *get_method_by_name;
 	llvm::Value *fetch_object;
+	llvm::Value *get_undef_value;
 	std::string cur_func_name;
 	std::string cur_pkg_name;
 	llvm::BasicBlock *main_entry;
+	llvm::BasicBlock *entry_point;
 	VariableManager vmgr;
 	FunctionManager fmgr;
 	bool has_return_statement;
@@ -190,6 +193,7 @@ public:
 	void createRuntimeTypes(void);
 	void debug_run(AST *ast);
 	const char *gen(AST *ast);
+	CodeGenerator::Value *lookupVariable(std::string name, Token *tk);
 	llvm::Value *getArgumentArray(llvm::IRBuilder<> *builder);
 	llvm::Value *generateReceiveUnionValueCode(llvm::IRBuilder<> *builder, llvm::Value *result);
 	llvm::Value *generateUnionToIntCode(llvm::IRBuilder<> *builder, llvm::Value *result);
@@ -253,6 +257,7 @@ public:
 	llvm::Constant *getBuiltinFunction(llvm::IRBuilder<> *builder, std::string function_name);
 	void generateGetMethodByName(void);
 	void generateFetchObject(void);
+	void generateGetUndefValue(void);
 };
 
 };
