@@ -194,6 +194,7 @@ public:
 	void debug_run(AST *ast);
 	const char *gen(AST *ast);
 	CodeGenerator::Value *lookupVariable(std::string name, Token *tk);
+	void setupVariable(llvm::IRBuilder<> *builder, CodeGenerator::Value *value, Token *tk);
 	llvm::Value *getArgumentArray(llvm::IRBuilder<> *builder);
 	llvm::Value *generateReceiveUnionValueCode(llvm::IRBuilder<> *builder, llvm::Value *result);
 	llvm::Value *generateUnionToIntCode(llvm::IRBuilder<> *builder, llvm::Value *result);

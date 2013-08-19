@@ -292,20 +292,17 @@ sub ambient_occlusion {
             $spheres[0]->intersect($occIsect, $_ray);
             $spheres[1]->intersect($occIsect, $_ray);
             $spheres[2]->intersect($occIsect, $_ray);
-=hoge
+
             $plane->intersect($occIsect, $_ray);
             if ($occIsect->{hit}) {
                 $occlusion += 1.0;
             }
-=cut
         }
     }
 
     $occlusion = ($ntheta * $nphi - $occlusion) / ($ntheta * $nphi);
     return Vec->new($occlusion, $occlusion, $occlusion);
 }
-
-=hoge
 
 sub render {
     my ($img, $w, $h, $nsubsamples) = @_;
@@ -346,6 +343,7 @@ sub render {
         }
     }
 }
+
 
 =hoge
 my @img;
