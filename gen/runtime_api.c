@@ -18,7 +18,7 @@ UnionType _abs(ArrayObject *args)
 	UnionType arg = args->list[0];
 	switch (TYPE(arg.o)) {
 	case Int:
-		ret.o = INT_init(abs(to_Int(arg.o)));
+		ret.o = INT_init(abs((int)to_Int(arg.o)));
 		break;
 	case Double:
 		ret.d = fabs(arg.d);
@@ -27,6 +27,7 @@ UnionType _abs(ArrayObject *args)
 		assert(0 && "Type Error!!! abs's argument");
 		break;
 	}
+	return ret;
 }
 
 UnionType _int(ArrayObject *args)
@@ -50,18 +51,8 @@ UnionType _int(ArrayObject *args)
 UnionType _rand(ArrayObject *args)
 {
 	UnionType ret;
-	UnionType arg = args->list[0];
-	switch (TYPE(arg.o)) {
-	case Int:
-		ret.o = INT_init(rand() % to_Int(arg.o));
-		break;
-	case Double:
-		ret.o = INT_init(rand() % (int)arg.d);
-		break;
-	default:
-		assert(0 && "Type Error!!! abs's argument");
-		break;
-	}
+	double random = (double)rand()/(RAND_MAX);
+	ret.d = random;
 	return ret;
 }
 

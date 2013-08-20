@@ -201,7 +201,7 @@ void print_hash(HashObject *hash);
 #define setResultByObjectInt(ret, a, b, op) do {	\
 		switch (TYPE(a->o)) {						\
 		case Int: {									\
-			int i = to_Int(a->o) op b;				\
+			int i = (int)to_Int(a->o) op b;			\
 			ret.o = INT_init(i);					\
 			break;									\
 		}											\
@@ -248,12 +248,12 @@ void print_hash(HashObject *hash);
 #define setCmpResultByIntObject(ret, a, b, op) do {	\
 		switch (TYPE(b->o)) {						\
 		case Int: {									\
-			int i = a op to_Int(b->o);				\
+			int i = a op (int)to_Int(b->o);			\
 			ret.o = INT_init(i);					\
 			break;									\
 		}											\
 		case Double: {								\
-			int i = (double)(int)a op b->d;			\
+			int i = a op b->d;						\
 			ret.o = INT_init(i);					\
 			break;									\
 		}											\

@@ -26,48 +26,48 @@ sub f {
     my $a = $_[0];
     my $b = $_[1];
     my $c = $a + $b;
-    say $a;
-    say $b;
+    say "$a : ", $a;
+    say "$b : ", $b;
 
     # Object op Object
-    say $a + $b;
-    say $a - $b;
-    say $a * $b;
-    say $a / $b;
-    say $a < $b;
-    say $a > $b;
-    say $a == $b;
-    say $a != $b;
+    say "$a + $b : ", $a + $b;
+    say "$a - $b : ", $a - $b;
+    say "$a * $b : ", $a * $b;
+    say "$a / $b : ", $a / $b;
+    say "$a < $b : ", $a < $b;
+    say "$a > $b : ", $a > $b;
+    say "$a == $b : ", $a == $b;
+    say "$a != $b : ", $a != $b;
 
     # Object op Int
-    say $a + 2;
-    say $b - 1;
-    say $b * 2;
-    say $b / 1;
-    say $a < 1;
-    say $a > 1;
-    say $a == 1;
-    say $a != 1;
+    say "$a + 2 : ", $a + 2;
+    say "$b - 1 : ", $b - 1;
+    say "$b * 2 : ", $b * 2;
+    say "$b / 1 : ", $b / 1;
+    say "$a < 1 : ", $a < 1;
+    say "$a > 1 : ", $a > 1;
+    say "$a == 1 : ", $a == 1;
+    say "$a != 1 : ", $a != 1;
 
     # Int op Object
-    say 2 + $b;
-    say 1 - $b;
-    say 2 * $b;
-    say 1 / $b;
-    say 1 < $a;
-    say 1 > $a;
-    say 1 == $a;
-    say 1 != $a;
+    say "2 + $b : ", 2 + $b;
+    say "1 - $b : ", 1 - $b;
+    say "2 * $b : ", 2 * $b;
+    say "1 / $b : ", 1 / $b;
+    say "0 < $a : ", 0 < $a;
+    say "1 > $a : ", 1 > $a;
+    say "1 == $a : ", 1 == $a;
+    say "1 != $a : ", 1 != $a;
 
     # Object op Double
-    say $a < 1.2;
-    say $a > 1.2;
-    say $a + 2.1;
-    say $b - 1.2;
-    say $b * 1.2;
-    say $b / 1.2;
-    say $a == 1.2;
-    say $a != 1.2;
+    say "$a < 1.2 : ", $a < 1.2;
+    say "$a > 1.2 : ", $a > 1.2;
+    say "$a + 2.1 : ", $a + 2.1;
+    say "$b - 1.2 : ", $b - 1.2;
+    say "$b * 1.2 : ", $b * 1.2;
+    say "$b / 1.2 : ", $b / 1.2;
+    say "$a == 1.2 : ", $a == 1.2;
+    say "$a != 1.2 : ", $a != 1.2;
 
     # Double op Object
     say 2.1 + $b;

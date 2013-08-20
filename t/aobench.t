@@ -102,6 +102,7 @@ sub new {
 }
 
 package Sphere;
+
 sub new {
     my ($class, $center, $radius) = @_;
     my $self = {
@@ -119,6 +120,7 @@ sub intersect {
     my $d = $b * $b - $c;
     if ($d > 0.0) {
         my $t = -$b - sqrt($d);
+        say $t;
         if ($t > 0.0 && $t < $isect->{t}) {
             $isect->{t} = $t;
             $isect->{hit} = 1;
@@ -163,13 +165,28 @@ sub intersect {
 
 package main;
 
-my $WIDTH = 64;
-my $HEIGHT = 64;
+my $WIDTH = 8;
+my $HEIGHT = 8;
 my $NSUBSAMPLES = 2;
-my $NAO_SAMPLES = 8;
+my $NAO_SAMPLES = 2;
 #my $M_PI = atan2(1,1) * 4;
-my @spheres;
+my @spheres = (1, 1, 1);
 my $plane;
+
+=hoge
+my $vec_ = Vec->new(1.0, 2.0, 3.0);
+my $org_ = Vec->new(0.5, 1.0, 1.5);
+my $sphere_ = Sphere->new($vec_, 0.5);
+my $inter_ = Intersection->new();
+my $dir_ = Vec->new(-1.0, -2.0, -3.0);
+my $ray_ = Ray->new($org_, $dir_);
+#$sphere_->intersect($inter_, $ray_);
+
+my $plane_ = Plane->new(Vec->new(0.0, -0.5, 0.0), Vec->new(0.0, 1.0, 0.0));
+$plane_->intersect($inter_, $ray_);
+say $inter_;
+say $ray_;
+
 
 my $vec = Vec->new(1.0, 2.0, 3.0);
 my $vec1 = Vec->new(2.0, 3.0, 4.0);
@@ -225,6 +242,8 @@ $plane = Plane->new($vec4, $vec4);
 say $plane;
 $plane->intersect($inter, $ray);
 
+=cut
+
 sub ortho_basis {
     my ($basis, $n) = @_;
     $basis->[1] = Vec->new(0.0, 0.0, 0.0);
@@ -263,8 +282,8 @@ sub clamp {
 
 sub ambient_occlusion {
     my $isect = shift;
-    my $ntheta = 8;#$NAO_SAMPLES;
-    my $nphi = 8;#$NAO_SAMPLES;
+    my $ntheta = $NAO_SAMPLES;
+    my $nphi = $NAO_SAMPLES;
     my $eps = 0.0001;
 
     my $p = Vec->new($isect->{p}->{x} + $eps * $isect->{n}->{x},
@@ -306,33 +325,45 @@ sub ambient_occlusion {
 
 sub render {
     my ($img, $w, $h, $nsubsamples) = @_;
-    my @fimg;
+    my @fimg = (0, 0, 0);
+    say $img;
+    say $w;
+    say $h;
+    say $nsubsamples;
+
     for (my $y = 0; $y < $h; $y++) {
         for (my $x = 0; $x < $w; $x++) {
             for (my $v = 0; $v < $nsubsamples; $v++) {
                 for (my $u = 0; $u < $nsubsamples; $u++) {
+                    say "y = ", $y, " x = ", $x;
+
                     my $px = ($x + ($u / $nsubsamples) - ($w / 2.0)) / ($w / 2.0);
                     my $py = -1 * ($y + ($v / $nsubsamples) - ($h / 2.0)) / ($h / 2.0);
                     my $eye = Vec->new($px, $py, -1.0);
                     $eye->normalize();
-                    my $ray = Ray->new(Vec->new(0.0, 0.0, 0.0), $eye);
+                    my $_vec = Vec->new(0.0, 0.0, 0.0);
+                    my $__ray = Ray->new($_vec, $eye);
+                    my $_isect = Intersection->new();
 
-                    my $isect = Intersection->new();
+                    $spheres[0]->intersect($_isect, $__ray);
+                    $spheres[1]->intersect($_isect, $__ray);
+                    $spheres[2]->intersect($_isect, $__ray);
+                    $plane->intersect($_isect, $__ray);
 
-                    $spheres[0]->intersect($isect, $ray);
-                    $spheres[1]->intersect($isect, $ray);
-                    $spheres[2]->intersect($isect, $ray);
-                    $plane->intersect($isect, $ray);
-
-                    if ($isect->{hit}) {
-                        my $c = ambient_occlusion($isect);
+                    if ($_isect->{hit}) {
+                        my $c = ambient_occlusion($_isect);
                         my $p0 = 3 * ($y * $w + $x);
+                        say "p0 = ", $p0;
+                        say "c->{x} = ", $c->{x};
+                        say "c->{y} = ", $c->{y};
+                        say "c->{z} = ", $c->{z};
                         $fimg[$p0 + 0] += $c->{x};
                         $fimg[$p0 + 1] += $c->{y};
                         $fimg[$p0 + 2] += $c->{z};
                     }
                 }
             }
+=hoge
             my $p1 = 3 * ($y * $w + $x);
             $fimg[$p1 + 0] /= ($nsubsamples * $nsubsamples);
             $fimg[$p1 + 1] /= ($nsubsamples * $nsubsamples);
@@ -340,18 +371,26 @@ sub render {
             $img->[$p1 + 0] = clamp($fimg[$p1 + 0]);
             $img->[$p1 + 1] = clamp($fimg[$p1 + 1]);
             $img->[$p1 + 2] = clamp($fimg[$p1 + 2]);
+=cut
         }
     }
+
 }
 
-
-=hoge
-my @img;
+my @img = (0, 0, 0);
 $spheres[0] = Sphere->new(Vec->new(-2.0, 0.0, -3.5), 0.5);
 $spheres[1] = Sphere->new(Vec->new(-0.5, 0.0, -3.0), 0.5);
 $spheres[2] = Sphere->new(Vec->new(1.0, 0.0, -2.2), 0.5);
 $plane = Plane->new(Vec->new(0.0, -0.5, 0.0), Vec->new(0.0, 1.0, 0.0));
+
+say $spheres[0];
+say $spheres[1];
+say $spheres[2];
+say $plane;
+
 render(\@img, $WIDTH, $HEIGHT, $NSUBSAMPLES);
+
+=hoge
 open(FP, ">", "ao.ppm");
 binmode(FP);
 print FP "P6\n$WIDTH $HEIGHT\n255\n";

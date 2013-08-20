@@ -149,7 +149,7 @@ const char *LLVM::gen(AST *ast)
 	pm.add(createCodeGenPreparePass());
 	pm.add(createIPSCCPPass());
 	pm.add(createFunctionInliningPass());
-	pm.run(*module);
+	//pm.run(*module);
 
 	AssemblyAnnotationWriter writer;
 	ostringstream os;
@@ -328,7 +328,7 @@ void LLVM::generateForStmtCode(IRBuilder<> *builder, ForStmtNode *node)
 	builder->SetInsertPoint(loop_head);
 	llvm::Value *_cond = generateValueCode(builder, node->cond);
 	llvm::Value *zero = ConstantInt::get(int_type, 0);
-	llvm::Value *cond = builder->CreateICmpNE(generateCastCode(builder, cur_type, _cond), zero);
+	llvm::Value *cond = builder->CreateICmpNE(generateCastCode(builder, cur_type, _cond), zero, "ne");
 	builder->CreateCondBr(cond, true_block, after_block);
 
 	builder->SetInsertPoint(true_block);
@@ -340,6 +340,10 @@ void LLVM::generateForStmtCode(IRBuilder<> *builder, ForStmtNode *node)
 	builder->CreateBr(loop_head);
 
 	builder->SetInsertPoint(after_block);
+	if (cur_pkg_name == "main" && cur_func_name == "main") {
+		main_entry = after_block;
+	}
+	last_evaluated_value = _cond;
 }
 
 void LLVM::setIteratorValue(IRBuilder<> *builder, Node *node)
@@ -359,6 +363,7 @@ void LLVM::generateForeachStmtCode(IRBuilder<> *builder, ForeachStmtNode *node)
 	BasicBlock *true_block = BasicBlock::Create(ctx, "true_block", cur_func);
 	BasicBlock *after_block = BasicBlock::Create(ctx, "after_block", cur_func);
 
+	llvm::Value *tmp_evaluated_value = last_evaluated_value;
 	llvm::Value *array = generateCastedValueCode(builder, node->cond);
 	assert(cur_type == Enum::Runtime::Array && "type must be Array at foreach");
 
@@ -395,6 +400,7 @@ void LLVM::generateForeachStmtCode(IRBuilder<> *builder, ForeachStmtNode *node)
 	builder->CreateBr(loop_head);
 
 	builder->SetInsertPoint(after_block);
+	last_evaluated_value = tmp_evaluated_value;
 }
 
 void LLVM::generateFunctionCode(IRBuilder<> *builder, FunctionNode *node)
@@ -418,7 +424,8 @@ void LLVM::generateFunctionCode(IRBuilder<> *builder, FunctionNode *node)
 	llvm::Value *mtd = builder->CreateGlobalStringPtr(node->tk->data.c_str());
 	builder->CreateCall3(f, pkg, mtd, func);
 
-	main_func = func;
+	llvm::Function *main_func = cur_func;
+
 	cur_func = func;
 	cur_func_name = node->tk->data.c_str();
 	func->setCallingConv(CallingConv::Fast);
@@ -469,7 +476,7 @@ void LLVM::generateLastEvaluatedReturnCode(IRBuilder<> *builder)
 		result = last_evaluated_value;
 	}
 	assert(result && "this function is nothing statement");
-	assert(cur_func == main_func && "main_func");
+	//assert(cur_func == main_func && "main_func");
 	llvm::Value *ret = generateUnionToIntCode(builder, result);
 	builder->CreateRet(ret);
 }
@@ -503,7 +510,7 @@ void LLVM::generateWhileStmtCode(IRBuilder<> *builder, WhileStmtNode *node)
 	builder->SetInsertPoint(loop_head);
 	llvm::Value *_cond = generateCastedValueCode(builder, node->expr);
 	llvm::Value *zero = ConstantInt::get(int_type, 0);
-	llvm::Value *cond = builder->CreateICmpNE(_cond, zero);
+	llvm::Value *cond = builder->CreateICmpNE(_cond, zero, "ne");
 	builder->CreateCondBr(cond, true_block, after_block);
 
 	builder->SetInsertPoint(true_block);
@@ -990,7 +997,7 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 	using namespace TokenType;
 	llvm::Value *left_value = generateValueCode(builder, node->left);
 	Enum::Runtime::Type left_type = cur_type;
-	if (node->right->tk->data == "$h") asm("int3");
+	//if (node->right->tk->data == "$h") asm("int3");
 	llvm::Value *right_value = (node->right->tk->info.type != Method) ? generateValueCode(builder, node->right) : NULL;
 	Enum::Runtime::Type right_type = (node->right->tk->info.type != Method) ? cur_type : Enum::Runtime::Undefined;
 	llvm::Value *ret = NULL;
@@ -1355,6 +1362,9 @@ llvm::Value *LLVM::generateArrayAccessCode(IRBuilder<> *builder, ArrayNode *node
 	llvm::Value *ret = NULL;
 	ArrayRefNode *idx_node = dynamic_cast<ArrayRefNode *>(node->idx);
 	llvm::Value *idx = generateCastedValueCode(builder, idx_node->data);
+	if (cur_type == Enum::Runtime::Value) {
+		idx = generateCastCode(builder, Enum::Runtime::Int, idx);
+	}
 	if (node->tk->type == TokenType::SpecificValue) {
 		Function::ArgumentListType &args = cur_func->getArgumentList();
 		Function::ArgumentListType::iterator it = args.begin();
@@ -1481,6 +1491,7 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 	}
 	case GlobalVar: case Var: {
 		CodeGenerator::Value *var = lookupVariable(tk->data, tk);
+		//if (tk->data == "$w") asm("int3");
 		if (!var) {
 			ret = builder->CreateAlloca(object_type, 0, tk->data.c_str());
 			CodeGenerator::Value *v = (CodeGenerator::Value *)malloc(sizeof(CodeGenerator::Value));
@@ -1685,7 +1696,7 @@ Constant *LLVM::getBuiltinFunction(IRBuilder<> *builder, string name)
 	} else if (name == "rand") {
 		FunctionType *ftype = llvm::FunctionType::get(int_type, array_ptr_type, false);
 		ret = module->getOrInsertFunction("_rand", ftype);
-		cur_type = Enum::Runtime::Int;
+		cur_type = Enum::Runtime::Double;
 	} else if (name == "sin") {
 		FunctionType *ftype = llvm::FunctionType::get(int_type, array_ptr_type, false);
 		ret = module->getOrInsertFunction("_sin", ftype);
