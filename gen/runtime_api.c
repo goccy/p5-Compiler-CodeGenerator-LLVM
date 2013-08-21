@@ -3,6 +3,37 @@
 
 UnionType u;
 
+UnionType _open(ArrayObject *args)
+{
+	UnionType ret;
+	size_t size = args->size;
+	if (size == 3) {
+		UnionType _handler = args->list[0];
+		UnionType _type = args->list[1];
+		UnionType _filename = args->list[2];
+		//fprintf(stderr, "handler type = [%llu]\n", TYPE(_handler.o));
+		TYPE_CHECK(_type.o, String);
+		TYPE_CHECK(_filename.o, String);
+		char *io_type = (to_String(_type.o))->s;
+		char *filename = (to_String(_filename.o))->s;
+		char *type = "";
+		if (!strncmp(io_type, ">", 1)) {
+			type = "w";
+		}
+		FILE *fp = NULL;
+		if ((fp = fopen(filename, type)) == NULL) {
+			fprintf(stderr, "ERROR: file open error!!\n");
+			exit(EXIT_FAILURE);
+		}
+		args->list[0] = new_IOHandler(fp);
+	} else {
+		fprintf(stderr, "argument size = [%zu]\n", size);
+		assert(0 && "Sorry, still not supported");
+	}
+	ret.o = INT_init(0);
+	return ret;
+}
+
 UnionType _sqrt(ArrayObject *args)
 {
 	UnionType ret;
@@ -103,6 +134,119 @@ UnionType _atan2(ArrayObject *args)
 	return ret;
 }
 
+UnionType undef;
+void new_Undef(void)
+{
+	UndefObject *o = (UndefObject *)calloc(sizeof(UndefObject), 1);
+	undef.o = UNDEF_init(o);
+}
+
+UnionType get_undef_value(void)
+{
+	return undef;
+}
+
+void print_space(size_t indent)
+{
+	size_t i = 0;
+	for (i = 0; i < indent; i++) {
+		fprintf(stdout, " ");
+	}
+}
+
+void print_message(const char *s, size_t indent)
+{
+	print_space(indent);
+	fprintf(stdout, "%s", s);
+}
+
+void dump_hash_ref(HashRefObject *ref, size_t indent)
+{
+	HashObject *hash = to_Hash(ref->v.o);
+	size_t key_n = hash->size;
+	size_t i = 0;
+	fprintf(stdout, "{\n");
+	for (i = 0; i < key_n; i++) {
+		StringObject *_key = hash->keys[i];
+		char *key = _key->s;
+		UnionType value = hash->table[_key->hash];
+		print_space(indent);
+		fprintf(stdout, "  '%s' => ", key);
+		dumper(value, indent + _key->len + 7);
+		if (i + 1 != key_n) {
+			fprintf(stdout, ",\n");
+		} else {
+			fprintf(stdout, "\n");
+		}
+	}
+	if (indent) {
+		print_message("}", indent);
+	} else {
+		fprintf(stdout, "}");
+	}
+}
+
+void dump_array_ref(ArrayRefObject *ref, size_t indent)
+{
+	ArrayObject *array = to_Array(ref->v.o);
+	size_t size = array->size;
+	size_t i = 0;
+	fprintf(stdout, "[\n");
+	for (i = 0; i < size; i++) {
+		UnionType value = array->list[i];
+		print_space(indent + 2);
+		dumper(value, indent + 2);
+		if (i + 1 != size) {
+			fprintf(stdout, ",\n");
+		} else {
+			fprintf(stdout, "\n");
+		}
+	}
+	if (indent) {
+		print_message("]", indent);
+	} else {
+		fprintf(stdout, "]");
+	}
+}
+
+void dump_string(StringObject *o)
+{
+	fprintf(stdout, "'%s'", o->s);
+}
+
+void dumper(UnionType o, size_t indent)
+{
+	switch (TYPE(o.o)) {
+	case Int: case Double:
+		print_object(o);
+		break;
+	case String:
+		dump_string(to_String(o.o));
+		break;
+	case HashRef:
+		dump_hash_ref(to_HashRef(o.o), indent);
+		break;
+	case ArrayRef:
+		dump_array_ref(to_ArrayRef(o.o), indent);
+		break;
+	case Undefined:
+		fprintf(stdout, "undef");
+		break;
+	default:
+		break;
+	}
+}
+
+UnionType Object_dumper(ArrayObject *a)
+{
+	UnionType ret;
+	if (a->size > 0) {
+		dumper(a->list[0], 0);
+	}
+	ret.o = INT_init(0);
+	return ret;
+}
+
 void print_object(UnionType _o)
 {
 	void *o = _o.o;
@@ -168,6 +312,20 @@ UnionType print(ArrayObject *array)
 	return ret;
 }
 
+UnionType print_with_handler(UnionType *_handler, ArrayObject *array)
+{
+	fprintf(stderr, "called print_with_handler\n");
+	fprintf(stderr, "handler type = [%llu]\n", TYPE(_handler->o));
+	UnionType ret;
+	size_t size = array->size;
+	size_t i = 0;
+	for (i = 0; i < size; i++) {
+		print_object(array->list[i]);
+	}
+	ret.o = INT_init(0);
+	return ret;
+}
+
 UnionType say(ArrayObject *array)
 {
 	UnionType ret;
@@ -202,6 +360,22 @@ UnionType shift(ArrayObject *args)
 	return ret;
 }
 
+void Array_grow(ArrayObject *array, size_t grow_size)
+{
+	void *tmp;
+	size_t size = array->size;
+	if (!(tmp = malloc(sizeof(Value) * grow_size))) {
+		fprintf(stderr, "ERROR!!: cannot allocated memory\n");
+	} else {
+		if (array->list) memcpy(tmp, array->list, sizeof(Value) * size);
+		array->list = (UnionType *)tmp;
+		for (int i = size; i <= grow_size; i++) {
+			array->list[i] = undef;
+		}
+		array->size = grow_size;
+	}
+}
+
 UnionType push(ArrayObject *args)
 {
 	size_t size = args->size;
@@ -213,18 +387,126 @@ UnionType push(ArrayObject *args)
 		UnionType value = args->list[1];
 		TYPE_CHECK(array.o, Array);
 		ArrayObject *base = to_Array(array.o);
-		void *tmp;
-		if (!(tmp = malloc(sizeof(Value) * (base->size + 1)))) {
-			fprintf(stderr, "ERROR!!: cannot allocated memory\n");
-		} else {
-			memcpy(tmp, base->list, sizeof(Value) * base->size);
-			base->list = (UnionType *)tmp;
-			base->list[base->size] = value;
-			base->size++;
-			ret.o = INT_init(base->size);
-		}
+		Array_grow(base, base->size + 1);
+		base->list[base->size] = value;
+		base->size++;
+		ret.o = INT_init(base->size);
 	}
 	return ret;
+}
+
+UnionType new_IOHandler(FILE *fp)
+{
+	UnionType ret;
+	IOHandlerObject *o = (IOHandlerObject *)fetch_object();
+	o->fp = fp;
+	ret.o = IO_HANDLER_init(o);
+	return ret;
+}
+
+UnionType new_HashRef(UnionType hash)
+{
+	UnionType ret;
+	HashRefObject *o = (HashRefObject *)fetch_object();
+	o->v = hash;
+	ret.o = HASH_REF_init(o);
+	return ret;
+}
+
+UnionType new_ArrayRef(UnionType array)
+{
+	UnionType ret;
+	ArrayRefObject *o = (ArrayRefObject *)fetch_object();
+	o->v = array;
+	ret.o = ARRAY_REF_init(o);
+	return ret;
+}
+
+UnionType *HashRef_get(UnionType *o, StringObject *key)
+{
+	UnionType *ret = &undef;
+	switch (TYPE(o->o)) {
+	case HashRef: {
+		HashRefObject *ref = to_HashRef(o->o);
+		HashObject *hash = to_Hash(ref->v.o);
+		ret = &hash->table[key->hash];
+		break;
+	}
+	case ObjectType: case BlessedObjectType: {
+		HashRefObject *ref = dynamic_hash_ref_cast_code(o);
+		HashObject *hash = to_Hash(ref->v.o);
+		ret = &hash->table[key->hash];
+		break;
+	}
+	case Int: case Double: case Undefined: {
+		/* auto vivification */
+		ArrayObject array;
+		array.size = 0;
+		array.list = NULL;
+		UnionType hash_ref = new_HashRef(new_Hash(&array));
+		o->o = hash_ref.o;
+		HashRefObject *ref = to_HashRef(hash_ref.o);
+		HashObject *hash = to_Hash(ref->v.o);
+		hash->keys[0] = key;
+		hash->size = 1;
+		ret = &hash->table[key->hash];
+		break;
+	}
+	default:
+		fprintf(stderr, "type = [%llu]\n", TYPE(o->o));
+		assert(0 && "Type Error!: Unknown Type");
+		break;
+	}
+	return ret;
+}
+
+UnionType *Array_get(ArrayObject *array, int idx)
+{
+	size_t size = array->size;
+	if (size <= idx) {
+		Array_grow(array, idx + 1);
+	}
+	return &array->list[idx];
+}
+
+UnionType *ArrayRef_get(UnionType *o, int idx)
+{
+	UnionType *ret = &undef;
+	switch (TYPE(o->o)) {
+	case ArrayRef: {
+		ArrayRefObject *ref = to_ArrayRef(o->o);
+		ArrayObject *array = to_Array(ref->v.o);
+		ret = Array_get(array, idx);
+		break;
+	}
+	case ObjectType: {
+		ArrayRefObject *ref = dynamic_array_ref_cast_code(o);
+		ArrayObject *array = to_Array(ref->v.o);
+		ret = Array_get(array, idx);
+		break;
+	}
+	case Int: case Double: case Undefined: {
+		/* auto vivification */
+		UnionType boxed_array = new_Array(NULL, 0);
+		UnionType array_ref = new_ArrayRef(boxed_array);
+		o->o = array_ref.o;
+		ArrayObject *array = to_Array(boxed_array.o);
+		ret = Array_get(array, idx);
+		break;
+	}
+	default:
+		fprintf(stderr, "type = [%llu]\n", TYPE(o->o));
+		assert(0 && "Type Error!: Unknown Type");
+		break;
+	}
+	return ret;
+}
+
+void Array_set(ArrayObject *array, int idx, UnionType elem)
+{
+	size_t size = array->size;
+	if (size <= idx) Array_grow(array, idx + 1);
+	array->list[idx] = elem;
 }
 
 /*
@@ -243,18 +525,6 @@ Object *map(ArrayObject *args)
 	return ret;
 }
 */
-
-UnionType undef;
-void new_Undef(void)
-{
-	UndefObject *o = (UndefObject *)calloc(sizeof(UndefObject), 1);
-	undef.o = UNDEF_init(o);
-}
-
-UnionType get_undef_value(void)
-{
-	return undef;
-}
 
 UnionType *base_hash_table;
 void init_table(void)
@@ -433,6 +703,16 @@ Code get_method_by_name(BlessedObject *self, char *mtd_name)
 	TYPE_CHECK(mtd.o, CodeRef);
 	CodeRefObject *code_ref = to_CodeRef(mtd.o);
 	return code_ref->code;
+}
+
+UnionType new_Array(UnionType *list, size_t size)
+{
+	UnionType ret;
+	ArrayObject *array = (ArrayObject *)fetch_object();
+	array->list = list;
+	array->size = size;
+	ret.o = ARRAY_init(array);
+	return ret;
 }
 
 UnionType new_Hash(ArrayObject *array)
@@ -848,7 +1128,7 @@ int Object_isTrue(UnionType a)
 	void *o = a.o;
 	switch (TYPE(o)) {
 	case Int:
-		ret = (to_Int(o) != 0);
+		ret = ((int)to_Int(o) != 0);
 		break;
 	case Double:
 		ret = (a.d != 0);
@@ -864,7 +1144,7 @@ int Value_isTrue(UnionType *a)
 	int ret = 0;
 	switch (TYPE(a->o)) {
 	case Int:
-		ret = (to_Int(a->o) != 0);
+		ret = ((int)to_Int(a->o) != 0);
 		break;
 	case Double:
 		ret = (a->d != 0);

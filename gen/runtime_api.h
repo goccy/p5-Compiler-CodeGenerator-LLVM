@@ -15,6 +15,7 @@ typedef enum {
 	ObjectType,
 	BlessedObjectType,
 	CodeRef,
+	IOHandler,
 	Undefined
 } Type;
 
@@ -87,6 +88,11 @@ typedef struct _BlessedObject {
 	const char *pkg_name;
 } BlessedObject;
 
+typedef struct _IOHandlerObject {
+	int header;
+	FILE *fp;
+} IOHandlerObject;
+
 #define NaN                (0xFFF0000000000000)
 #define MASK               (0x00000000FFFFFFFF)
 #define _TYPE              (0x000F000000000000)
@@ -99,7 +105,8 @@ typedef struct _BlessedObject {
 #define OBJECT_TAG         (uint64_t)(0x0007000000000000)
 #define BLESSED_OBJECT_TAG (uint64_t)(0x0008000000000000)
 #define CODE_REF_TAG       (uint64_t)(0x0009000000000000)
-#define UNDEF_TAG          (uint64_t)(0x000a000000000000)
+#define IO_HANDLER_TAG     (uint64_t)(0x000a000000000000)
+#define UNDEF_TAG          (uint64_t)(0x000b000000000000)
 
 #define HASH_TABLE_SIZE 512
 
@@ -109,10 +116,13 @@ typedef struct _BlessedObject {
 #define DOUBLE_init(data) (void *)&data
 #define STRING_init(data) (void *)((uint64_t)data | NaN | STRING_TAG)
 #define ARRAY_init(data) (void *)((uint64_t)data | NaN | ARRAY_TAG)
+#define ARRAY_REF_init(data) (void *)((uint64_t)data | NaN | ARRAY_REF_TAG)
 #define HASH_init(data) (void *)((uint64_t)data | NaN | HASH_TAG)
+#define HASH_REF_init(data) (void *)((uint64_t)data | NaN | HASH_REF_TAG)
 #define OBJECT_init(data) (void *)((uint64_t)data | NaN | OBJECT_TAG)
 #define CODE_REF_init(data) (void *)((uint64_t)data | NaN | CODE_REF_TAG)
 #define BLESSED_OBJECT_init(data) (void *)((uint64_t)data | NaN | BLESSED_OBJECT_TAG)
+#define IO_HANDLER_init(data) (void *)((uint64_t)data | NaN | IO_HANDLER_TAG)
 #define UNDEF_init(data) (void *)((uint64_t)data | NaN | UNDEF_TAG)
 
 #define to_Int(o) ((intptr_t)o)
@@ -125,6 +135,7 @@ typedef struct _BlessedObject {
 #define to_HashRef(o) (HashRefObject *)((uint64_t)o ^ (NaN | HASH_REF_TAG))
 #define to_CodeRef(o) (CodeRefObject *)((uint64_t)o ^ (NaN | CODE_REF_TAG))
 #define to_BlessedObject(o) (BlessedObject *)((uint64_t)o ^ (NaN | BLESSED_OBJECT_TAG))
+#define to_IOHandler(o) (IOHandlerObject *)((uint64_t)o ^ (NaN | IO_HANDLER_TAG))
 
 #define TYPE_CHECK(o, T) do {					\
 		if (TYPE(o) != T) {						\
@@ -134,6 +145,15 @@ typedef struct _BlessedObject {
 
 UnionType print(ArrayObject *array);
 void print_hash(HashObject *hash);
+void print_object(UnionType o);
+void dumper(UnionType o, size_t indent);
+Object *fetch_object(void);
+UnionType new_Hash(ArrayObject *array);
+HashRefObject *dynamic_hash_ref_cast_code(UnionType *o);
+ArrayRefObject *dynamic_array_ref_cast_code(UnionType *o);
+UnionType new_Array(UnionType *list, size_t size);
+UnionType new_ArrayRef(UnionType array);
+UnionType new_IOHandler(FILE *fp);
 
 #define SET(ret, a, b, op) do {					\
 		switch (TYPE(b->o)) {					\

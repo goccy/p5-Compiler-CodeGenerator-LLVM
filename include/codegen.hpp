@@ -38,6 +38,7 @@ typedef enum {
 	Object,
 	BlessedObject,
 	CodeRef,
+	IOHandler,
 	Undefined,
 	Value
 } Type;
@@ -60,7 +61,8 @@ typedef enum {
 #define OBJECT_TAG         (uint64_t)(0x0007000000000000)
 #define BLESSED_OBJECT_TAG (uint64_t)(0x0008000000000000)
 #define CODE_REF_TAG       (uint64_t)(0x0009000000000000)
-#define UNDEF_TAG          (uint64_t)(0x000a000000000000)
+#define IO_HANDLER_TAG     (uint64_t)(0x000a000000000000)
+#define UNDEF_TAG          (uint64_t)(0x000b000000000000)
 
 #define INT_init(data) (void *)(uint64_t)((data & MASK) | NaN | INT_TAG)
 #define DOUBLE_init(data) (void *)&data
@@ -68,6 +70,7 @@ typedef enum {
 #define ARRAY_init(data) (void *)((uint64_t)data | NaN | ARRAY_TAG)
 #define HASH_init(data) (void *)((uint64_t)data | NaN | HASH_TAG)
 #define OBJECT_init(data) (void *)((uint64_t)data | NaN | OBJECT_TAG)
+#define IO_HANDLER_init(data) (void *)((uint64_t)data | NaN | IO_HANDLER_TAG)
 
 #define TYPE(data) ((((uint64_t)data & NaN) == NaN) * (((uint64_t)data & _TYPE) >> 48))
 
@@ -198,9 +201,12 @@ public:
 	llvm::Value *getArgumentArray(llvm::IRBuilder<> *builder);
 	llvm::Value *generateReceiveUnionValueCode(llvm::IRBuilder<> *builder, llvm::Value *result);
 	llvm::Value *generateUnionToIntCode(llvm::IRBuilder<> *builder, llvm::Value *result);
+	llvm::Value *getHashRefValue(llvm::IRBuilder<> *builder, llvm::Value *hash_ref, llvm::Value *key);
 	llvm::Value *getHashValue(llvm::IRBuilder<> *builder, llvm::Value *hash, llvm::Value *key);
 	llvm::Value *getArraySize(llvm::IRBuilder<> *builder, llvm::Value *array);
 	llvm::Value *getArrayElement(llvm::IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx);
+	llvm::Value *setArrayElement(llvm::IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx, llvm::Value *elem);
+	llvm::Value *getArrayElementBySimpleAccess(llvm::IRBuilder<> *builder, llvm::Value *array, llvm::Value *idx);
 	llvm::Value *generateCastedValueCode(llvm::IRBuilder<> *builder, Node *node);
 	llvm::Value *generateCastCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type type, llvm::Value *value);
 	llvm::Value *generateDynamicCastCode(llvm::IRBuilder<> *builder, Enum::Runtime::Type type, llvm::Value *value);
@@ -219,7 +225,8 @@ public:
 	llvm::Value *createArrayRef(llvm::IRBuilder<> *builder, llvm::Value *boxed_array);
 	llvm::Value *createCodeRef(llvm::IRBuilder<> *builder, llvm::Value *code);
 	llvm::Value *createHashRef(llvm::IRBuilder<> *builder, llvm::Value *boxed_array);
-	llvm::Value *createArgumentArray(llvm::IRBuilder<> *builder, FunctionCallNode *node);// llvm::Value *list, size_t size);
+	llvm::Value *createArgument(llvm::IRBuilder<> *builder, Node *node);
+	llvm::Value *createArgumentArray(llvm::IRBuilder<> *builder, FunctionCallNode *node);
 	void setIteratorValue(llvm::IRBuilder<> *builder, Node *node);
 	void traverse(llvm::IRBuilder<> *builder, AST *ast);
 	bool linkModule(llvm::Module *dest, std::string filename);
