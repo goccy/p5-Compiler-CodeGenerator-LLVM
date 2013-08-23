@@ -237,6 +237,8 @@ Node *hv_to_node(pTHX_ SV *from_)
 		HV *token = (HV *)cast(aTHX_ get_value(from, "token"), "Compiler::Lexer::Token");
 		Token *tk = new_Token(aTHX_ token);
 		ModuleNode *node = new ModuleNode(tk);
+		Node *root = hv_to_node(aTHX_ get_value(from, "ast"));
+		node->ast = new AST(root);
 		node->args = hv_to_node(aTHX_ get_value(from, "args"));
 		node->next = hv_to_node(aTHX_ get_value(from, "next"));
 		ret = node;

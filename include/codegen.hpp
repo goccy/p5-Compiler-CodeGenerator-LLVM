@@ -23,7 +23,7 @@
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-
+#include <dirent.h>
 
 namespace Enum {
 namespace Runtime {
@@ -190,11 +190,17 @@ public:
 	VariableManager vmgr;
 	FunctionManager fmgr;
 	bool has_return_statement;
+	std::vector<const char *> library_paths;
 
 	LLVM(void);
+	void set_library_paths(std::vector<const char *> *paths);
 	void write(void);
 	void createRuntimeTypes(void);
 	void debug_run(AST *ast);
+	char *expandSpecialCharacter(const char *str);
+	std::string find_file(std::string filename, std::string dirname, DIR *dp);
+	std::string stringReplace(std::string str, std::string from, std::string to);
+	std::string load_file(std::string filename);
 	const char *gen(AST *ast);
 	CodeGenerator::Value *lookupVariable(std::string name, Token *tk);
 	void setupVariable(llvm::IRBuilder<> *builder, CodeGenerator::Value *value, Token *tk);
@@ -222,6 +228,7 @@ public:
 	llvm::Value *createNaNBoxingObject(llvm::IRBuilder<> *builder, llvm::Value *value);
 	llvm::Value *createNaNBoxingPtr(llvm::IRBuilder<> *builder, llvm::Value *value, uint64_t tag);
 	llvm::Value *createArray(llvm::IRBuilder<> *builder, llvm::Value *list, size_t size);
+	llvm::Value *createTemporaryArray(llvm::IRBuilder<> *builder, llvm::Value *list, size_t size);
 	llvm::Value *createArrayRef(llvm::IRBuilder<> *builder, llvm::Value *boxed_array);
 	llvm::Value *createCodeRef(llvm::IRBuilder<> *builder, llvm::Value *code);
 	llvm::Value *createHashRef(llvm::IRBuilder<> *builder, llvm::Value *boxed_array);
@@ -241,6 +248,7 @@ public:
 	void generateReturnCode(llvm::IRBuilder<> *builder, ReturnNode *node);
 	void generateLastEvaluatedReturnCode(llvm::IRBuilder<> *builder);
 	void generatePackageCode(llvm::IRBuilder<> *builder, PackageNode *node);
+	void generateModuleCode(llvm::IRBuilder<> *builder, ModuleNode *node);
     void generateCommaCode(llvm::IRBuilder<> *builder, BranchNode *node, std::vector<CodeGenerator::Value *> *list);
 	llvm::Value *generateSingleTermOperatorCode(llvm::IRBuilder<> *builder, SingleTermOperatorNode *node);
 	llvm::Value *generateAssignCode(llvm::IRBuilder<> *builder, BranchNode *node);

@@ -287,100 +287,24 @@ sub render {
             $img->[$p1 + 2] = clamp($fimg[$p1 + 2]);
         }
     }
-
 }
 
-my @img = (0, 0, 0);
+my @imgs = (0, 0, 0);
 $spheres[0] = Sphere->new(Vec->new(-2.0, 0.0, -3.5), 0.5);
 $spheres[1] = Sphere->new(Vec->new(-0.5, 0.0, -3.0), 0.5);
 $spheres[2] = Sphere->new(Vec->new(1.0, 0.0, -2.2), 0.5);
 $plane = Plane->new(Vec->new(0.0, -0.5, 0.0), Vec->new(0.0, 1.0, 0.0));
+render(\@imgs, $WIDTH, $HEIGHT, $NSUBSAMPLES);
+say @imgs;
 
-say $spheres[0];
-say $spheres[1];
-say $spheres[2];
-say $plane;
+my $fh;
+open($fh, ">", "ao.ppm");
+binmode($fh);
+print $fh "P6\n$WIDTH $HEIGHT\n255\n";
 
-render(\@img, $WIDTH, $HEIGHT, $NSUBSAMPLES);
-say @img;
-
-=hoge
-open(FP, ">", "ao.ppm");
-binmode(FP);
-print FP "P6\n$WIDTH $HEIGHT\n255\n";
-foreach (@img) {
-    print FP chr($_);
+foreach my $img (@imgs) {
+    my $ch = chr $img;
+    print $fh $ch;
 }
-close(FP);
-=cut
 
-=hoge
-my $vec_ = Vec->new(1.0, 2.0, 3.0);
-my $org_ = Vec->new(0.5, 1.0, 1.5);
-my $sphere_ = Sphere->new($vec_, 0.5);
-my $inter_ = Intersection->new();
-my $dir_ = Vec->new(-1.0, -2.0, -3.0);
-my $ray_ = Ray->new($org_, $dir_);
-#$sphere_->intersect($inter_, $ray_);
-
-my $plane_ = Plane->new(Vec->new(0.0, -0.5, 0.0), Vec->new(0.0, 1.0, 0.0));
-$plane_->intersect($inter_, $ray_);
-say $inter_;
-say $ray_;
-
-
-my $vec = Vec->new(1.0, 2.0, 3.0);
-my $vec1 = Vec->new(2.0, 3.0, 4.0);
-
-say $vec;
-say $vec->{x};
-say $vec->{y};
-say $vec->{z};
-
-say $vec1;
-say $vec1->{x};
-say $vec1->{y};
-say $vec1->{z};
-
-my $vec2 = $vec->add($vec1);
-say $vec2;
-say $vec2->{x};
-say $vec2->{y};
-say $vec2->{z};
-
-my $vec3 = $vec->sub_($vec1);
-say $vec3;
-say $vec3->{x};
-say $vec3->{y};
-say $vec3->{z};
-
-say $vec->dot($vec1);
-
-my $vec4 = $vec->cross($vec1);
-say $vec4;
-say $vec4->{x};
-say $vec4->{y};
-say $vec4->{z};
-
-say $vec->length();
-
-$vec->normalize();
-say $vec->{x};
-say $vec->{y};
-say $vec->{z};
-
-my $ray = Ray->new($vec2, $vec3);
-say $ray;
-
-my $inter = Intersection->new();
-say $inter;
-
-my $sphere = Sphere->new($vec4, 0.5);
-say $sphere;
-$sphere->intersect($inter, $ray);
-
-$plane = Plane->new($vec4, $vec4);
-say $plane;
-$plane->intersect($inter, $ray);
-
-=cut
+close($fh);

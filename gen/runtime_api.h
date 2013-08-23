@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 typedef enum {
 	Double,
@@ -53,7 +54,8 @@ typedef struct _String {
 
 typedef struct _Array {
 	int type;
-	Value *list;
+	//Value *list;
+	Value **list;
 	size_t size;
 } ArrayObject;
 
@@ -91,6 +93,8 @@ typedef struct _BlessedObject {
 typedef struct _IOHandlerObject {
 	int header;
 	FILE *fp;
+	const char *filename;
+	const char *mode;
 } IOHandlerObject;
 
 #define NaN                (0xFFF0000000000000)
@@ -139,21 +143,25 @@ typedef struct _IOHandlerObject {
 
 #define TYPE_CHECK(o, T) do {					\
 		if (TYPE(o) != T) {						\
+			fprintf(stderr, "type = [%llu]\n", TYPE(o));	\
 			assert(0 && "Type Error!\n");		\
 		}										\
 	} while (0)
 
 UnionType print(ArrayObject *array);
-void print_hash(HashObject *hash);
-void print_object(UnionType o);
+void print_hash(FILE *fp, HashObject *hash);
+void print_object(FILE *fp, UnionType o);
+void _print_with_handler(FILE *fp, ArrayObject *array);
 void dumper(UnionType o, size_t indent);
 Object *fetch_object(void);
 UnionType new_Hash(ArrayObject *array);
 HashRefObject *dynamic_hash_ref_cast_code(UnionType *o);
 ArrayRefObject *dynamic_array_ref_cast_code(UnionType *o);
-UnionType new_Array(UnionType *list, size_t size);
+UnionType new_Array(UnionType **list, size_t size);
 UnionType new_ArrayRef(UnionType array);
-UnionType new_IOHandler(FILE *fp);
+UnionType new_IOHandler(const char *filename, const char *mode, FILE *fp);
+UnionType new_String(char *str);
+void make_object_pool(void);
 
 #define SET(ret, a, b, op) do {					\
 		switch (TYPE(b->o)) {					\

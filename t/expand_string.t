@@ -12,7 +12,7 @@ Compiler::Parser::AST::Renderer->new()->render($ast);
 
 my $llvm_ir = Compiler::CodeGenerator::LLVM->new->generate($ast);
 
-open my $fh, '>', 'io.ll';
+open my $fh, '>', 'expand_string.ll';
 print $fh $llvm_ir;
 close $fh;
 
@@ -21,18 +21,9 @@ warn "generated";
 Compiler::CodeGenerator::LLVM->new->debug_run($ast);
 
 __DATA__
-
-sub f {
-    $_[0] = 2;
-    return 1;
-}
-
 my $a = 1;
-say $a;
-f($a);
-say $a;
+my $b = 2.345;
+my $c = 'hello';
 
-my $fh;
-open $fh, ">", "hoge.pl";
-print $fh "hello world";
-close $fh;
+say "$a : $b : $c";
+

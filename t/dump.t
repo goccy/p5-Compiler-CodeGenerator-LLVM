@@ -12,7 +12,7 @@ Compiler::Parser::AST::Renderer->new()->render($ast);
 
 my $llvm_ir = Compiler::CodeGenerator::LLVM->new->generate($ast);
 
-open my $fh, '>', 'auto_vivification.ll';
+open my $fh, '>', 'dump.ll';
 print $fh $llvm_ir;
 close $fh;
 

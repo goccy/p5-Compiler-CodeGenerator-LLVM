@@ -8,24 +8,26 @@ UnionType _open(ArrayObject *args)
 	UnionType ret;
 	size_t size = args->size;
 	if (size == 3) {
-		UnionType _handler = args->list[0];
-		UnionType _type = args->list[1];
-		UnionType _filename = args->list[2];
+		UnionType *_handler = args->list[0];
+		UnionType *_type = args->list[1];
+		UnionType *_filename = args->list[2];
 		//fprintf(stderr, "handler type = [%llu]\n", TYPE(_handler.o));
-		TYPE_CHECK(_type.o, String);
-		TYPE_CHECK(_filename.o, String);
-		char *io_type = (to_String(_type.o))->s;
-		char *filename = (to_String(_filename.o))->s;
-		char *type = "";
+		TYPE_CHECK(_type->o, String);
+		TYPE_CHECK(_filename->o, String);
+		char *io_type = (to_String(_type->o))->s;
+		char *filename = (to_String(_filename->o))->s;
+		char *mode = "";
 		if (!strncmp(io_type, ">", 1)) {
-			type = "w";
+			mode = "w";
+		} else if (!strncmp(io_type, "<", 1)) {
+			mode = "r";
 		}
 		FILE *fp = NULL;
-		if ((fp = fopen(filename, type)) == NULL) {
+		if ((fp = fopen(filename, mode)) == NULL) {
 			fprintf(stderr, "ERROR: file open error!!\n");
 			exit(EXIT_FAILURE);
 		}
-		args->list[0] = new_IOHandler(fp);
+		*args->list[0] = new_IOHandler(filename, mode, fp);
 	} else {
 		fprintf(stderr, "argument size = [%zu]\n", size);
 		assert(0 && "Sorry, still not supported");
@@ -34,10 +36,55 @@ UnionType _open(ArrayObject *args)
 	return ret;
 }
 
+UnionType _binmode(ArrayObject *args)
+{
+	UnionType ret;
+	UnionType arg = *args->list[0];
+	arg = (TYPE(arg.o) == ObjectType) ? (to_Object(arg.o))->v : arg;
+	TYPE_CHECK(arg.o, IOHandler);
+	IOHandlerObject *handler = to_IOHandler(arg.o);
+	char *mode = NULL;
+	if (!strncmp(handler->mode, "r", sizeof("r"))) {
+		mode = "rb";
+	} else if (!strncmp(handler->mode, "w", sizeof("w"))) {
+		mode = "wb";
+	}
+	handler->fp = freopen(handler->filename, mode, handler->fp);
+	if (!handler->fp) {
+		fprintf(stderr, "ERROR: could not reopen [%s]\n", handler->filename);
+		exit(EXIT_FAILURE);
+	}
+	ret.o = INT_init(0);
+	return ret;
+}
+
+UnionType _chr(ArrayObject *args)
+{
+	UnionType arg = *args->list[0];
+	arg = (TYPE(arg.o) == ObjectType) ? (to_Object(arg.o))->v : arg;
+	TYPE_CHECK(arg.o, Int);
+	int ch = (int)to_Int(arg.o);
+	char buf[8] = {0};
+	sprintf(buf, "%c", ch);
+	UnionType ret = new_String(buf);
+	return ret;
+}
+
+UnionType _close(ArrayObject *args)
+{
+	UnionType ret;
+	UnionType arg = *args->list[0];
+	arg = (TYPE(arg.o) == ObjectType) ? (to_Object(arg.o))->v : arg;
+	TYPE_CHECK(arg.o, IOHandler);
+	IOHandlerObject *handler = to_IOHandler(arg.o);
+	ret.o = INT_init(fclose(handler->fp));
+	return ret;
+}
+
 UnionType _sqrt(ArrayObject *args)
 {
 	UnionType ret;
-	UnionType arg = args->list[0];
+	UnionType arg = *args->list[0];
 	arg = (TYPE(arg.o) == ObjectType) ? (to_Object(arg.o))->v : arg;
 	ret.d = sqrt(arg.d);
 	return ret;
@@ -46,13 +93,13 @@ UnionType _sqrt(ArrayObject *args)
 UnionType _abs(ArrayObject *args)
 {
 	UnionType ret;
-	UnionType arg = args->list[0];
-	switch (TYPE(arg.o)) {
+	UnionType *arg = args->list[0];
+	switch (TYPE(arg->o)) {
 	case Int:
-		ret.o = INT_init(abs((int)to_Int(arg.o)));
+		ret.o = INT_init(abs((int)to_Int(arg->o)));
 		break;
 	case Double:
-		ret.d = fabs(arg.d);
+		ret.d = fabs(arg->d);
 		break;
 	default:
 		assert(0 && "Type Error!!! abs's argument");
@@ -64,13 +111,13 @@ UnionType _abs(ArrayObject *args)
 UnionType _int(ArrayObject *args)
 {
 	UnionType ret;
-	UnionType arg = args->list[0];
-	switch (TYPE(arg.o)) {
+	UnionType *arg = args->list[0];
+	switch (TYPE(arg->o)) {
 	case Int:
-		ret.o = arg.o;
+		ret.o = arg->o;
 		break;
 	case Double:
-		ret.o = INT_init((int)arg.d);
+		ret.o = INT_init((int)arg->d);
 		break;
 	default:
 		assert(0 && "Type Error!!! abs's argument");
@@ -90,13 +137,13 @@ UnionType _rand(ArrayObject *args)
 UnionType _sin(ArrayObject *args)
 {
 	UnionType ret;
-	UnionType arg = args->list[0];
-	switch (TYPE(arg.o)) {
+	UnionType *arg = args->list[0];
+	switch (TYPE(arg->o)) {
 	case Int:
-		ret.d = sin(to_Int(arg.o));
+		ret.d = sin(to_Int(arg->o));
 		break;
 	case Double:
-		ret.d = sin(arg.d);
+		ret.d = sin(arg->d);
 		break;
 	default:
 		assert(0 && "Type Error!!! abs's argument");
@@ -108,13 +155,13 @@ UnionType _sin(ArrayObject *args)
 UnionType _cos(ArrayObject *args)
 {
 	UnionType ret;
-	UnionType arg = args->list[0];
-	switch (TYPE(arg.o)) {
+	UnionType *arg = args->list[0];
+	switch (TYPE(arg->o)) {
 	case Int:
-		ret.d = cos(to_Int(arg.o));
+		ret.d = cos(to_Int(arg->o));
 		break;
 	case Double:
-		ret.d = cos(arg.d);
+		ret.d = cos(arg->d);
 		break;
 	default:
 		assert(0 && "Type Error!!! abs's argument");
@@ -126,10 +173,10 @@ UnionType _cos(ArrayObject *args)
 UnionType _atan2(ArrayObject *args)
 {
 	UnionType ret;
-	UnionType arg1 = args->list[0];
-	UnionType arg2 = args->list[1];
-	double d1 = (TYPE(arg1.o) == Int) ? (double)to_Int(arg1.o) : arg1.d;
-	double d2 = (TYPE(arg2.o) == Int) ? (double)to_Int(arg2.o) : arg2.d;
+	UnionType *arg1 = args->list[0];
+	UnionType *arg2 = args->list[1];
+	double d1 = (TYPE(arg1->o) == Int) ? (double)to_Int(arg1->o) : arg1->d;
+	double d2 = (TYPE(arg2->o) == Int) ? (double)to_Int(arg2->o) : arg2->d;
 	ret.d = atan2(d1, d2);
 	return ret;
 }
@@ -193,7 +240,7 @@ void dump_array_ref(ArrayRefObject *ref, size_t indent)
 	size_t i = 0;
 	fprintf(stdout, "[\n");
 	for (i = 0; i < size; i++) {
-		UnionType value = array->list[i];
+		UnionType value = *array->list[i];
 		print_space(indent + 2);
 		dumper(value, indent + 2);
 		if (i + 1 != size) {
@@ -218,7 +265,7 @@ void dumper(UnionType o, size_t indent)
 {
 	switch (TYPE(o.o)) {
 	case Int: case Double:
-		print_object(o);
+		print_object(stdout, o);
 		break;
 	case String:
 		dump_string(to_String(o.o));
@@ -241,62 +288,67 @@ UnionType Object_dumper(ArrayObject *a)
 {
 	UnionType ret;
 	if (a->size > 0) {
-		dumper(a->list[0], 0);
+		dumper(*a->list[0], 0);
 	}
 	ret.o = INT_init(0);
 	return ret;
 }
 
-void print_object(UnionType _o)
+void print_object(FILE *fp, UnionType _o)
 {
+	if (!fp) fp = stdout;
 	void *o = _o.o;
 	//fprintf(stderr, "type = [%d]\n", TYPE(o));
 	switch (TYPE(o)) {
 	case Int:
-		fprintf(stdout, "%d", to_Int(o));
+		fprintf(fp, "%d", to_Int(o));
 		break;
 	case Double:
-		fprintf(stdout, "%f", _o.d);
+		fprintf(fp, "%f", _o.d);
 		break;
 	case String:
-		fprintf(stdout, "%s", (to_String(o))->s);
+		fprintf(fp, "%s", (to_String(o))->s);
 		break;
 	case Array:
-		print(to_Array(o));
+		if (fp != stdout) {
+			_print_with_handler(fp, to_Array(o));
+		} else {
+			print(to_Array(o));
+		}
 		break;
 	case ArrayRef:
-		fprintf(stdout, "ARRAY(%p)", o);
+		fprintf(fp, "ARRAY(%p)", o);
 		break;
 	case Hash:
-		print_hash(to_Hash(o));
+		print_hash(fp, to_Hash(o));
 		break;
 	case HashRef:
-		fprintf(stdout, "HASH(%p)", o);
+		fprintf(fp, "HASH(%p)", o);
 		break;
 	case CodeRef:
-		fprintf(stdout, "CODE(%p)", o);
+		fprintf(fp, "CODE(%p)", o);
 		break;
 	case ObjectType: {
 		Object *object = to_Object(o);
-		print_object(object->v);
+		print_object(fp, object->v);
 		break;
 	}
 	case BlessedObjectType:
-		fprintf(stdout, "%s=HASH(%p)", (to_BlessedObject(o))->pkg_name, o);
+		fprintf(fp, "%s=HASH(%p)", (to_BlessedObject(o))->pkg_name, o);
 		break;
 	default:
 		break;
 	}
 }
 
-void print_hash(HashObject *hash)
+void print_hash(FILE *fp, HashObject *hash)
 {
 	size_t key_n = hash->size;
 	size_t i = 0;
 	for (i = 0; i < key_n; i++) {
 		StringObject *key = hash->keys[i];
-		fprintf(stdout, "%s", key->s);
-		print_object(hash->table[key->hash]);
+		fprintf(fp, "%s", key->s);
+		print_object(fp, hash->table[key->hash]);
 	}
 }
 
@@ -306,22 +358,27 @@ UnionType print(ArrayObject *array)
 	size_t size = array->size;
 	size_t i = 0;
 	for (i = 0; i < size; i++) {
-		print_object(array->list[i]);
+		print_object(stdout, *array->list[i]);
 	}
 	ret.o = INT_init(0);
 	return ret;
 }
 
+void _print_with_handler(FILE *fp, ArrayObject *array)
+{
+	size_t size = array->size;
+	for (size_t i = 0; i < size; i++) {
+		print_object(fp, *array->list[i]);
+	}
+}
+
 UnionType print_with_handler(UnionType *_handler, ArrayObject *array)
 {
-	fprintf(stderr, "called print_with_handler\n");
-	fprintf(stderr, "handler type = [%llu]\n", TYPE(_handler->o));
+	//fprintf(stderr, "called print_with_handler\n");
+	//fprintf(stderr, "handler type = [%llu]\n", TYPE(_handler->o));
 	UnionType ret;
-	size_t size = array->size;
-	size_t i = 0;
-	for (i = 0; i < size; i++) {
-		print_object(array->list[i]);
-	}
+	FILE *fp = (to_IOHandler(_handler->o))->fp;
+	_print_with_handler(fp, array);
 	ret.o = INT_init(0);
 	return ret;
 }
@@ -338,7 +395,7 @@ UnionType say(ArrayObject *array)
 void debug_print(UnionType o)
 {
 	fprintf(stderr, "===== debug_print ======\n");
-	print_object(o);
+	print_object(stdout, o);
 	fprintf(stderr, "=============\n");
 }
 
@@ -348,10 +405,10 @@ UnionType shift(ArrayObject *args)
 	size_t size = args->size;
 	if (size > 1) return ret;
 	if (size == 1) {
-		UnionType o = args->list[0];
+		UnionType o = *args->list[0];
 		TYPE_CHECK(o.o, Array);
 		ArrayObject *array = to_Array(o.o);
-		ret = array->list[0];
+		ret = *array->list[0];
 		array->size--;
 		memmove(array->list, array->list + 1, array->size * sizeof(Value));
 	} else {
@@ -364,13 +421,17 @@ void Array_grow(ArrayObject *array, size_t grow_size)
 {
 	void *tmp;
 	size_t size = array->size;
-	if (!(tmp = malloc(sizeof(Value) * grow_size))) {
+	if (!(tmp = malloc(sizeof(Value *) * grow_size))) {
 		fprintf(stderr, "ERROR!!: cannot allocated memory\n");
 	} else {
-		if (array->list) memcpy(tmp, array->list, sizeof(Value) * size);
-		array->list = (UnionType *)tmp;
+		if (array->list) memcpy(tmp, array->list, sizeof(Value *) * size);
+		array->list = (UnionType **)tmp;
 		for (int i = size; i <= grow_size; i++) {
-			array->list[i] = undef;
+			//fprintf(stderr, "undef type = [%d]\n", TYPE(undef.o));
+			UnionType *undef_ptr = (UnionType *)fetch_object();
+			undef_ptr->o = undef.o;
+			array->list[i] = undef_ptr;
+			//array->list[i] = &undef;
 		}
 		array->size = grow_size;
 	}
@@ -383,10 +444,10 @@ UnionType push(ArrayObject *args)
 	if (size != 2) {
 		fprintf(stderr, "Type Error!: near by push\n");
 	} else {
-		UnionType array = args->list[0];
-		UnionType value = args->list[1];
-		TYPE_CHECK(array.o, Array);
-		ArrayObject *base = to_Array(array.o);
+		UnionType *array = args->list[0];
+		UnionType *value = args->list[1];
+		TYPE_CHECK(array->o, Array);
+		ArrayObject *base = to_Array(array->o);
 		Array_grow(base, base->size + 1);
 		base->list[base->size] = value;
 		base->size++;
@@ -395,11 +456,13 @@ UnionType push(ArrayObject *args)
 	return ret;
 }
 
-UnionType new_IOHandler(FILE *fp)
+UnionType new_IOHandler(const char *filename, const char *mode, FILE *fp)
 {
 	UnionType ret;
 	IOHandlerObject *o = (IOHandlerObject *)fetch_object();
 	o->fp = fp;
+	o->mode = mode;
+	o->filename = filename;
 	ret.o = IO_HANDLER_init(o);
 	return ret;
 }
@@ -439,7 +502,7 @@ UnionType *HashRef_get(UnionType *o, StringObject *key)
 		break;
 	}
 	case Int: case Double: case Undefined: {
-		/* auto vivification */
+		// auto vivification
 		ArrayObject array;
 		array.size = 0;
 		array.list = NULL;
@@ -466,7 +529,7 @@ UnionType *Array_get(ArrayObject *array, int idx)
 	if (size <= idx) {
 		Array_grow(array, idx + 1);
 	}
-	return &array->list[idx];
+	return array->list[idx];
 }
 
 UnionType *ArrayRef_get(UnionType *o, int idx)
@@ -486,12 +549,20 @@ UnionType *ArrayRef_get(UnionType *o, int idx)
 		break;
 	}
 	case Int: case Double: case Undefined: {
-		/* auto vivification */
+		// auto vivification
+		//fprintf(stderr, "auto vivification\n");
 		UnionType boxed_array = new_Array(NULL, 0);
 		UnionType array_ref = new_ArrayRef(boxed_array);
-		o->o = array_ref.o;
+		//o->o = array_ref.o;
+		*o = array_ref;
 		ArrayObject *array = to_Array(boxed_array.o);
+		//fprintf(stderr, "idx = [%d]\n", idx);
+		//fprintf(stderr, "size = [%d]\n", array->size);
+		//fprintf(stderr, "list = [%p]\n", array->list);
+		//say(array);
 		ret = Array_get(array, idx);
+		//fprintf(stderr, "array->size = [%d]\n", array->size);
+		//say(array);
 		break;
 	}
 	default:
@@ -506,25 +577,24 @@ void Array_set(ArrayObject *array, int idx, UnionType elem)
 {
 	size_t size = array->size;
 	if (size <= idx) Array_grow(array, idx + 1);
-	array->list[idx] = elem;
+	array->list[idx] = &elem;
 }
 
-/*
-Object *map(ArrayObject *args)
-{
-	Object *block = args->list[0];
-	Object *array = args->list[1];
-	Object *ret;
-	for (i = 0; i < size; i++) {
-		Object *map_arg = array->list[0];
-		Function *map_func = (Function *)block->o.value;
-		ret->list[i] = map_func(map_arg);
-	}
-	ret->type = Array;
-	ret->v.ovalue = mapped_array;
-	return ret;
-}
-*/
+
+//Object *map(ArrayObject *args)
+//{
+//	Object *block = args->list[0];
+//	Object *array = args->list[1];
+//	Object *ret;
+//	for (i = 0; i < size; i++) {
+//		Object *map_arg = array->list[0];
+//		Function *map_func = (Function *)block->o.value;
+//		ret->list[i] = map_func(map_arg);
+//	}
+//	ret->type = Array;
+//	ret->v.ovalue = mapped_array;
+//	return ret;
+//}
 
 UnionType *base_hash_table;
 void init_table(void)
@@ -553,17 +623,14 @@ void global_init(void)
 	new_Undef();
 	init_table();
 	init_package_map();
+	make_object_pool();
 }
 
-/**
- * An implementation of the djb2 hash function by Dan Bernstein.
- */
 unsigned long make_hash(char* _str, size_t len)
 {
 	char* str = _str;
 	unsigned long hash = 5381;
 	while (len--) {
-		/* hash * 33 + c */
 		hash = ((hash << 5) + hash) + *str++;
 	}
 	return hash;
@@ -587,12 +654,14 @@ UnionType new_String(char *str)
 void _unshift(ArrayObject *base, char *pkg_name)
 {
 	UnionType *tmp;
-	if (!(tmp = malloc(sizeof(Value) * (base->size + 1)))) {
+	if (!(tmp = malloc(sizeof(Value *) * (base->size + 1)))) {
 		fprintf(stderr, "ERROR!!: cannot allocated memory\n");
 	} else {
 		memcpy(tmp + 1, base->list, base->size * sizeof(Value));
-		base->list = (UnionType *)tmp;
-		base->list[0] = new_String(pkg_name);
+		base->list = (UnionType **)tmp;
+		UnionType *class = (UnionType *)fetch_object();
+		class->o = new_String(pkg_name).o;
+		base->list[0] = class;
 		base->size++;
 	}
 }
@@ -601,13 +670,13 @@ void _make_method_argument(ArrayObject *base, BlessedObject *self)
 {
 	//fprintf(stderr, "call _make_method_argument\n");
 	UnionType *tmp;
-	if (!(tmp = malloc(sizeof(Value) * (base->size + 1)))) {
+	if (!(tmp = malloc(sizeof(Value *) * (base->size + 1)))) {
 		fprintf(stderr, "ERROR!!: cannot allocated memory\n");
 	} else {
 		memcpy(tmp + 1, base->list, base->size * sizeof(Value));
-		base->list = (UnionType *)tmp;
-		UnionType elem;
-		elem.o = BLESSED_OBJECT_init(self);
+		base->list = (UnionType **)tmp;
+		UnionType *elem = (UnionType *)fetch_object();
+		elem->o = BLESSED_OBJECT_init(self);
 		base->list[0] = elem;
 		base->size++;
 	}
@@ -633,8 +702,8 @@ UnionType bless(ArrayObject *args)
 	if (args->size != 2) {
 		fprintf(stderr, "ERROR!: bless function must be required two argument\n");
 	}
-	UnionType self = args->list[0];
-	UnionType class = args->list[1];
+	UnionType self = *args->list[0];
+	UnionType class = *args->list[1];
 	BlessedObject *blessed = (BlessedObject *)calloc(sizeof(BlessedObject), 1);
 	TYPE_CHECK(self.o, HashRef);
 	class = (TYPE(class.o) == ObjectType) ? (to_Object(class.o))->v : class;
@@ -656,9 +725,21 @@ UnionType bless(ArrayObject *args)
 	return ret;
 }
 
+int count = 0;
+Object **object_pool;
+void make_object_pool(void)
+{
+	size_t size = 4096 * 128;
+	object_pool = (Object **)calloc(sizeof(Object *), size);
+	for (size_t i = 0; i < size; i++) {
+		object_pool[i] = (Object *)calloc(sizeof(Object), 1);
+	}
+}
+
 Object *fetch_object(void)
 {
-	return (Object *)calloc(sizeof(Object), 1);
+	count++;
+	return (Object *)object_pool[count];
 }
 
 HashObject *get_pkg(char *pkg_name)
@@ -705,7 +786,7 @@ Code get_method_by_name(BlessedObject *self, char *mtd_name)
 	return code_ref->code;
 }
 
-UnionType new_Array(UnionType *list, size_t size)
+UnionType new_Array(UnionType **list, size_t size)
 {
 	UnionType ret;
 	ArrayObject *array = (ArrayObject *)fetch_object();
@@ -725,22 +806,23 @@ UnionType new_Hash(ArrayObject *array)
 	size_t size = array->size;
 	int key_n = 0;
 	size_t i = 0;
-	UnionType *list = array->list;
+	UnionType **list = array->list;
 	for (i = 0; i < size; i += 2, key_n++) {
-		StringObject *key = to_String(list[i].o);
-		UnionType value = list[i + 1];
-		if (TYPE(value.o) == ObjectType) {
+		StringObject *key = to_String(list[i]->o);
+		hash->keys[key_n] = key;
+		UnionType *value = (i + 1 < size) ? list[i + 1] : NULL;
+		if (!value) continue;
+		if (TYPE(value->o) == ObjectType) {
 			//Object is allocated stack.
 			//must be cast
-			Object *o = to_Object(value.o);
-			value = o->v;
+			Object *o = to_Object(value->o);
+			value = &(o->v);
 		}
-		if (TYPE(value.o) == Double) {
-			hash->table[key->hash].d = value.d;
+		if (TYPE(value->o) == Double) {
+			hash->table[key->hash].d = value->d;
 		} else {
-			hash->table[key->hash].o = value.o;
+			hash->table[key->hash].o = value->o;
 		}
-		hash->keys[key_n] = key;
 	}
 	hash->size = key_n;
 	ret.o = HASH_init(hash);
@@ -753,15 +835,15 @@ UnionType Hash_to_array(HashObject *hash)
 	ArrayObject *array = (ArrayObject *)calloc(sizeof(ArrayObject), 1);
 	size_t key_n = hash->size;
 	size_t array_size = key_n * 2;
-	array->list = (UnionType *)calloc(sizeof(UnionType), array_size);
+	array->list = (UnionType **)calloc(sizeof(UnionType), array_size);
 	array->size = array_size;
 	size_t i = 0;
 	for (i = 0; i < key_n; i++) {
 		StringObject *key = hash->keys[i];
-		UnionType boxed_key;
-		boxed_key.o = STRING_init(key);
+		UnionType *boxed_key = (UnionType *)fetch_object();
+		boxed_key->o = STRING_init(key);
 		array->list[i * 2] = boxed_key;
-		array->list[i * 2 + 1] = hash->table[key->hash];
+		array->list[i * 2 + 1] = &hash->table[key->hash];
 	}
 	ret.o = ARRAY_init(array);
 	return ret;
@@ -1153,4 +1235,86 @@ int Value_isTrue(UnionType *a)
 		break;
 	}
 	return ret;
+}
+
+char *int_to_string(int v)
+{
+	char buf[256] = {0};
+	snprintf(buf, 256, "%d", v);
+	size_t len = strlen(buf) + 1;
+	char *ret = (char *)malloc(len);
+	memcpy(ret, buf, len);
+	return ret;
+}
+
+char *double_to_string(double v)
+{
+	char buf[256] = {0};
+	snprintf(buf, 256, "%f", v);
+	size_t len = strlen(buf) + 1;
+	char *ret = (char *)malloc(len);
+	memcpy(ret, buf, len);
+	return ret;
+}
+
+UnionType expandVariable(const char *fmt, ...)
+{
+	fprintf(stderr, "called expandVariable\n");
+	const char* p;
+	va_list args;
+	va_start(args, fmt);
+	size_t fmt_len = strlen(fmt);
+	size_t arg_num = 0;
+	for (p = fmt; *p != '\0'; p++) {
+		if (*p == '%' && *(p+1) == 's') arg_num++;
+	}
+	char *vars[arg_num];
+	size_t i = 0;
+	size_t all_length = 0;
+	for (p = fmt; *p != '\0'; p++) {
+		if (*p == '%' && *(p+1) == 's') {
+			UnionType *arg = va_arg(args, UnionType *);
+			char *str = NULL;
+			switch (TYPE(arg->o)) {
+			case Int:
+				str = int_to_string(to_Int(arg->o));
+				break;
+			case Double:
+				str = double_to_string(arg->d);
+				break;
+			case String:
+				str = (to_String(arg->o))->s;
+				break;
+			case Array:
+				break;
+			default:
+				break;
+			}
+			vars[i] = str;
+			all_length += strlen(str);
+			p++;
+		} else {
+			all_length++;
+		}
+	}
+	char buf[all_length];
+	i = 0;
+	size_t k = 0;
+	for (p = fmt; *p != '\0'; p++) {
+		if (*p == '%' && *(p+1) == 's') {
+			char *s = vars[i];
+			size_t len = strlen(s);
+			for (size_t j = 0; j < len; j++) {
+				buf[i] = s[j];
+				i++;
+			}
+			p++;
+		} else {
+			buf[i] = fmt[k];
+		}
+		i++;
+		k++;
+	}
+	fprintf(stderr, "buf = [%s]\n", buf);
+	return new_String(buf);
 }
