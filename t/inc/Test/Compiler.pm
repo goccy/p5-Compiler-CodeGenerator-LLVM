@@ -65,6 +65,7 @@ sub __make_ast {
     my %ast;
     foreach my $module_name (keys %$results) {
         my $tokens = $results->{$module_name};
+        next unless @$tokens;
         $ast{$module_name} = $parser->parse($tokens);
     }
     $parser->link_ast(\%ast);
