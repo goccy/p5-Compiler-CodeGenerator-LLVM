@@ -2,25 +2,29 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Compiler;
-use Data::Dumper;
 use File::Basename qw/dirname/;
 
 my $ir_dir = dirname(__FILE__) . '/ir';
 my $code = do { local $/; <DATA> };
 my $compiler = Test::Compiler->new({
-    output => "$ir_dir/expand_string.ll"
+    output => "$ir_dir/code_ref.ll"
 });
 
 $compiler->compile($code);
 my $results = $compiler->debug_run($code);
-is($results->[0], '$a : $b : $c');
+like($results->[0], qr/CODE\(0x[0-f]+\)/);
+is($results->[1], 4);
+is($results->[2], 5);
 
 done_testing;
 
 __DATA__
-my $a = 1;
-my $b = 2.345;
-my $c = 'hello';
+sub f {
+    $_[0] + 1;
+}
 
-say "$a : $b : $c";
+my $code = \&f;
+say $code;
 
+say &$code(3);
+say &$code(4);

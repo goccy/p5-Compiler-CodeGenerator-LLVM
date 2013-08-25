@@ -5,12 +5,9 @@ use Test::Compiler;
 use File::Basename qw/dirname/;
 
 my $ir_dir = dirname(__FILE__) . '/ir';
-my $path = dirname(__FILE__) . '/lib';
 my $code = do { local $/; <DATA> };
-
 my $compiler = Test::Compiler->new({
-    library_path => [$path],
-    output => "$ir_dir/use.ll"
+    output => "$ir_dir/package.ll"
 });
 
 $compiler->compile($code);
@@ -22,7 +19,28 @@ is($results->[2], 26, '$person->get_age');
 done_testing;
 
 __DATA__
-use Person;
+package Person;
+
+sub new {
+    my ($class, $name, $age) = @_;
+    my $self = {
+        age  => $age,
+        name => $name
+    };
+    return bless($self, $class);
+}
+
+sub get_name {
+    my $self = shift;
+    $self->{name};
+}
+
+sub get_age {
+    my $self = shift;
+    $self->{age};
+}
+
+package main;
 
 my $person = Person->new("goccy", 26);
 

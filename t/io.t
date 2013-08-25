@@ -1,38 +1,25 @@
 use strict;
 use warnings;
-use Compiler::Lexer;
-use Compiler::Parser;
-use Compiler::Parser::AST::Renderer;
-use Compiler::CodeGenerator::LLVM;
+use Test::More;
+use Test::Compiler;
+use File::Basename qw/dirname/;
 
+my $ir_dir = dirname(__FILE__) . '/ir';
 my $code = do { local $/; <DATA> };
-my $tokens = Compiler::Lexer->new('')->tokenize($code);
-my $ast = Compiler::Parser->new->parse($tokens);
-Compiler::Parser::AST::Renderer->new()->render($ast);
+my $compiler = Test::Compiler->new({
+    output => "$ir_dir/io.ll"
+});
 
-my $llvm_ir = Compiler::CodeGenerator::LLVM->new->generate($ast);
+$compiler->compile($code);
+$compiler->debug_run($code);
+open my $fh, '<', 'io_test.pl';
+my $str = do { local $/; <$fh> };
+is($str, 'hello world', 'write');
 
-open my $fh, '>', 'io.ll';
-print $fh $llvm_ir;
-close $fh;
-
-warn "generated";
-
-Compiler::CodeGenerator::LLVM->new->debug_run($ast);
+done_testing;
 
 __DATA__
-
-sub f {
-    $_[0] = 2;
-    return 1;
-}
-
-my $a = 1;
-say $a;
-f($a);
-say $a;
-
 my $fh;
-open $fh, ">", "hoge.pl";
-print $fh "hello world";
+open $fh, '>', 'io_test.pl';
+print $fh 'hello world';
 close $fh;

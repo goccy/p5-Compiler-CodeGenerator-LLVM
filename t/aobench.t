@@ -1,24 +1,21 @@
 use strict;
 use warnings;
-use Compiler::Lexer;
-use Compiler::Parser;
-use Compiler::Parser::AST::Renderer;
-use Compiler::CodeGenerator::LLVM;
+use Test::More;
+use Test::Compiler;
+use File::Basename qw/dirname/;
 
+my $ir_dir = dirname(__FILE__) . '/ir';
 my $code = do { local $/; <DATA> };
-my $tokens = Compiler::Lexer->new('')->tokenize($code);
-my $ast = Compiler::Parser->new->parse($tokens);
-Compiler::Parser::AST::Renderer->new()->render($ast);
+my $compiler = Test::Compiler->new({
+    output => "$ir_dir/aobench.ll"
+});
 
-my $llvm_ir = Compiler::CodeGenerator::LLVM->new->generate($ast);
-
-open my $fh, '>', 'aobench.ll';
-print $fh $llvm_ir;
-close $fh;
-
-warn "generated";
-
-Compiler::CodeGenerator::LLVM->new->debug_run($ast);
+$compiler->compile($code);
+my $results = $compiler->debug_run($code);
+is($results->[0],
+   '000000000000000000000000000000000000000000000000000000000000000000000000000000000636363000000636363000636363111111111959595191191191474747191191191191191191636363191191191175175175191191191175175175175175175143143143143143143159159159175175175191191191175175175191191191191191191191191191175175175175175175191191191191191191191191191191191191175175175191191191191191191191191191',
+, '8 x 8');
+done_testing;
 
 __DATA__
 package Vec;

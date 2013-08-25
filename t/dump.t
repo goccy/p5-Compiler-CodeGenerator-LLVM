@@ -1,24 +1,46 @@
 use strict;
 use warnings;
-use Compiler::Lexer;
-use Compiler::Parser;
-use Compiler::Parser::AST::Renderer;
-use Compiler::CodeGenerator::LLVM;
+use Test::More;
+use Test::Compiler;
+use Data::Dumper;
+use File::Basename qw/dirname/;
 
+my $ir_dir = dirname(__FILE__) . '/ir';
 my $code = do { local $/; <DATA> };
-my $tokens = Compiler::Lexer->new('')->tokenize($code);
-my $ast = Compiler::Parser->new->parse($tokens);
-Compiler::Parser::AST::Renderer->new()->render($ast);
+my $compiler = Test::Compiler->new({
+    output => "$ir_dir/dump.ll"
+});
 
-my $llvm_ir = Compiler::CodeGenerator::LLVM->new->generate($ast);
+$compiler->compile($code);
+my $results = $compiler->debug_run($code);
 
-open my $fh, '>', 'dump.ll';
-print $fh $llvm_ir;
-close $fh;
+my $a = {
+    a => {
+        b => {
+            c => 1
+        }
+    },
+    d => {
+        e => "hoge"
+    }
+};
 
-warn "generated";
+my $b = [
+    0,
+    [
+        1,
+        [
+            2
+        ]
+    ],
+    3
+];
 
-Compiler::CodeGenerator::LLVM->new->debug_run($ast);
+$Data::Dumper::Terse = 1;
+my $expected = [ split("\n", Dumper($a) . Dumper($b)) ];
+is(Dumper($results), Dumper($expected), 'dump');
+
+done_testing;
 
 __DATA__
 

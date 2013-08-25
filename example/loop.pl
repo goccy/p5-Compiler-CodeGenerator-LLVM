@@ -31,7 +31,6 @@ while ($j < 10) {
 
 my @a = (1, 2, 3, 4);
 say @a;
-say "=============";
 
 foreach my $itr (@a) {
     say $itr;
