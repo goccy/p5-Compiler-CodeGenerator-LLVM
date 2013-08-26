@@ -17,6 +17,7 @@ typedef enum {
 	BlessedObjectType,
 	CodeRef,
 	IOHandler,
+	Package,
 	Undefined
 } Type;
 
@@ -71,6 +72,14 @@ typedef struct _Hash {
 	size_t size;
 } HashObject;
 
+typedef struct _Package {
+	int header;
+	Value *table;
+	StringObject **keys;
+	size_t size;
+	ArrayObject *isa;
+} PackageObject;
+
 typedef struct _HashRef {
 	int type;
 	Value v; /* boxed HashObject */
@@ -86,7 +95,7 @@ typedef struct _CodeRef {
 typedef struct _BlessedObject {
 	int header;
 	Value members; /* boxed HashObject */
-	HashObject *mtds;
+	PackageObject *mtds;
 	const char *pkg_name;
 } BlessedObject;
 
@@ -110,7 +119,8 @@ typedef struct _IOHandlerObject {
 #define BLESSED_OBJECT_TAG (uint64_t)(0x0008000000000000)
 #define CODE_REF_TAG       (uint64_t)(0x0009000000000000)
 #define IO_HANDLER_TAG     (uint64_t)(0x000a000000000000)
-#define UNDEF_TAG          (uint64_t)(0x000b000000000000)
+#define PACKAGE_TAG        (uint64_t)(0x000b000000000000)
+#define UNDEF_TAG          (uint64_t)(0x000c000000000000)
 
 #define HASH_TABLE_SIZE 512
 
@@ -127,6 +137,7 @@ typedef struct _IOHandlerObject {
 #define CODE_REF_init(data) (void *)((uint64_t)data | NaN | CODE_REF_TAG)
 #define BLESSED_OBJECT_init(data) (void *)((uint64_t)data | NaN | BLESSED_OBJECT_TAG)
 #define IO_HANDLER_init(data) (void *)((uint64_t)data | NaN | IO_HANDLER_TAG)
+#define PACKAGE_init(data) (void *)((uint64_t)data | NaN | PACKAGE_TAG)
 #define UNDEF_init(data) (void *)((uint64_t)data | NaN | UNDEF_TAG)
 
 #define to_Int(o) ((intptr_t)o)
@@ -136,6 +147,7 @@ typedef struct _IOHandlerObject {
 #define to_Array(o) (ArrayObject *)((uint64_t)o ^ (NaN | ARRAY_TAG))
 #define to_ArrayRef(o) (ArrayRefObject *)((uint64_t)o ^ (NaN | ARRAY_REF_TAG))
 #define to_Hash(o) (HashObject *)((uint64_t)o ^ (NaN | HASH_TAG))
+#define to_Package(o) (PackageObject *)((uint64_t)o ^ (NaN | PACKAGE_TAG))
 #define to_HashRef(o) (HashRefObject *)((uint64_t)o ^ (NaN | HASH_REF_TAG))
 #define to_CodeRef(o) (CodeRefObject *)((uint64_t)o ^ (NaN | CODE_REF_TAG))
 #define to_BlessedObject(o) (BlessedObject *)((uint64_t)o ^ (NaN | BLESSED_OBJECT_TAG))
@@ -162,6 +174,8 @@ UnionType new_ArrayRef(UnionType array);
 UnionType new_IOHandler(const char *filename, const char *mode, FILE *fp);
 UnionType new_String(char *str);
 void make_object_pool(void);
+PackageObject *get_pkg(char *pkg_name);
+void Array_add(ArrayObject *array, UnionType *elem);
 
 #define SET(ret, a, b, op) do {					\
 		switch (TYPE(b->o)) {					\

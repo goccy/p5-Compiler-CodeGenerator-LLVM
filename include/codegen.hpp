@@ -39,6 +39,7 @@ typedef enum {
 	BlessedObject,
 	CodeRef,
 	IOHandler,
+	Package,
 	Undefined,
 	Value
 } Type;
@@ -62,7 +63,8 @@ typedef enum {
 #define BLESSED_OBJECT_TAG (uint64_t)(0x0008000000000000)
 #define CODE_REF_TAG       (uint64_t)(0x0009000000000000)
 #define IO_HANDLER_TAG     (uint64_t)(0x000a000000000000)
-#define UNDEF_TAG          (uint64_t)(0x000b000000000000)
+#define PACKAGE_TAG        (uint64_t)(0x000b000000000000)
+#define UNDEF_TAG          (uint64_t)(0x000c000000000000)
 
 #define INT_init(data) (void *)(uint64_t)((data & MASK) | NaN | INT_TAG)
 #define DOUBLE_init(data) (void *)&data

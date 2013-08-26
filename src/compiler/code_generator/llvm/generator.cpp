@@ -242,6 +242,18 @@ void LLVM::generatePackageCode(IRBuilder<> *, PackageNode *node)
 
 void LLVM::generateModuleCode(IRBuilder<> *builder, ModuleNode *node)
 {
+	if (node->tk->data == "base") {
+		string base_name = node->args->tk->data;
+		vector<llvm::Type *> arg_types;
+		arg_types.push_back(void_ptr_type);
+		arg_types.push_back(void_ptr_type);
+		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+		FunctionType *_ftype = llvm::FunctionType::get(void_type, arg_types_ref, false);
+		llvm::Constant *f = module->getOrInsertFunction("add_base_name", _ftype);
+		llvm::Value *pkg = builder->CreateGlobalStringPtr(cur_pkg_name.c_str());
+		llvm::Value *base = builder->CreateGlobalStringPtr(base_name.c_str());
+		builder->CreateCall2(f, pkg, base);
+	}
 	traverse(builder, node->ast);
 }
 

@@ -523,6 +523,13 @@ UnionType *HashRef_get(UnionType *o, StringObject *key)
 	return ret;
 }
 
+void Array_add(ArrayObject *array, UnionType *elem)
+{
+	size_t size = array->size;
+	Array_grow(array, size + 1);
+	array->list[size] = elem;
+}
+
 UnionType *Array_get(ArrayObject *array, int idx)
 {
 	size_t size = array->size;
@@ -715,10 +722,11 @@ UnionType bless(ArrayObject *args)
 	//fprintf(stderr, "hash_ref = [%p]\n", hash_ref);
 	blessed->members = self;
 	blessed->pkg_name = pkg_name;
-	UnionType s = new_String((char *)pkg_name);
-	UnionType mtds = Hash_get(pkg_map, to_String(s.o));
-	TYPE_CHECK(mtds.o, Hash);
-	blessed->mtds = to_Hash(mtds.o);
+	PackageObject *pkg = get_pkg((char *)pkg_name);
+	//UnionType s = new_String((char *)pkg_name);
+	//UnionType mtds = Hash_get(pkg_map, to_String(s.o));
+	assert (pkg && "unknown package name");
+	blessed->mtds = pkg;
 	ret.o = BLESSED_OBJECT_init(blessed);
 	//fprintf(stderr, "ret.o = [%p]\n", ret.o);
 	//fprintf(stderr, "ret type = [%d]\n", TYPE(ret.o));
@@ -742,21 +750,22 @@ Object *fetch_object(void)
 	return (Object *)object_pool[count];
 }
 
-HashObject *get_pkg(char *pkg_name)
+PackageObject *get_pkg(char *pkg_name)
 {
-	HashObject *ret = NULL;
+	PackageObject *ret = NULL;
 	UnionType _key = new_String(pkg_name);
 	StringObject *key = to_String(_key.o);
-	UnionType pkg = Hash_get(pkg_map, key);
-	if (TYPE(pkg.o) == Hash) return to_Hash(pkg.o);
-	HashObject *hash = (HashObject *)calloc(sizeof(HashObject), 1);
-	hash->table = (UnionType *)calloc(sizeof(UnionType), HASH_TABLE_SIZE);
-	memcpy(hash->table, base_hash_table, sizeof(UnionType) * HASH_TABLE_SIZE);
-	hash->keys = (StringObject **)calloc(sizeof(void *), HASH_TABLE_SIZE);
+	UnionType _pkg = Hash_get(pkg_map, key);
+	if (TYPE(_pkg.o) == Package) return to_Package(_pkg.o);
+	PackageObject *pkg = (PackageObject *)calloc(sizeof(PackageObject), 1);
+	pkg->table = (UnionType *)calloc(sizeof(UnionType), HASH_TABLE_SIZE);
+	memcpy(pkg->table, base_hash_table, sizeof(UnionType) * HASH_TABLE_SIZE);
+	pkg->keys = (StringObject **)calloc(sizeof(void *), HASH_TABLE_SIZE);
+	pkg->isa = to_Array((new_Array(NULL, 0)).o);
 	UnionType value;
-	value.o = HASH_init(hash);
+	value.o = PACKAGE_init(pkg);
 	Hash_add(pkg_map, key, value);
-	return hash;
+	return pkg;
 }
 
 void store_method_by_pkg_name(char *pkg_name, char *mtd_name, Code code)
@@ -764,26 +773,48 @@ void store_method_by_pkg_name(char *pkg_name, char *mtd_name, Code code)
 	//fprintf(stderr, "pkg_name = [%s]\n", pkg_name);
 	//fprintf(stderr, "mtd_name = [%s]\n", mtd_name);
 	//fprintf(stderr, "code = [%p]\n", code);
-	HashObject *pkg = get_pkg(pkg_name);
-	//fprintf(stderr, "pkg = [%p]\n", pkg);
+	PackageObject *pkg = get_pkg(pkg_name);
 	UnionType _mtd_name = new_String(mtd_name);
 	CodeRefObject *o = (CodeRefObject *)calloc(sizeof(CodeRefObject), 1);
 	o->code = code;
 	UnionType code_ref;
 	code_ref.o = CODE_REF_init(o);
-	Hash_add(pkg, to_String(_mtd_name.o), code_ref);
+	Hash_add((HashObject *)pkg, to_String(_mtd_name.o), code_ref);
 }
 
 Code get_method_by_name(BlessedObject *self, char *mtd_name)
 {
 	//fprintf(stderr, "call get_method_by_name\n");
-	HashObject *mtds = self->mtds;
+	PackageObject *mtds = self->mtds;
 	UnionType str = new_String(mtd_name);
 	StringObject *s = to_String(str.o);
 	UnionType mtd = mtds->table[s->hash];
-	TYPE_CHECK(mtd.o, CodeRef);
-	CodeRefObject *code_ref = to_CodeRef(mtd.o);
+	CodeRefObject *code_ref;
+	if (TYPE(mtd.o) == CodeRef) {
+		code_ref = to_CodeRef(mtd.o);
+	} else {
+		ArrayObject *isa = mtds->isa;
+		size_t size = isa->size;
+		for (size_t i = 0; i < size; i++) {
+			PackageObject *base = to_Package(isa->list[i]->o);
+			UnionType mtd = base->table[s->hash];
+			if (TYPE(mtd.o) == CodeRef) {
+				code_ref = to_CodeRef(mtd.o);
+				break;
+			}
+		}
+	}
+	assert(code_ref && "cannot find method");
 	return code_ref->code;
+}
+
+void add_base_name(char *pkg_name, char *base_name)
+{
+	PackageObject *pkg = get_pkg(pkg_name);
+	PackageObject *base = get_pkg(base_name);
+	UnionType *boxed_base = (UnionType *)fetch_object();
+	boxed_base->o = PACKAGE_init(base);
+	Array_add(pkg->isa, boxed_base);
 }
 
 UnionType new_Array(UnionType **list, size_t size)
