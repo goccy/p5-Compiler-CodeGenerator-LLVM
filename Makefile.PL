@@ -15,6 +15,15 @@ makemaker_args->{CC} = 'g++';
 makemaker_args->{LD} = 'g++';
 my @ignore_warnings_options = qw(missing-field-initializers unused-variable);
 makemaker_args->{CCFLAGS} .= join('', map { ' -Wno-' . $_ } @ignore_warnings_options);
+chomp(my $bin_dir = `llvm-config --bindir`);
+my $clang = "$bin_dir/clang";
+die "could not find clang" unless ($clang);
+
+my $llvm_lib_dir = 'lib/Compiler/CodeGenerator/LLVM';
+`$clang -emit-llvm -S -o $llvm_lib_dir/runtime_api.ll gen/runtime_api.c`;
+`$clang -emit-llvm -arch i386 -S -o $llvm_lib_dir/runtime_api_32.ll gen/runtime_api_32.c`;
+`cp gen/*.h  $llvm_lib_dir`;
+
 if (DEBUG) {
     makemaker_args->{OPTIMIZE} = '-O0';
     chomp(my $llvm_cflags = `llvm-config --cxxflags`);

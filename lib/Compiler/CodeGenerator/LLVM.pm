@@ -2,7 +2,7 @@ package Compiler::CodeGenerator::LLVM;
 use v5.008_001;
 use strict;
 use warnings;
-
+use File::Basename qw/dirname/;
 require Exporter;
 
 our @ISA = qw(Exporter);
@@ -12,6 +12,16 @@ our @EXPORT = qw();
 our $VERSION = '0.01';
 require XSLoader;
 XSLoader::load('Compiler::CodeGenerator::LLVM', $VERSION);
+
+sub new {
+    my ($class, $options) = @_;
+    $options ||= +{};
+    my $lib_path = dirname(__FILE__) . '/LLVM/';
+    $options->{'32bit'} ||= 0;
+    my $runtime_api_file = ($options->{'32bit'}) ? "$lib_path/runtime_api_32.ll" : "$lib_path/runtime_api.ll";
+    $options->{runtime_api_path} ||= $runtime_api_file;
+    $class->_new($options);
+}
 
 1;
 __END__

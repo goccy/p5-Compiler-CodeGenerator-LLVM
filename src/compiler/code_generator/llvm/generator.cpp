@@ -9,9 +9,10 @@ using namespace std;
 namespace TokenType = Enum::Token::Type;
 namespace TokenKind = Enum::Token::Kind;
 
-LLVM::LLVM(void) : last_evaluated_value(NULL), cur_pkg_name("main"), has_return_statement(false)
+LLVM::LLVM(bool _is_32bit, const char *_runtime_api_path) : last_evaluated_value(NULL), cur_pkg_name("main"), has_return_statement(false), is_32bit(_is_32bit), runtime_api_path(_runtime_api_path)
 {
 	//LLVMContext &ctx = getGlobalContext();
+	//is_32bit = true;//for debug
 	module = new llvm::Module("LLVMIR", ctx);
 	cur_args = NULL;
 }
@@ -110,7 +111,7 @@ const char *LLVM::gen(AST *ast)
 {
 	//fprintf(stdout, "gen!!\n");
 	//LLVMContext &ctx = getGlobalContext();
-	linkModule(module, "gen/runtime_api.lli");
+	linkModule(module, runtime_api_path);
 	union_type = module->getTypeByName("union.UnionType");
 	union_ptr_type = PointerType::get(union_type, 0);
 	createRuntimeTypes();
@@ -1274,9 +1275,21 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 				llvm::Value *unshift = module->getOrInsertFunction("_unshift", ftype);
 				builder->CreateCall2(unshift, vargs, pkg);
 				llvm::Value *func = fmgr.getFunction(pkg_name, mtd_name);
+				if (!func) {
+					vector<llvm::Type *> arg_types;
+					arg_types.push_back(void_ptr_type);
+					arg_types.push_back(void_ptr_type);
+					llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+					FunctionType *ftype = llvm::FunctionType::get(code_ptr_type, arg_types_ref, false);
+					llvm::Value *get_class_method_by_name = module->getOrInsertFunction("get_class_method_by_name", ftype);
+					func = builder->CreateCall2(get_class_method_by_name,
+											   builder->CreateGlobalStringPtr(pkg_name),
+											   builder->CreateGlobalStringPtr(mtd_name),
+											   "get_class_method_by_name");
+				}
 				CallInst *result = builder->CreateCall(func, vargs, "function_rvalue");
-				result->setCallingConv(CallingConv::Fast);
-				result->setTailCall(true);
+				//result->setCallingConv(CallingConv::Fast);
+				//result->setTailCall(true);
 				ret = generateReceiveUnionValueCode(builder, result);
 				cur_type = Enum::Runtime::BlessedObject;//TODO Object
 			} else {
@@ -1299,8 +1312,8 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 				builder->CreateCall2(make_method_argument, vargs, left);
 
 				CallInst *result = builder->CreateCall(mtd, vargs, "function_rvalue");
-				result->setCallingConv(CallingConv::Fast);
-				result->setTailCall(true);
+				//result->setCallingConv(CallingConv::Fast);
+				//result->setTailCall(true);
 				ret = generateReceiveUnionValueCode(builder, result);
 				cur_type = Enum::Runtime::Value;
 			}
@@ -1825,7 +1838,7 @@ llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNo
 			name == "abs"   || name == "int"   || name == "rand" ||
 			name == "sin"   || name == "cos"   || name == "atan2" ||
 			name == "open"  || name == "chr"   || name == "binmode" || name == "close" ||
-			name == "print_with_handler" || name == "Data::Dumper") {
+			name == "print_with_handler" || name == "Data::Dumper" | name == "IOS::init" || name == "IOS::store_ios_native_library") {
 			ret = generateReceiveUnionValueCode(builder, result);
 		} else {
 			ret = result;
@@ -1908,6 +1921,14 @@ Constant *LLVM::getBuiltinFunction(IRBuilder<> *builder, string name)
 		FunctionType *ftype = llvm::FunctionType::get(int_type, array_ptr_type, false);
 		ret = module->getOrInsertFunction("_close", ftype);
 		cur_type = Enum::Runtime::Int;
+	} else if (name == "IOS::init") {
+		FunctionType *ftype = llvm::FunctionType::get(int_type, array_ptr_type, false);
+		ret = module->getOrInsertFunction("ios_init", ftype);
+		cur_type = Enum::Runtime::Int;
+	} else if (name == "IOS::store_ios_native_library") {
+		FunctionType *ftype = llvm::FunctionType::get(int_type, array_ptr_type, false);
+		ret = module->getOrInsertFunction("store_ios_native_library", ftype);
+		cur_type = Enum::Runtime::Int;
 	} else if (name == "puts") {
 		arg_types.push_back(builder->getInt8Ty()->getPointerTo());
 		ArrayRef<Type*> arg_types_ref(arg_types);
@@ -1944,41 +1965,53 @@ llvm::Value *LLVM::createNaNBoxingDouble(IRBuilder<> *builder, llvm::Value *valu
 
 llvm::Value *LLVM::createNaNBoxingString(IRBuilder<> *builder, llvm::Value *_value)
 {
-	return createNaNBoxingPtr(builder, _value, STRING_TAG);
+	uint64_t tag = (is_32bit) ? STRING_32_TAG : STRING_TAG;
+	return createNaNBoxingPtr(builder, _value, tag);
 }
 
 llvm::Value *LLVM::createNaNBoxingArray(IRBuilder<> *builder, llvm::Value *_value)
 {
-	return createNaNBoxingPtr(builder, _value, ARRAY_TAG);
+	uint64_t tag = (is_32bit) ? ARRAY_32_TAG : ARRAY_TAG;
+	return createNaNBoxingPtr(builder, _value, tag);
 }
 
 llvm::Value *LLVM::createNaNBoxingArrayRef(IRBuilder<> *builder, llvm::Value *_value)
 {
-	return createNaNBoxingPtr(builder, _value, ARRAY_REF_TAG);
+	uint64_t tag = (is_32bit) ? ARRAY_REF_32_TAG : ARRAY_REF_TAG;
+	return createNaNBoxingPtr(builder, _value, tag);
 }
 
 llvm::Value *LLVM::createNaNBoxingHashRef(IRBuilder<> *builder, llvm::Value *_value)
 {
-	return createNaNBoxingPtr(builder, _value, HASH_REF_TAG);
+	uint64_t tag = (is_32bit) ? HASH_REF_32_TAG : HASH_REF_TAG;
+	return createNaNBoxingPtr(builder, _value, tag);
 }
 
 llvm::Value *LLVM::createNaNBoxingCodeRef(IRBuilder<> *builder, llvm::Value *_value)
 {
-	return createNaNBoxingPtr(builder, _value, CODE_REF_TAG);
+	uint64_t tag = (is_32bit) ? CODE_REF_32_TAG : CODE_REF_TAG;
+	return createNaNBoxingPtr(builder, _value, tag);
 }
 
 llvm::Value *LLVM::createNaNBoxingObject(IRBuilder<> *builder, llvm::Value *_value)
 {
-	return createNaNBoxingPtr(builder, _value, OBJECT_TAG);
+	uint64_t tag = (is_32bit) ? OBJECT_32_TAG : OBJECT_TAG;
+	return createNaNBoxingPtr(builder, _value, tag);
 }
 
 llvm::Value *LLVM::createNaNBoxingPtr(IRBuilder<> *builder, llvm::Value *_value, uint64_t ptr_tag)
 {
 	llvm::Value *union_ptr = builder->CreateAlloca(union_type, 0, "base_ptr");
 	llvm::Value *value = builder->CreatePtrToInt(_value, int_type, "union_ptr_to_int");
-	llvm::Value *nan = ConstantInt::get(int_type, NaN);
-	llvm::Value *tag = ConstantInt::get(int_type, ptr_tag);
-	llvm::Value *nan_boxing_value = builder->CreateOr(builder->CreateOr(value, nan, "or"), tag, "or");
+	llvm::Value *nan_boxing_value = NULL;
+	if (is_32bit) {
+		llvm::Value *tag = ConstantInt::get(int_type, ptr_tag);
+		nan_boxing_value = builder->CreateOr(value, tag, "or");
+	} else {
+		llvm::Value *nan = ConstantInt::get(int_type, NaN);
+		llvm::Value *tag = ConstantInt::get(int_type, ptr_tag);
+		nan_boxing_value = builder->CreateOr(builder->CreateOr(value, nan, "or"), tag, "or");
+	}
 	builder->CreateStore(nan_boxing_value, builder->CreateBitCast(union_ptr, int_ptr_type, "bitcast"));
 	return union_ptr;
 }

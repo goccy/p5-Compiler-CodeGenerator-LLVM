@@ -40,6 +40,7 @@ typedef enum {
 	CodeRef,
 	IOHandler,
 	Package,
+	FFI,
 	Undefined,
 	Value
 } Type;
@@ -64,7 +65,22 @@ typedef enum {
 #define CODE_REF_TAG       (uint64_t)(0x0009000000000000)
 #define IO_HANDLER_TAG     (uint64_t)(0x000a000000000000)
 #define PACKAGE_TAG        (uint64_t)(0x000b000000000000)
-#define UNDEF_TAG          (uint64_t)(0x000c000000000000)
+#define FFI_TAG            (uint64_t)(0x000c000000000000)
+#define UNDEF_TAG          (uint64_t)(0x000d000000000000)
+
+#define INT_32_TAG            (uint64_t)(0xfffffff100000000)
+#define STRING_32_TAG         (uint64_t)(0xfffffff200000000)
+#define ARRAY_32_TAG          (uint64_t)(0xfffffff300000000)
+#define ARRAY_REF_32_TAG      (uint64_t)(0xfffffff400000000)
+#define HASH_32_TAG           (uint64_t)(0xfffffff500000000)
+#define HASH_REF_32_TAG       (uint64_t)(0xfffffff600000000)
+#define OBJECT_32_TAG         (uint64_t)(0xfffffff700000000)
+#define BLESSED_OBJECT_32_TAG (uint64_t)(0xfffffff800000000)
+#define CODE_REF_32_TAG       (uint64_t)(0xfffffff900000000)
+#define IO_HANDLER_32_TAG     (uint64_t)(0xfffffffa00000000)
+#define PACKAGE_32_TAG        (uint64_t)(0xfffffffb00000000)
+#define FFI_32_TAG            (uint64_t)(0xfffffffc00000000)
+#define UNDEF_32_TAG          (uint64_t)(0xfffffffd00000000)
 
 #define INT_init(data) (void *)(uint64_t)((data & MASK) | NaN | INT_TAG)
 #define DOUBLE_init(data) (void *)&data
@@ -192,9 +208,11 @@ public:
 	VariableManager vmgr;
 	FunctionManager fmgr;
 	bool has_return_statement;
+	bool is_32bit;
+	std::string runtime_api_path;
 	std::vector<const char *> library_paths;
 
-	LLVM(void);
+	LLVM(bool is_32bit, const char *runtime_api_path);
 	void set_library_paths(std::vector<const char *> *paths);
 	void write(void);
 	void createRuntimeTypes(void);

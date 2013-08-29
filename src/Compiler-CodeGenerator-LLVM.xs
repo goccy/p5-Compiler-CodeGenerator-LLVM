@@ -28,11 +28,14 @@ MODULE = Compiler::CodeGenerator::LLVM PACKAGE = Compiler::CodeGenerator::LLVM
 PROTOTYPES: DISABLE
 
 Compiler_CodeGenerator_LLVM
-new(classname)
+_new(classname, _options)
 	char *classname
+	HV   *_options
 CODE:
 {
-	CodeGenerator::LLVM *code_generator = new CodeGenerator::LLVM();
+	bool is_32bit = SvPVX(get_value(_options, "32bit"));
+	const char *runtime_api_path = SvPVX(get_value(_options, "runtime_api_path"));
+	CodeGenerator::LLVM *code_generator = new CodeGenerator::LLVM(is_32bit, runtime_api_path);
 	RETVAL = code_generator;
 }
 OUTPUT:

@@ -14,7 +14,8 @@ target triple = "x86_64-apple-macosx10.7.0"
 %struct._Undef = type { i32 }
 %struct._HashRef = type { i32, %union.UnionType }
 %struct._ArrayRef = type { i32, %union.UnionType }
-%struct._BlessedObject = type { i32, %union.UnionType, %struct._Hash*, i8* }
+%struct._BlessedObject = type { i32, %union.UnionType, %struct._Package*, i8* }
+%struct._Package = type { i32, %union.UnionType*, %struct._String**, i64, %struct._Array* }
 %struct._CodeRef = type { i32, i64 (%struct._Array*)* }
 %struct.__va_list_tag = type { i32, i32, i8*, i8* }
 %ArrayObject = type { i32, %union.UnionType**, i64 }
@@ -82,12 +83,16 @@ target triple = "x86_64-apple-macosx10.7.0"
 @pkg_map = common global %struct._Hash* null, align 8
 @.str39 = private unnamed_addr constant [54 x i8] c"ERROR!: bless function must be required two argument\0A\00", align 1
 @__func__.bless = private unnamed_addr constant [6 x i8] c"bless\00", align 1
+@.str40 = private unnamed_addr constant [21 x i8] c"unknown package name\00", align 1
+@.str41 = private unnamed_addr constant [30 x i8] c"pkg && \22unknown package name\22\00", align 1
 @count = global i32 0, align 4
 @object_pool = common global %struct._Object** null, align 8
+@.str42 = private unnamed_addr constant [19 x i8] c"cannot find method\00", align 1
 @__func__.get_method_by_name = private unnamed_addr constant [19 x i8] c"get_method_by_name\00", align 1
+@.str43 = private unnamed_addr constant [33 x i8] c"code_ref && \22cannot find method\22\00", align 1
 @__func__.dynamic_blessed_object_cast_code = private unnamed_addr constant [33 x i8] c"dynamic_blessed_object_cast_code\00", align 1
-@.str40 = private unnamed_addr constant [23 x i8] c"called expandVariable\0A\00", align 1
-@.str41 = private unnamed_addr constant [12 x i8] c"buf = [%s]\0A\00", align 1
+@.str44 = private unnamed_addr constant [23 x i8] c"called expandVariable\0A\00", align 1
+@.str45 = private unnamed_addr constant [12 x i8] c"buf = [%s]\0A\00", align 1
 @u = common global %union.UnionType zeroinitializer, align 8
 @0 = private unnamed_addr constant [7 x i8] c"Person\00"
 @1 = private unnamed_addr constant [4 x i8] c"new\00"
@@ -1474,7 +1479,7 @@ entry:
   %1 = load %struct._Undef** %o, align 8
   %2 = ptrtoint %struct._Undef* %1 to i64
   %or = or i64 %2, -4503599627370496
-  %or1 = or i64 %or, 3096224743817216
+  %or1 = or i64 %or, 3377699720527872
   %3 = inttoptr i64 %or1 to i8*
   store i8* %3, i8** bitcast (%union.UnionType* @undef to i8**), align 8
   ret void
@@ -1787,7 +1792,7 @@ entry:
     i64 2, label %sw.bb6
     i64 6, label %sw.bb8
     i64 4, label %sw.bb11
-    i64 11, label %sw.bb14
+    i64 12, label %sw.bb14
   ]
 
 sw.bb:                                            ; preds = %entry, %entry
@@ -3240,7 +3245,7 @@ entry:
     i64 8, label %sw.bb9
     i64 1, label %sw.bb18
     i64 0, label %sw.bb18
-    i64 11, label %sw.bb18
+    i64 12, label %sw.bb18
   ]
 
 sw.bb:                                            ; preds = %entry
@@ -3747,6 +3752,32 @@ for.end:                                          ; preds = %for.cond
 }
 
 ; Function Attrs: nounwind ssp uwtable
+define void @Array_add(%struct._Array* %array, %union.UnionType* %elem) #0 {
+entry:
+  %array.addr = alloca %struct._Array*, align 8
+  %elem.addr = alloca %union.UnionType*, align 8
+  %size = alloca i64, align 8
+  store %struct._Array* %array, %struct._Array** %array.addr, align 8
+  store %union.UnionType* %elem, %union.UnionType** %elem.addr, align 8
+  %0 = load %struct._Array** %array.addr, align 8
+  %size1 = getelementptr inbounds %struct._Array* %0, i32 0, i32 2
+  %1 = load i64* %size1, align 8
+  store i64 %1, i64* %size, align 8
+  %2 = load %struct._Array** %array.addr, align 8
+  %3 = load i64* %size, align 8
+  %add = add i64 %3, 1
+  call void @Array_grow(%struct._Array* %2, i64 %add)
+  %4 = load %union.UnionType** %elem.addr, align 8
+  %5 = load i64* %size, align 8
+  %6 = load %struct._Array** %array.addr, align 8
+  %list = getelementptr inbounds %struct._Array* %6, i32 0, i32 1
+  %7 = load %union.UnionType*** %list, align 8
+  %arrayidx = getelementptr inbounds %union.UnionType** %7, i64 %5
+  store %union.UnionType* %4, %union.UnionType** %arrayidx, align 8
+  ret void
+}
+
+; Function Attrs: nounwind ssp uwtable
 define %union.UnionType* @Array_get(%struct._Array* %array, i32 %idx) #0 {
 entry:
   %array.addr = alloca %struct._Array*, align 8
@@ -3837,7 +3868,7 @@ entry:
     i64 7, label %sw.bb8
     i64 1, label %sw.bb16
     i64 0, label %sw.bb16
-    i64 11, label %sw.bb16
+    i64 12, label %sw.bb16
   ]
 
 sw.bb:                                            ; preds = %entry
@@ -4141,7 +4172,7 @@ sw.default:                                       ; preds = %entry
   %shr32 = lshr i64 %and31, 48
   %mul33 = mul i64 %conv29, %shr32
   %call34 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %133, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul33)
-  call void @__assert_rtn(i8* getelementptr inbounds ([13 x i8]* @__func__.ArrayRef_get, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 570, i8* getelementptr inbounds ([33 x i8]* @.str38, i32 0, i32 0)) #7
+  call void @__assert_rtn(i8* getelementptr inbounds ([13 x i8]* @__func__.ArrayRef_get, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 577, i8* getelementptr inbounds ([33 x i8]* @.str38, i32 0, i32 0)) #7
   unreachable
 
 sw.epilog:                                        ; preds = %Array_get.exit29, %Array_get.exit16, %Array_get.exit
@@ -4422,7 +4453,7 @@ entry:
   %2 = load %struct._Undef** %o.i, align 8
   %3 = ptrtoint %struct._Undef* %2 to i64
   %or.i = or i64 %3, -4503599627370496
-  %or1.i = or i64 %or.i, 3096224743817216
+  %or1.i = or i64 %or.i, 3377699720527872
   %4 = inttoptr i64 %or1.i to i8*
   store i8* %4, i8** bitcast (%union.UnionType* @undef to i8**), align 8
   %5 = bitcast %struct._Undef** %o.i to i8*
@@ -4905,9 +4936,6 @@ entry:
 ; Function Attrs: nounwind ssp uwtable
 define i64 @bless(%struct._Array* %args) #0 {
 entry:
-  %retval.i = alloca %union.UnionType, align 8
-  %hash.addr.i = alloca %struct._Hash*, align 8
-  %key.addr.i = alloca %struct._String*, align 8
   %retval = alloca %union.UnionType, align 8
   %args.addr = alloca %struct._Array*, align 8
   %ret = alloca %union.UnionType, align 8
@@ -4917,8 +4945,7 @@ entry:
   %pkg_name = alloca i8*, align 8
   %hash_ref = alloca %struct._HashRef*, align 8
   %hash = alloca %struct._Hash*, align 8
-  %s67 = alloca %union.UnionType, align 8
-  %mtds = alloca %union.UnionType, align 8
+  %pkg = alloca %struct._Package*, align 8
   store %struct._Array* %args, %struct._Array** %args.addr, align 8
   %0 = load %struct._Array** %args.addr, align 8
   %size = getelementptr inbounds %struct._Array* %0, i32 0, i32 2
@@ -4983,7 +5010,7 @@ if.then10:                                        ; preds = %do.body
   %shr18 = lshr i64 %and17, 48
   %mul19 = mul i64 %conv15, %shr18
   %call20 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %18, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul19)
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 708, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #7
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 715, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #7
   unreachable
 
 do.end:                                           ; preds = %do.body
@@ -5035,7 +5062,7 @@ do.body34:                                        ; preds = %cond.true, %cond.fa
   %shr42 = lshr i64 %and41, 48
   %mul43 = mul i64 %conv39, %shr42
   %cmp44 = icmp ne i64 %mul43, 2
-  br i1 %cmp44, label %if.then46, label %do.body73
+  br i1 %cmp44, label %if.then46, label %do.end58
 
 if.then46:                                        ; preds = %do.body34
   %38 = load %struct.__sFILE** @__stderrp, align 8
@@ -5053,10 +5080,10 @@ if.then46:                                        ; preds = %do.body34
   %shr54 = lshr i64 %and53, 48
   %mul55 = mul i64 %conv51, %shr54
   %call56 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %38, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul55)
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 710, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #7
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 717, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #7
   unreachable
 
-do.body73:                                        ; preds = %do.body34
+do.end58:                                         ; preds = %do.body34
   %o59 = bitcast %union.UnionType* %class to i8**
   %43 = load i8** %o59, align 8
   %44 = ptrtoint i8* %43 to i64
@@ -5089,129 +5116,78 @@ do.body73:                                        ; preds = %do.body34
   %pkg_name66 = getelementptr inbounds %struct._BlessedObject* %58, i32 0, i32 3
   store i8* %57, i8** %pkg_name66, align 8
   %59 = load i8** %pkg_name, align 8
-  %call68 = call i64 @new_String(i8* %59)
-  %coerce.dive2 = bitcast %union.UnionType* %s67 to double*
-  %60 = bitcast double* %coerce.dive2 to i64*
-  store i64 %call68, i64* %60, align 1
-  %61 = load %struct._Hash** @pkg_map, align 8
-  %o69 = bitcast %union.UnionType* %s67 to i8**
-  %62 = load i8** %o69, align 8
-  %63 = ptrtoint i8* %62 to i64
-  %xor70 = xor i64 %63, -3940649673949184
-  %64 = inttoptr i64 %xor70 to %struct._String*
-  %65 = bitcast %union.UnionType* %retval.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %65) #3
-  %66 = bitcast %struct._Hash** %hash.addr.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %66) #3
-  %67 = bitcast %struct._String** %key.addr.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %67) #3
-  store %struct._Hash* %61, %struct._Hash** %hash.addr.i, align 8
-  store %struct._String* %64, %struct._String** %key.addr.i, align 8
-  %68 = load %struct._String** %key.addr.i, align 8
-  %hash1.i = getelementptr inbounds %struct._String* %68, i32 0, i32 3
-  %69 = load i64* %hash1.i, align 8
-  %70 = load %struct._Hash** %hash.addr.i, align 8
-  %table.i = getelementptr inbounds %struct._Hash* %70, i32 0, i32 1
-  %71 = load %union.UnionType** %table.i, align 8
-  %arrayidx.i = getelementptr inbounds %union.UnionType* %71, i64 %69
-  %72 = bitcast %union.UnionType* %retval.i to i8*
-  %73 = bitcast %union.UnionType* %arrayidx.i to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %72, i8* %73, i64 8, i32 8, i1 false) #3
-  %coerce.dive1.i = bitcast %union.UnionType* %retval.i to double*
-  %74 = bitcast double* %coerce.dive1.i to i64*
-  %75 = load i64* %74, align 1
-  %76 = bitcast %union.UnionType* %retval.i to i8*
-  call void @llvm.lifetime.end(i64 -1, i8* %76) #3
-  %77 = bitcast %struct._Hash** %hash.addr.i to i8*
-  call void @llvm.lifetime.end(i64 -1, i8* %77) #3
-  %78 = bitcast %struct._String** %key.addr.i to i8*
-  call void @llvm.lifetime.end(i64 -1, i8* %78) #3
-  %coerce.dive723 = bitcast %union.UnionType* %mtds to double*
-  %79 = bitcast double* %coerce.dive723 to i64*
-  store i64 %75, i64* %79, align 1
-  %o74 = bitcast %union.UnionType* %mtds to i8**
-  %80 = load i8** %o74, align 8
-  %81 = ptrtoint i8* %80 to i64
-  %and75 = and i64 %81, -4503599627370496
-  %cmp76 = icmp eq i64 %and75, -4503599627370496
-  %conv77 = zext i1 %cmp76 to i32
-  %conv78 = sext i32 %conv77 to i64
-  %o79 = bitcast %union.UnionType* %mtds to i8**
-  %82 = load i8** %o79, align 8
-  %83 = ptrtoint i8* %82 to i64
-  %and80 = and i64 %83, 4222124650659840
-  %shr81 = lshr i64 %and80, 48
-  %mul82 = mul i64 %conv78, %shr81
-  %cmp83 = icmp ne i64 %mul82, 5
-  br i1 %cmp83, label %if.then85, label %do.end97
+  %call67 = call %struct._Package* @get_pkg(i8* %59)
+  store %struct._Package* %call67, %struct._Package** %pkg, align 8
+  %60 = load %struct._Package** %pkg, align 8
+  %tobool = icmp ne %struct._Package* %60, null
+  br i1 %tobool, label %land.rhs, label %land.end
 
-if.then85:                                        ; preds = %do.body73
-  %84 = load %struct.__sFILE** @__stderrp, align 8
-  %o86 = bitcast %union.UnionType* %mtds to i8**
-  %85 = load i8** %o86, align 8
-  %86 = ptrtoint i8* %85 to i64
-  %and87 = and i64 %86, -4503599627370496
-  %cmp88 = icmp eq i64 %and87, -4503599627370496
-  %conv89 = zext i1 %cmp88 to i32
-  %conv90 = sext i32 %conv89 to i64
-  %o91 = bitcast %union.UnionType* %mtds to i8**
-  %87 = load i8** %o91, align 8
-  %88 = ptrtoint i8* %87 to i64
-  %and92 = and i64 %88, 4222124650659840
-  %shr93 = lshr i64 %and92, 48
-  %mul94 = mul i64 %conv90, %shr93
-  %call95 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %84, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul94)
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 720, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #7
+land.rhs:                                         ; preds = %do.end58
+  br label %land.end
+
+land.end:                                         ; preds = %land.rhs, %do.end58
+  %61 = phi i1 [ false, %do.end58 ], [ true, %land.rhs ]
+  %lnot = xor i1 %61, true
+  %lnot.ext = zext i1 %lnot to i32
+  %conv68 = sext i32 %lnot.ext to i64
+  %expval = call i64 @llvm.expect.i64(i64 %conv68, i64 0)
+  %tobool69 = icmp ne i64 %expval, 0
+  br i1 %tobool69, label %cond.true70, label %cond.end72
+
+cond.true70:                                      ; preds = %land.end
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 728, i8* getelementptr inbounds ([30 x i8]* @.str41, i32 0, i32 0)) #7
   unreachable
 
-do.end97:                                         ; preds = %do.body73
-  %o98 = bitcast %union.UnionType* %mtds to i8**
-  %89 = load i8** %o98, align 8
-  %90 = ptrtoint i8* %89 to i64
-  %xor99 = xor i64 %90, -3096224743817216
-  %91 = inttoptr i64 %xor99 to %struct._Hash*
-  %92 = load %struct._BlessedObject** %blessed, align 8
-  %mtds100 = getelementptr inbounds %struct._BlessedObject* %92, i32 0, i32 2
-  store %struct._Hash* %91, %struct._Hash** %mtds100, align 8
-  %93 = load %struct._BlessedObject** %blessed, align 8
-  %94 = ptrtoint %struct._BlessedObject* %93 to i64
-  %or = or i64 %94, -4503599627370496
-  %or101 = or i64 %or, 2251799813685248
-  %95 = inttoptr i64 %or101 to i8*
-  %o102 = bitcast %union.UnionType* %ret to i8**
-  store i8* %95, i8** %o102, align 8
-  %96 = bitcast %union.UnionType* %retval to i8*
-  %97 = bitcast %union.UnionType* %ret to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %96, i8* %97, i64 8, i32 8, i1 false)
-  %coerce.dive1034 = bitcast %union.UnionType* %retval to double*
-  %98 = bitcast double* %coerce.dive1034 to i64*
-  %99 = load i64* %98, align 1
-  ret i64 %99
+cond.end72:                                       ; preds = %land.end
+  %62 = load %struct._Package** %pkg, align 8
+  %63 = load %struct._BlessedObject** %blessed, align 8
+  %mtds = getelementptr inbounds %struct._BlessedObject* %63, i32 0, i32 2
+  store %struct._Package* %62, %struct._Package** %mtds, align 8
+  %64 = load %struct._BlessedObject** %blessed, align 8
+  %65 = ptrtoint %struct._BlessedObject* %64 to i64
+  %or = or i64 %65, -4503599627370496
+  %or73 = or i64 %or, 2251799813685248
+  %66 = inttoptr i64 %or73 to i8*
+  %o74 = bitcast %union.UnionType* %ret to i8**
+  store i8* %66, i8** %o74, align 8
+  %67 = bitcast %union.UnionType* %retval to i8*
+  %68 = bitcast %union.UnionType* %ret to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %67, i8* %68, i64 8, i32 8, i1 false)
+  %coerce.dive2 = bitcast %union.UnionType* %retval to double*
+  %69 = bitcast double* %coerce.dive2 to i64*
+  %70 = load i64* %69, align 1
+  ret i64 %70
 }
 
 ; Function Attrs: nounwind ssp uwtable
-define %struct._Hash* @get_pkg(i8* %pkg_name) #0 {
+define %struct._Package* @get_pkg(i8* %pkg_name) #0 {
 entry:
   %__dest.addr.i = alloca i8*, align 8
   %__src.addr.i = alloca i8*, align 8
   %__len.addr.i = alloca i64, align 8
-  %hash.addr.i4 = alloca %struct._Hash*, align 8
-  %key.addr.i5 = alloca %struct._String*, align 8
+  %retval.i10 = alloca %union.UnionType, align 8
+  %list.addr.i = alloca %union.UnionType**, align 8
+  %size.addr.i = alloca i64, align 8
+  %ret.i = alloca %union.UnionType, align 8
+  %array.i = alloca %struct._Array*, align 8
+  %hash.addr.i5 = alloca %struct._Hash*, align 8
+  %key.addr.i6 = alloca %struct._String*, align 8
   %elem.i = alloca %union.UnionType, align 8
   %size.i = alloca i64, align 8
   %retval.i = alloca %union.UnionType, align 8
   %hash.addr.i = alloca %struct._Hash*, align 8
   %key.addr.i = alloca %struct._String*, align 8
-  %retval = alloca %struct._Hash*, align 8
+  %retval = alloca %struct._Package*, align 8
   %pkg_name.addr = alloca i8*, align 8
-  %ret = alloca %struct._Hash*, align 8
+  %ret = alloca %struct._Package*, align 8
   %_key = alloca %union.UnionType, align 8
   %key = alloca %struct._String*, align 8
-  %pkg = alloca %union.UnionType, align 8
-  %hash = alloca %struct._Hash*, align 8
+  %_pkg = alloca %union.UnionType, align 8
+  %pkg = alloca %struct._Package*, align 8
+  %coerce = alloca %union.UnionType, align 8
   %value = alloca %union.UnionType, align 8
   store i8* %pkg_name, i8** %pkg_name.addr, align 8
-  store %struct._Hash* null, %struct._Hash** %ret, align 8
+  store %struct._Package* null, %struct._Package** %ret, align 8
   %0 = load i8** %pkg_name.addr, align 8
   %call = call i64 @new_String(i8* %0)
   %coerce.dive1 = bitcast %union.UnionType* %_key to double*
@@ -5252,49 +5228,49 @@ entry:
   call void @llvm.lifetime.end(i64 -1, i8* %19) #3
   %20 = bitcast %struct._String** %key.addr.i to i8*
   call void @llvm.lifetime.end(i64 -1, i8* %20) #3
-  %coerce.dive22 = bitcast %union.UnionType* %pkg to double*
+  %coerce.dive22 = bitcast %union.UnionType* %_pkg to double*
   %21 = bitcast double* %coerce.dive22 to i64*
   store i64 %17, i64* %21, align 1
-  %o3 = bitcast %union.UnionType* %pkg to i8**
+  %o3 = bitcast %union.UnionType* %_pkg to i8**
   %22 = load i8** %o3, align 8
   %23 = ptrtoint i8* %22 to i64
   %and = and i64 %23, -4503599627370496
   %cmp = icmp eq i64 %and, -4503599627370496
   %conv = zext i1 %cmp to i32
   %conv4 = sext i32 %conv to i64
-  %o5 = bitcast %union.UnionType* %pkg to i8**
+  %o5 = bitcast %union.UnionType* %_pkg to i8**
   %24 = load i8** %o5, align 8
   %25 = ptrtoint i8* %24 to i64
   %and6 = and i64 %25, 4222124650659840
   %shr = lshr i64 %and6, 48
   %mul = mul i64 %conv4, %shr
-  %cmp7 = icmp eq i64 %mul, 5
+  %cmp7 = icmp eq i64 %mul, 11
   br i1 %cmp7, label %if.then, label %cond.end
 
 if.then:                                          ; preds = %entry
-  %o9 = bitcast %union.UnionType* %pkg to i8**
+  %o9 = bitcast %union.UnionType* %_pkg to i8**
   %26 = load i8** %o9, align 8
   %27 = ptrtoint i8* %26 to i64
-  %xor10 = xor i64 %27, -3096224743817216
-  %28 = inttoptr i64 %xor10 to %struct._Hash*
-  store %struct._Hash* %28, %struct._Hash** %retval
+  %xor10 = xor i64 %27, -1407374883553280
+  %28 = inttoptr i64 %xor10 to %struct._Package*
+  store %struct._Package* %28, %struct._Package** %retval
   br label %return
 
 cond.end:                                         ; preds = %entry
-  %call11 = call i8* @calloc(i64 32, i64 1)
-  %29 = bitcast i8* %call11 to %struct._Hash*
-  store %struct._Hash* %29, %struct._Hash** %hash, align 8
+  %call11 = call i8* @calloc(i64 40, i64 1)
+  %29 = bitcast i8* %call11 to %struct._Package*
+  store %struct._Package* %29, %struct._Package** %pkg, align 8
   %call12 = call i8* @calloc(i64 8, i64 512)
   %30 = bitcast i8* %call12 to %union.UnionType*
-  %31 = load %struct._Hash** %hash, align 8
-  %table = getelementptr inbounds %struct._Hash* %31, i32 0, i32 1
+  %31 = load %struct._Package** %pkg, align 8
+  %table = getelementptr inbounds %struct._Package* %31, i32 0, i32 1
   store %union.UnionType* %30, %union.UnionType** %table, align 8
-  %32 = load %struct._Hash** %hash, align 8
-  %table13 = getelementptr inbounds %struct._Hash* %32, i32 0, i32 1
+  %32 = load %struct._Package** %pkg, align 8
+  %table13 = getelementptr inbounds %struct._Package* %32, i32 0, i32 1
   %33 = load %union.UnionType** %table13, align 8
   %34 = bitcast %union.UnionType* %33 to i8*
-  %35 = load %struct._Hash** %hash, align 8
-  %table19 = getelementptr inbounds %struct._Hash* %35, i32 0, i32 1
+  %35 = load %struct._Package** %pkg, align 8
+  %table19 = getelementptr inbounds %struct._Package* %35, i32 0, i32 1
   %36 = load %union.UnionType** %table19, align 8
   %37 = bitcast %union.UnionType* %36 to i8*
   %38 = load %union.UnionType** @base_hash_table, align 8
@@ -5321,77 +5297,144 @@ cond.end:                                         ; preds = %entry
   call void @llvm.lifetime.end(i64 -1, i8* %49) #3
   %call21 = call i8* @calloc(i64 8, i64 512)
   %50 = bitcast i8* %call21 to %struct._String**
-  %51 = load %struct._Hash** %hash, align 8
-  %keys = getelementptr inbounds %struct._Hash* %51, i32 0, i32 2
+  %51 = load %struct._Package** %pkg, align 8
+  %keys = getelementptr inbounds %struct._Package* %51, i32 0, i32 2
   store %struct._String** %50, %struct._String*** %keys, align 8
-  %52 = load %struct._Hash** %hash, align 8
-  %53 = ptrtoint %struct._Hash* %52 to i64
-  %or = or i64 %53, -4503599627370496
-  %or22 = or i64 %or, 1407374883553280
-  %54 = inttoptr i64 %or22 to i8*
-  %o23 = bitcast %union.UnionType* %value to i8**
-  store i8* %54, i8** %o23, align 8
-  %55 = load %struct._Hash** @pkg_map, align 8
-  %56 = load %struct._String** %key, align 8
-  %coerce.dive243 = bitcast %union.UnionType* %value to double*
-  %57 = bitcast double* %coerce.dive243 to i64*
-  %58 = load i64* %57, align 1
-  %59 = bitcast %struct._Hash** %hash.addr.i4 to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %59) #3
-  %60 = bitcast %struct._String** %key.addr.i5 to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %60) #3
-  %61 = bitcast %union.UnionType* %elem.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %61) #3
-  %62 = bitcast i64* %size.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %62) #3
-  store %struct._Hash* %55, %struct._Hash** %hash.addr.i4, align 8
-  store %struct._String* %56, %struct._String** %key.addr.i5, align 8
-  %coerce.dive1.i6 = bitcast %union.UnionType* %elem.i to double*
-  %63 = bitcast double* %coerce.dive1.i6 to i64*
-  store i64 %58, i64* %63, align 1
-  %64 = load %struct._Hash** %hash.addr.i4, align 8
-  %size1.i = getelementptr inbounds %struct._Hash* %64, i32 0, i32 3
-  %65 = load i64* %size1.i, align 8
-  store i64 %65, i64* %size.i, align 8
-  %66 = load %struct._String** %key.addr.i5, align 8
-  %hash2.i = getelementptr inbounds %struct._String* %66, i32 0, i32 3
-  %67 = load i64* %hash2.i, align 8
-  %68 = load %struct._Hash** %hash.addr.i4, align 8
-  %table.i7 = getelementptr inbounds %struct._Hash* %68, i32 0, i32 1
-  %69 = load %union.UnionType** %table.i7, align 8
-  %arrayidx.i8 = getelementptr inbounds %union.UnionType* %69, i64 %67
-  %70 = bitcast %union.UnionType* %arrayidx.i8 to i8*
-  %71 = bitcast %union.UnionType* %elem.i to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %70, i8* %71, i64 8, i32 8, i1 false) #3
-  %72 = load %struct._String** %key.addr.i5, align 8
-  %73 = load i64* %size.i, align 8
-  %add.i = add i64 %73, 1
-  %74 = load %struct._Hash** %hash.addr.i4, align 8
-  %keys.i = getelementptr inbounds %struct._Hash* %74, i32 0, i32 2
-  %75 = load %struct._String*** %keys.i, align 8
-  %arrayidx3.i = getelementptr inbounds %struct._String** %75, i64 %add.i
-  store %struct._String* %72, %struct._String** %arrayidx3.i, align 8
-  %76 = load %struct._Hash** %hash.addr.i4, align 8
-  %size4.i = getelementptr inbounds %struct._Hash* %76, i32 0, i32 3
-  %77 = load i64* %size4.i, align 8
-  %inc.i = add i64 %77, 1
+  %52 = bitcast %union.UnionType* %retval.i10 to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %52) #3
+  %53 = bitcast %union.UnionType*** %list.addr.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %53) #3
+  %54 = bitcast i64* %size.addr.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %54) #3
+  %55 = bitcast %union.UnionType* %ret.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %55) #3
+  %56 = bitcast %struct._Array** %array.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %56) #3
+  store %union.UnionType** null, %union.UnionType*** %list.addr.i, align 8
+  store i64 0, i64* %size.addr.i, align 8
+  %57 = load i32* @count, align 4
+  %inc.i.i = add nsw i32 %57, 1
+  store i32 %inc.i.i, i32* @count, align 4
+  %58 = load i32* @count, align 4
+  %idxprom.i.i = sext i32 %58 to i64
+  %59 = load %struct._Object*** @object_pool, align 8
+  %arrayidx.i.i = getelementptr inbounds %struct._Object** %59, i64 %idxprom.i.i
+  %60 = load %struct._Object** %arrayidx.i.i, align 8
+  %61 = bitcast %struct._Object* %60 to %struct._Array*
+  store %struct._Array* %61, %struct._Array** %array.i, align 8
+  %62 = load %union.UnionType*** %list.addr.i, align 8
+  %63 = load %struct._Array** %array.i, align 8
+  %list1.i = getelementptr inbounds %struct._Array* %63, i32 0, i32 1
+  store %union.UnionType** %62, %union.UnionType*** %list1.i, align 8
+  %64 = load i64* %size.addr.i, align 8
+  %65 = load %struct._Array** %array.i, align 8
+  %size2.i = getelementptr inbounds %struct._Array* %65, i32 0, i32 2
+  store i64 %64, i64* %size2.i, align 8
+  %66 = load %struct._Array** %array.i, align 8
+  %67 = ptrtoint %struct._Array* %66 to i64
+  %or.i = or i64 %67, -4503599627370496
+  %or3.i = or i64 %or.i, 844424930131968
+  %68 = inttoptr i64 %or3.i to i8*
+  %o.i = bitcast %union.UnionType* %ret.i to i8**
+  store i8* %68, i8** %o.i, align 8
+  %69 = bitcast %union.UnionType* %retval.i10 to i8*
+  %70 = bitcast %union.UnionType* %ret.i to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %69, i8* %70, i64 8, i32 8, i1 false) #3
+  %coerce.dive1.i11 = bitcast %union.UnionType* %retval.i10 to double*
+  %71 = bitcast double* %coerce.dive1.i11 to i64*
+  %72 = load i64* %71, align 1
+  %73 = bitcast %union.UnionType* %retval.i10 to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %73) #3
+  %74 = bitcast %union.UnionType*** %list.addr.i to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %74) #3
+  %75 = bitcast i64* %size.addr.i to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %75) #3
+  %76 = bitcast %union.UnionType* %ret.i to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %76) #3
+  %77 = bitcast %struct._Array** %array.i to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %77) #3
+  %coerce.dive233 = bitcast %union.UnionType* %coerce to double*
+  %78 = bitcast double* %coerce.dive233 to i64*
+  store i64 %72, i64* %78, align 1
+  %o24 = bitcast %union.UnionType* %coerce to i8**
+  %79 = load i8** %o24, align 8
+  %80 = ptrtoint i8* %79 to i64
+  %xor25 = xor i64 %80, -3659174697238528
+  %81 = inttoptr i64 %xor25 to %struct._Array*
+  %82 = load %struct._Package** %pkg, align 8
+  %isa = getelementptr inbounds %struct._Package* %82, i32 0, i32 4
+  store %struct._Array* %81, %struct._Array** %isa, align 8
+  %83 = load %struct._Package** %pkg, align 8
+  %84 = ptrtoint %struct._Package* %83 to i64
+  %or = or i64 %84, -4503599627370496
+  %or26 = or i64 %or, 3096224743817216
+  %85 = inttoptr i64 %or26 to i8*
+  %o27 = bitcast %union.UnionType* %value to i8**
+  store i8* %85, i8** %o27, align 8
+  %86 = load %struct._Hash** @pkg_map, align 8
+  %87 = load %struct._String** %key, align 8
+  %coerce.dive284 = bitcast %union.UnionType* %value to double*
+  %88 = bitcast double* %coerce.dive284 to i64*
+  %89 = load i64* %88, align 1
+  %90 = bitcast %struct._Hash** %hash.addr.i5 to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %90) #3
+  %91 = bitcast %struct._String** %key.addr.i6 to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %91) #3
+  %92 = bitcast %union.UnionType* %elem.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %92) #3
+  %93 = bitcast i64* %size.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %93) #3
+  store %struct._Hash* %86, %struct._Hash** %hash.addr.i5, align 8
+  store %struct._String* %87, %struct._String** %key.addr.i6, align 8
+  %coerce.dive1.i7 = bitcast %union.UnionType* %elem.i to double*
+  %94 = bitcast double* %coerce.dive1.i7 to i64*
+  store i64 %89, i64* %94, align 1
+  %95 = load %struct._Hash** %hash.addr.i5, align 8
+  %size1.i = getelementptr inbounds %struct._Hash* %95, i32 0, i32 3
+  %96 = load i64* %size1.i, align 8
+  store i64 %96, i64* %size.i, align 8
+  %97 = load %struct._String** %key.addr.i6, align 8
+  %hash2.i = getelementptr inbounds %struct._String* %97, i32 0, i32 3
+  %98 = load i64* %hash2.i, align 8
+  %99 = load %struct._Hash** %hash.addr.i5, align 8
+  %table.i8 = getelementptr inbounds %struct._Hash* %99, i32 0, i32 1
+  %100 = load %union.UnionType** %table.i8, align 8
+  %arrayidx.i9 = getelementptr inbounds %union.UnionType* %100, i64 %98
+  %101 = bitcast %union.UnionType* %arrayidx.i9 to i8*
+  %102 = bitcast %union.UnionType* %elem.i to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %101, i8* %102, i64 8, i32 8, i1 false) #3
+  %103 = load %struct._String** %key.addr.i6, align 8
+  %104 = load i64* %size.i, align 8
+  %add.i = add i64 %104, 1
+  %105 = load %struct._Hash** %hash.addr.i5, align 8
+  %keys.i = getelementptr inbounds %struct._Hash* %105, i32 0, i32 2
+  %106 = load %struct._String*** %keys.i, align 8
+  %arrayidx3.i = getelementptr inbounds %struct._String** %106, i64 %add.i
+  store %struct._String* %103, %struct._String** %arrayidx3.i, align 8
+  %107 = load %struct._Hash** %hash.addr.i5, align 8
+  %size4.i = getelementptr inbounds %struct._Hash* %107, i32 0, i32 3
+  %108 = load i64* %size4.i, align 8
+  %inc.i = add i64 %108, 1
   store i64 %inc.i, i64* %size4.i, align 8
-  %78 = bitcast %struct._Hash** %hash.addr.i4 to i8*
-  call void @llvm.lifetime.end(i64 -1, i8* %78) #3
-  %79 = bitcast %struct._String** %key.addr.i5 to i8*
-  call void @llvm.lifetime.end(i64 -1, i8* %79) #3
-  %80 = bitcast %union.UnionType* %elem.i to i8*
-  call void @llvm.lifetime.end(i64 -1, i8* %80) #3
-  %81 = bitcast i64* %size.i to i8*
-  call void @llvm.lifetime.end(i64 -1, i8* %81) #3
-  %82 = load %struct._Hash** %hash, align 8
-  store %struct._Hash* %82, %struct._Hash** %retval
+  %109 = bitcast %struct._Hash** %hash.addr.i5 to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %109) #3
+  %110 = bitcast %struct._String** %key.addr.i6 to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %110) #3
+  %111 = bitcast %union.UnionType* %elem.i to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %111) #3
+  %112 = bitcast i64* %size.i to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %112) #3
+  %113 = load %struct._Package** %pkg, align 8
+  store %struct._Package* %113, %struct._Package** %retval
   br label %return
 
 return:                                           ; preds = %cond.end, %if.then
-  %83 = load %struct._Hash** %retval
-  ret %struct._Hash* %83
+  %114 = load %struct._Package** %retval
+  ret %struct._Package* %114
 }
+
+; Function Attrs: nounwind readnone
+declare i64 @llvm.expect.i64(i64, i64) #5
 
 ; Function Attrs: nounwind ssp uwtable
 define void @store_method_by_pkg_name(i8* %pkg_name, i8* %mtd_name, i64 (%struct._Array*)* %code) #0 {
@@ -5403,7 +5446,7 @@ entry:
   %pkg_name.addr = alloca i8*, align 8
   %mtd_name.addr = alloca i8*, align 8
   %code.addr = alloca i64 (%struct._Array*)*, align 8
-  %pkg = alloca %struct._Hash*, align 8
+  %pkg = alloca %struct._Package*, align 8
   %_mtd_name = alloca %union.UnionType, align 8
   %o = alloca %struct._CodeRef*, align 8
   %code_ref = alloca %union.UnionType, align 8
@@ -5411,8 +5454,8 @@ entry:
   store i8* %mtd_name, i8** %mtd_name.addr, align 8
   store i64 (%struct._Array*)* %code, i64 (%struct._Array*)** %code.addr, align 8
   %0 = load i8** %pkg_name.addr, align 8
-  %call = call %struct._Hash* @get_pkg(i8* %0)
-  store %struct._Hash* %call, %struct._Hash** %pkg, align 8
+  %call = call %struct._Package* @get_pkg(i8* %0)
+  store %struct._Package* %call, %struct._Package** %pkg, align 8
   %1 = load i8** %mtd_name.addr, align 8
   %call1 = call i64 @new_String(i8* %1)
   %coerce.dive1 = bitcast %union.UnionType* %_mtd_name to double*
@@ -5432,82 +5475,88 @@ entry:
   %8 = inttoptr i64 %or4 to i8*
   %o5 = bitcast %union.UnionType* %code_ref to i8**
   store i8* %8, i8** %o5, align 8
-  %9 = load %struct._Hash** %pkg, align 8
+  %9 = load %struct._Package** %pkg, align 8
+  %10 = bitcast %struct._Package* %9 to %struct._Hash*
   %o6 = bitcast %union.UnionType* %_mtd_name to i8**
-  %10 = load i8** %o6, align 8
-  %11 = ptrtoint i8* %10 to i64
-  %xor = xor i64 %11, -3940649673949184
-  %12 = inttoptr i64 %xor to %struct._String*
+  %11 = load i8** %o6, align 8
+  %12 = ptrtoint i8* %11 to i64
+  %xor = xor i64 %12, -3940649673949184
+  %13 = inttoptr i64 %xor to %struct._String*
   %coerce.dive72 = bitcast %union.UnionType* %code_ref to double*
-  %13 = bitcast double* %coerce.dive72 to i64*
-  %14 = load i64* %13, align 1
-  %15 = bitcast %struct._Hash** %hash.addr.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %15) #3
-  %16 = bitcast %struct._String** %key.addr.i to i8*
+  %14 = bitcast double* %coerce.dive72 to i64*
+  %15 = load i64* %14, align 1
+  %16 = bitcast %struct._Hash** %hash.addr.i to i8*
   call void @llvm.lifetime.start(i64 -1, i8* %16) #3
-  %17 = bitcast %union.UnionType* %elem.i to i8*
+  %17 = bitcast %struct._String** %key.addr.i to i8*
   call void @llvm.lifetime.start(i64 -1, i8* %17) #3
-  %18 = bitcast i64* %size.i to i8*
+  %18 = bitcast %union.UnionType* %elem.i to i8*
   call void @llvm.lifetime.start(i64 -1, i8* %18) #3
-  store %struct._Hash* %9, %struct._Hash** %hash.addr.i, align 8
-  store %struct._String* %12, %struct._String** %key.addr.i, align 8
+  %19 = bitcast i64* %size.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %19) #3
+  store %struct._Hash* %10, %struct._Hash** %hash.addr.i, align 8
+  store %struct._String* %13, %struct._String** %key.addr.i, align 8
   %coerce.dive1.i = bitcast %union.UnionType* %elem.i to double*
-  %19 = bitcast double* %coerce.dive1.i to i64*
-  store i64 %14, i64* %19, align 1
-  %20 = load %struct._Hash** %hash.addr.i, align 8
-  %size1.i = getelementptr inbounds %struct._Hash* %20, i32 0, i32 3
-  %21 = load i64* %size1.i, align 8
-  store i64 %21, i64* %size.i, align 8
-  %22 = load %struct._String** %key.addr.i, align 8
-  %hash2.i = getelementptr inbounds %struct._String* %22, i32 0, i32 3
-  %23 = load i64* %hash2.i, align 8
-  %24 = load %struct._Hash** %hash.addr.i, align 8
-  %table.i = getelementptr inbounds %struct._Hash* %24, i32 0, i32 1
-  %25 = load %union.UnionType** %table.i, align 8
-  %arrayidx.i = getelementptr inbounds %union.UnionType* %25, i64 %23
-  %26 = bitcast %union.UnionType* %arrayidx.i to i8*
-  %27 = bitcast %union.UnionType* %elem.i to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %26, i8* %27, i64 8, i32 8, i1 false) #3
-  %28 = load %struct._String** %key.addr.i, align 8
-  %29 = load i64* %size.i, align 8
-  %add.i = add i64 %29, 1
-  %30 = load %struct._Hash** %hash.addr.i, align 8
-  %keys.i = getelementptr inbounds %struct._Hash* %30, i32 0, i32 2
-  %31 = load %struct._String*** %keys.i, align 8
-  %arrayidx3.i = getelementptr inbounds %struct._String** %31, i64 %add.i
-  store %struct._String* %28, %struct._String** %arrayidx3.i, align 8
-  %32 = load %struct._Hash** %hash.addr.i, align 8
-  %size4.i = getelementptr inbounds %struct._Hash* %32, i32 0, i32 3
-  %33 = load i64* %size4.i, align 8
-  %inc.i = add i64 %33, 1
+  %20 = bitcast double* %coerce.dive1.i to i64*
+  store i64 %15, i64* %20, align 1
+  %21 = load %struct._Hash** %hash.addr.i, align 8
+  %size1.i = getelementptr inbounds %struct._Hash* %21, i32 0, i32 3
+  %22 = load i64* %size1.i, align 8
+  store i64 %22, i64* %size.i, align 8
+  %23 = load %struct._String** %key.addr.i, align 8
+  %hash2.i = getelementptr inbounds %struct._String* %23, i32 0, i32 3
+  %24 = load i64* %hash2.i, align 8
+  %25 = load %struct._Hash** %hash.addr.i, align 8
+  %table.i = getelementptr inbounds %struct._Hash* %25, i32 0, i32 1
+  %26 = load %union.UnionType** %table.i, align 8
+  %arrayidx.i = getelementptr inbounds %union.UnionType* %26, i64 %24
+  %27 = bitcast %union.UnionType* %arrayidx.i to i8*
+  %28 = bitcast %union.UnionType* %elem.i to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %27, i8* %28, i64 8, i32 8, i1 false) #3
+  %29 = load %struct._String** %key.addr.i, align 8
+  %30 = load i64* %size.i, align 8
+  %add.i = add i64 %30, 1
+  %31 = load %struct._Hash** %hash.addr.i, align 8
+  %keys.i = getelementptr inbounds %struct._Hash* %31, i32 0, i32 2
+  %32 = load %struct._String*** %keys.i, align 8
+  %arrayidx3.i = getelementptr inbounds %struct._String** %32, i64 %add.i
+  store %struct._String* %29, %struct._String** %arrayidx3.i, align 8
+  %33 = load %struct._Hash** %hash.addr.i, align 8
+  %size4.i = getelementptr inbounds %struct._Hash* %33, i32 0, i32 3
+  %34 = load i64* %size4.i, align 8
+  %inc.i = add i64 %34, 1
   store i64 %inc.i, i64* %size4.i, align 8
-  %34 = bitcast %struct._Hash** %hash.addr.i to i8*
-  call void @llvm.lifetime.end(i64 -1, i8* %34) #3
-  %35 = bitcast %struct._String** %key.addr.i to i8*
+  %35 = bitcast %struct._Hash** %hash.addr.i to i8*
   call void @llvm.lifetime.end(i64 -1, i8* %35) #3
-  %36 = bitcast %union.UnionType* %elem.i to i8*
+  %36 = bitcast %struct._String** %key.addr.i to i8*
   call void @llvm.lifetime.end(i64 -1, i8* %36) #3
-  %37 = bitcast i64* %size.i to i8*
+  %37 = bitcast %union.UnionType* %elem.i to i8*
   call void @llvm.lifetime.end(i64 -1, i8* %37) #3
+  %38 = bitcast i64* %size.i to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %38) #3
   ret void
 }
 
 ; Function Attrs: nounwind ssp uwtable
 define i64 (%struct._Array*)* @get_method_by_name(%struct._BlessedObject* %self, i8* %mtd_name) #0 {
-do.body:
+entry:
   %self.addr = alloca %struct._BlessedObject*, align 8
   %mtd_name.addr = alloca i8*, align 8
-  %mtds = alloca %struct._Hash*, align 8
+  %mtds = alloca %struct._Package*, align 8
   %str = alloca %union.UnionType, align 8
   %s = alloca %struct._String*, align 8
   %mtd = alloca %union.UnionType, align 8
   %code_ref = alloca %struct._CodeRef*, align 8
+  %isa = alloca %struct._Array*, align 8
+  %size = alloca i64, align 8
+  %i = alloca i64, align 8
+  %base = alloca %struct._Package*, align 8
+  %mtd17 = alloca %union.UnionType, align 8
   store %struct._BlessedObject* %self, %struct._BlessedObject** %self.addr, align 8
   store i8* %mtd_name, i8** %mtd_name.addr, align 8
   %0 = load %struct._BlessedObject** %self.addr, align 8
   %mtds1 = getelementptr inbounds %struct._BlessedObject* %0, i32 0, i32 2
-  %1 = load %struct._Hash** %mtds1, align 8
-  store %struct._Hash* %1, %struct._Hash** %mtds, align 8
+  %1 = load %struct._Package** %mtds1, align 8
+  store %struct._Package* %1, %struct._Package** %mtds, align 8
   %2 = load i8** %mtd_name.addr, align 8
   %call = call i64 @new_String(i8* %2)
   %coerce.dive1 = bitcast %union.UnionType* %str to double*
@@ -5522,8 +5571,8 @@ do.body:
   %7 = load %struct._String** %s, align 8
   %hash = getelementptr inbounds %struct._String* %7, i32 0, i32 3
   %8 = load i64* %hash, align 8
-  %9 = load %struct._Hash** %mtds, align 8
-  %table = getelementptr inbounds %struct._Hash* %9, i32 0, i32 1
+  %9 = load %struct._Package** %mtds, align 8
+  %table = getelementptr inbounds %struct._Package* %9, i32 0, i32 1
   %10 = load %union.UnionType** %table, align 8
   %arrayidx = getelementptr inbounds %union.UnionType* %10, i64 %8
   %11 = bitcast %union.UnionType* %mtd to i8*
@@ -5542,39 +5591,189 @@ do.body:
   %and5 = and i64 %16, 4222124650659840
   %shr = lshr i64 %and5, 48
   %mul = mul i64 %conv3, %shr
-  %cmp6 = icmp ne i64 %mul, 9
-  br i1 %cmp6, label %if.then, label %do.end
+  %cmp6 = icmp eq i64 %mul, 9
+  br i1 %cmp6, label %if.then, label %if.else
 
-if.then:                                          ; preds = %do.body
-  %17 = load %struct.__sFILE** @__stderrp, align 8
+if.then:                                          ; preds = %entry
   %o8 = bitcast %union.UnionType* %mtd to i8**
-  %18 = load i8** %o8, align 8
-  %19 = ptrtoint i8* %18 to i64
-  %and9 = and i64 %19, -4503599627370496
-  %cmp10 = icmp eq i64 %and9, -4503599627370496
-  %conv11 = zext i1 %cmp10 to i32
-  %conv12 = sext i32 %conv11 to i64
-  %o13 = bitcast %union.UnionType* %mtd to i8**
-  %20 = load i8** %o13, align 8
-  %21 = ptrtoint i8* %20 to i64
-  %and14 = and i64 %21, 4222124650659840
-  %shr15 = lshr i64 %and14, 48
-  %mul16 = mul i64 %conv12, %shr15
-  %call17 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %17, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul16)
-  call void @__assert_rtn(i8* getelementptr inbounds ([19 x i8]* @__func__.get_method_by_name, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 784, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #7
+  %17 = load i8** %o8, align 8
+  %18 = ptrtoint i8* %17 to i64
+  %xor9 = xor i64 %18, -1970324836974592
+  %19 = inttoptr i64 %xor9 to %struct._CodeRef*
+  store %struct._CodeRef* %19, %struct._CodeRef** %code_ref, align 8
+  br label %if.end35
+
+if.else:                                          ; preds = %entry
+  %20 = load %struct._Package** %mtds, align 8
+  %isa10 = getelementptr inbounds %struct._Package* %20, i32 0, i32 4
+  %21 = load %struct._Array** %isa10, align 8
+  store %struct._Array* %21, %struct._Array** %isa, align 8
+  %22 = load %struct._Array** %isa, align 8
+  %size11 = getelementptr inbounds %struct._Array* %22, i32 0, i32 2
+  %23 = load i64* %size11, align 8
+  store i64 %23, i64* %size, align 8
+  store i64 0, i64* %i, align 8
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %if.else
+  %24 = load i64* %i, align 8
+  %25 = load i64* %size, align 8
+  %cmp12 = icmp ult i64 %24, %25
+  br i1 %cmp12, label %for.body, label %if.end35
+
+for.body:                                         ; preds = %for.cond
+  %26 = load i64* %i, align 8
+  %27 = load %struct._Array** %isa, align 8
+  %list = getelementptr inbounds %struct._Array* %27, i32 0, i32 1
+  %28 = load %union.UnionType*** %list, align 8
+  %arrayidx14 = getelementptr inbounds %union.UnionType** %28, i64 %26
+  %29 = load %union.UnionType** %arrayidx14, align 8
+  %o15 = bitcast %union.UnionType* %29 to i8**
+  %30 = load i8** %o15, align 8
+  %31 = ptrtoint i8* %30 to i64
+  %xor16 = xor i64 %31, -1407374883553280
+  %32 = inttoptr i64 %xor16 to %struct._Package*
+  store %struct._Package* %32, %struct._Package** %base, align 8
+  %33 = load %struct._String** %s, align 8
+  %hash18 = getelementptr inbounds %struct._String* %33, i32 0, i32 3
+  %34 = load i64* %hash18, align 8
+  %35 = load %struct._Package** %base, align 8
+  %table19 = getelementptr inbounds %struct._Package* %35, i32 0, i32 1
+  %36 = load %union.UnionType** %table19, align 8
+  %arrayidx20 = getelementptr inbounds %union.UnionType* %36, i64 %34
+  %37 = bitcast %union.UnionType* %mtd17 to i8*
+  %38 = bitcast %union.UnionType* %arrayidx20 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %37, i8* %38, i64 8, i32 8, i1 false)
+  %o21 = bitcast %union.UnionType* %mtd17 to i8**
+  %39 = load i8** %o21, align 8
+  %40 = ptrtoint i8* %39 to i64
+  %and22 = and i64 %40, -4503599627370496
+  %cmp23 = icmp eq i64 %and22, -4503599627370496
+  %conv24 = zext i1 %cmp23 to i32
+  %conv25 = sext i32 %conv24 to i64
+  %o26 = bitcast %union.UnionType* %mtd17 to i8**
+  %41 = load i8** %o26, align 8
+  %42 = ptrtoint i8* %41 to i64
+  %and27 = and i64 %42, 4222124650659840
+  %shr28 = lshr i64 %and27, 48
+  %mul29 = mul i64 %conv25, %shr28
+  %cmp30 = icmp eq i64 %mul29, 9
+  br i1 %cmp30, label %if.then32, label %for.inc
+
+if.then32:                                        ; preds = %for.body
+  %o33 = bitcast %union.UnionType* %mtd17 to i8**
+  %43 = load i8** %o33, align 8
+  %44 = ptrtoint i8* %43 to i64
+  %xor34 = xor i64 %44, -1970324836974592
+  %45 = inttoptr i64 %xor34 to %struct._CodeRef*
+  store %struct._CodeRef* %45, %struct._CodeRef** %code_ref, align 8
+  br label %if.end35
+
+for.inc:                                          ; preds = %for.body
+  %46 = load i64* %i, align 8
+  %inc = add i64 %46, 1
+  store i64 %inc, i64* %i, align 8
+  br label %for.cond
+
+if.end35:                                         ; preds = %for.cond, %if.then32, %if.then
+  %47 = load %struct._CodeRef** %code_ref, align 8
+  %tobool = icmp ne %struct._CodeRef* %47, null
+  br i1 %tobool, label %land.rhs, label %land.end
+
+land.rhs:                                         ; preds = %if.end35
+  br label %land.end
+
+land.end:                                         ; preds = %land.rhs, %if.end35
+  %48 = phi i1 [ false, %if.end35 ], [ true, %land.rhs ]
+  %lnot = xor i1 %48, true
+  %lnot.ext = zext i1 %lnot to i32
+  %conv36 = sext i32 %lnot.ext to i64
+  %expval = call i64 @llvm.expect.i64(i64 %conv36, i64 0)
+  %tobool37 = icmp ne i64 %expval, 0
+  br i1 %tobool37, label %cond.true, label %cond.end
+
+cond.true:                                        ; preds = %land.end
+  call void @__assert_rtn(i8* getelementptr inbounds ([19 x i8]* @__func__.get_method_by_name, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 807, i8* getelementptr inbounds ([33 x i8]* @.str43, i32 0, i32 0)) #7
   unreachable
 
-do.end:                                           ; preds = %do.body
-  %o18 = bitcast %union.UnionType* %mtd to i8**
-  %22 = load i8** %o18, align 8
-  %23 = ptrtoint i8* %22 to i64
-  %xor19 = xor i64 %23, -1970324836974592
-  %24 = inttoptr i64 %xor19 to %struct._CodeRef*
-  store %struct._CodeRef* %24, %struct._CodeRef** %code_ref, align 8
-  %25 = load %struct._CodeRef** %code_ref, align 8
-  %code = getelementptr inbounds %struct._CodeRef* %25, i32 0, i32 1
-  %26 = load i64 (%struct._Array*)** %code, align 8
-  ret i64 (%struct._Array*)* %26
+cond.end:                                         ; preds = %land.end
+  %49 = load %struct._CodeRef** %code_ref, align 8
+  %code = getelementptr inbounds %struct._CodeRef* %49, i32 0, i32 1
+  %50 = load i64 (%struct._Array*)** %code, align 8
+  ret i64 (%struct._Array*)* %50
+}
+
+; Function Attrs: nounwind ssp uwtable
+define void @add_base_name(i8* %pkg_name, i8* %base_name) #0 {
+entry:
+  %array.addr.i = alloca %struct._Array*, align 8
+  %elem.addr.i = alloca %union.UnionType*, align 8
+  %size.i = alloca i64, align 8
+  %pkg_name.addr = alloca i8*, align 8
+  %base_name.addr = alloca i8*, align 8
+  %pkg = alloca %struct._Package*, align 8
+  %base = alloca %struct._Package*, align 8
+  %boxed_base = alloca %union.UnionType*, align 8
+  store i8* %pkg_name, i8** %pkg_name.addr, align 8
+  store i8* %base_name, i8** %base_name.addr, align 8
+  %0 = load i8** %pkg_name.addr, align 8
+  %call = call %struct._Package* @get_pkg(i8* %0)
+  store %struct._Package* %call, %struct._Package** %pkg, align 8
+  %1 = load i8** %base_name.addr, align 8
+  %call1 = call %struct._Package* @get_pkg(i8* %1)
+  store %struct._Package* %call1, %struct._Package** %base, align 8
+  %2 = load i32* @count, align 4
+  %inc.i = add nsw i32 %2, 1
+  store i32 %inc.i, i32* @count, align 4
+  %3 = load i32* @count, align 4
+  %idxprom.i = sext i32 %3 to i64
+  %4 = load %struct._Object*** @object_pool, align 8
+  %arrayidx.i = getelementptr inbounds %struct._Object** %4, i64 %idxprom.i
+  %5 = load %struct._Object** %arrayidx.i, align 8
+  %6 = bitcast %struct._Object* %5 to %union.UnionType*
+  store %union.UnionType* %6, %union.UnionType** %boxed_base, align 8
+  %7 = load %struct._Package** %base, align 8
+  %8 = ptrtoint %struct._Package* %7 to i64
+  %or = or i64 %8, -4503599627370496
+  %or3 = or i64 %or, 3096224743817216
+  %9 = inttoptr i64 %or3 to i8*
+  %10 = load %union.UnionType** %boxed_base, align 8
+  %o = bitcast %union.UnionType* %10 to i8**
+  store i8* %9, i8** %o, align 8
+  %11 = load %struct._Package** %pkg, align 8
+  %isa = getelementptr inbounds %struct._Package* %11, i32 0, i32 4
+  %12 = load %struct._Array** %isa, align 8
+  %13 = load %union.UnionType** %boxed_base, align 8
+  %14 = bitcast %struct._Array** %array.addr.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %14) #3
+  %15 = bitcast %union.UnionType** %elem.addr.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %15) #3
+  %16 = bitcast i64* %size.i to i8*
+  call void @llvm.lifetime.start(i64 -1, i8* %16) #3
+  store %struct._Array* %12, %struct._Array** %array.addr.i, align 8
+  store %union.UnionType* %13, %union.UnionType** %elem.addr.i, align 8
+  %17 = load %struct._Array** %array.addr.i, align 8
+  %size1.i = getelementptr inbounds %struct._Array* %17, i32 0, i32 2
+  %18 = load i64* %size1.i, align 8
+  store i64 %18, i64* %size.i, align 8
+  %19 = load %struct._Array** %array.addr.i, align 8
+  %20 = load i64* %size.i, align 8
+  %add.i = add i64 %20, 1
+  call void @Array_grow(%struct._Array* %19, i64 %add.i) #3
+  %21 = load %union.UnionType** %elem.addr.i, align 8
+  %22 = load i64* %size.i, align 8
+  %23 = load %struct._Array** %array.addr.i, align 8
+  %list.i = getelementptr inbounds %struct._Array* %23, i32 0, i32 1
+  %24 = load %union.UnionType*** %list.i, align 8
+  %arrayidx.i1 = getelementptr inbounds %union.UnionType** %24, i64 %22
+  store %union.UnionType* %21, %union.UnionType** %arrayidx.i1, align 8
+  %25 = bitcast %struct._Array** %array.addr.i to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %25) #3
+  %26 = bitcast %union.UnionType** %elem.addr.i to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %26) #3
+  %27 = bitcast i64* %size.i to i8*
+  call void @llvm.lifetime.end(i64 -1, i8* %27) #3
+  ret void
 }
 
 ; Function Attrs: nounwind ssp uwtable
@@ -5767,7 +5966,7 @@ if.then:                                          ; preds = %do.body
   %shr27 = lshr i64 %and26, 48
   %mul28 = mul i64 %conv23, %shr27
   %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %16, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul28)
-  call void @__assert_rtn(i8* getelementptr inbounds ([33 x i8]* @__func__.dynamic_blessed_object_cast_code, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 907, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #7
+  call void @__assert_rtn(i8* getelementptr inbounds ([33 x i8]* @__func__.dynamic_blessed_object_cast_code, i32 0, i32 0), i8* getelementptr inbounds ([18 x i8]* @.str1, i32 0, i32 0), i32 938, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #7
   unreachable
 
 do.end:                                           ; preds = %do.body
@@ -9697,7 +9896,7 @@ entry:
   %cleanup.dest.slot = alloca i32
   store i8* %fmt, i8** %fmt.addr, align 8
   %0 = load %struct.__sFILE** @__stderrp, align 8
-  %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %0, i8* getelementptr inbounds ([23 x i8]* @.str40, i32 0, i32 0))
+  %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %0, i8* getelementptr inbounds ([23 x i8]* @.str44, i32 0, i32 0))
   %arraydecay2 = bitcast [1 x %struct.__va_list_tag]* %args to %struct.__va_list_tag*
   %arraydecay1 = bitcast %struct.__va_list_tag* %arraydecay2 to i8*
   call void @llvm.va_start(i8* %arraydecay1)
@@ -10083,7 +10282,7 @@ for.inc80:                                        ; preds = %for.end72, %if.else
 
 for.end82:                                        ; preds = %for.cond46
   %126 = load %struct.__sFILE** @__stderrp, align 8
-  %call83 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %126, i8* getelementptr inbounds ([12 x i8]* @.str41, i32 0, i32 0), i8* %vla45)
+  %call83 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %126, i8* getelementptr inbounds ([12 x i8]* @.str45, i32 0, i32 0), i8* %vla45)
   %call84 = call i64 @new_String(i8* %vla45)
   %coerce.dive5 = bitcast %union.UnionType* %retval to double*
   %127 = bitcast double* %coerce.dive5 to i64*
