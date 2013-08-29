@@ -28,11 +28,14 @@ MODULE = Compiler::CodeGenerator::LLVM PACKAGE = Compiler::CodeGenerator::LLVM
 PROTOTYPES: DISABLE
 
 Compiler_CodeGenerator_LLVM
-new(classname)
+_new(classname, _options)
 	char *classname
+	HV   *_options
 CODE:
 {
-	CodeGenerator::LLVM *code_generator = new CodeGenerator::LLVM();
+	bool is_32bit = SvPVX(get_value(_options, "32bit"));
+	const char *runtime_api_path = SvPVX(get_value(_options, "runtime_api_path"));
+	CodeGenerator::LLVM *code_generator = new CodeGenerator::LLVM(is_32bit, runtime_api_path);
 	RETVAL = code_generator;
 }
 OUTPUT:
@@ -59,4 +62,24 @@ CODE:
 {
 	AST *ast = sv_to_ast(aTHX_ ast_); 
 	self->debug_run(ast);
+}
+
+void
+set_library_paths(self, paths_)
+    Compiler_CodeGenerator_LLVM self
+    AV *paths_
+CODE:
+{
+	int path_num = av_len(paths_);
+	if (path_num < 0) return;
+	std::vector<const char *> library_paths;
+	for (int i = 0; i <= path_num; i++) {
+		SV *path_ = (SV *)*av_fetch(paths_, i, FALSE);
+		const char *p = SvPVX(path_);
+		size_t len = strlen(p) + 1;
+		const char *path = (const char *)malloc(len);
+		memcpy((void *)path, (void *)p, len);
+		library_paths.push_back(path);
+	}
+	self->set_library_paths(&library_paths);
 }

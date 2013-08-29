@@ -29,6 +29,9 @@ say $b;
 say $a[0];
 $a[0] = 3;
 say @a;
-
+my $b = 0;
+say $a[$b];
+$a[$b + 1] = 2;
+say @a;
 #my @c = map { $_ * 2; } @a;
 #say @c;

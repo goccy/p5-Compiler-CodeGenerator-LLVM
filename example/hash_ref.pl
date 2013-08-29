@@ -19,7 +19,11 @@ $generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
+<<<<<<< HEAD
 my $a = { a => 1, b => { d => 2 }, c => 2 };
+=======
+my $a = { a => 1, b => { d => 8 }, c => 2 };
+>>>>>>> origin/dev
 say $a;
 say %$a;
 
