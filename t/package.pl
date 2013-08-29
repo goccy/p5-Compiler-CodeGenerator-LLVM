@@ -1,6 +1,9 @@
 use strict;
 use warnings;
 use Test::More;
+use FindBin;
+use File::Spec;
+use lib File::Spec->catdir($FindBin::Bin, 'inc');
 use Test::Compiler;
 use File::Basename qw/dirname/;
 
