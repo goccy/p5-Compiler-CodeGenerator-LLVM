@@ -20,6 +20,7 @@ $generator = Compiler::CodeGenerator::LLVM->new();
 $generator->debug_run($ast);
 
 __DATA__
+say undef;
 say 1;
 say 2;
 say 1 + 2 == 3;

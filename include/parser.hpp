@@ -1,5 +1,6 @@
 #include <common.hpp>
 
+class AST;
 class Node {
 public:
 	Token *tk;
@@ -83,6 +84,7 @@ public:
 class ModuleNode : public Node {
 public:
 	Node *args;
+	AST *ast;
 	ModuleNode(Token *tk);
 	void dump(size_t depth);
 };

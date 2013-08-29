@@ -37,6 +37,7 @@ int main(void)
 	VALUE v;
 	VALUE v2;
 	char *s = "hello world";
+	fprintf(stderr, "s = [%p]\n", s);
 	int i = -2;
 	int j = 23;
 	double d = 1.234556677;
@@ -49,7 +50,7 @@ int main(void)
 	//fprintf(stderr, "p = [%p]\n", i);
 	//v = (double)(uint64_t)((i & Mask) | NaN | IntTag);
 	//v2 = (void *)(uint64_t)((j & Mask) | NaN | IntTag);
-	//v = (VALUE)((uint64_t)s | NaN | StringTag);
+	fprintf(stderr, "[%p]\n", ((uint64_t)s | NaN | StringTag));
 	//int type = (((uint64_t)v & NaN) == NaN) * (((uint64_t)v & TYPE) >> 48);
 	//fprintf(stderr, "%d\n", type);
 	//fprintf(stderr, "%s\n", (char *)((uint64_t)v ^ (NaN | StringTag)));
