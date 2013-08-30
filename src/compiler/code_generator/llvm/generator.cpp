@@ -9,10 +9,10 @@ using namespace std;
 namespace TokenType = Enum::Token::Type;
 namespace TokenKind = Enum::Token::Kind;
 
-LLVM::LLVM(bool _is_32bit, const char *_runtime_api_path) : last_evaluated_value(NULL), cur_pkg_name("main"), has_return_statement(false), is_32bit(_is_32bit), runtime_api_path(_runtime_api_path)
+LLVM::LLVM(bool _is_32bit, const char *_runtime_api_path) :
+	last_evaluated_value(NULL), cur_pkg_name("main"),
+	has_return_statement(false), is_32bit(_is_32bit), runtime_api_path(_runtime_api_path)
 {
-	//LLVMContext &ctx = getGlobalContext();
-	//is_32bit = true;//for debug
 	module = new llvm::Module("LLVMIR", ctx);
 	cur_args = NULL;
 }
@@ -25,7 +25,6 @@ void LLVM::set_library_paths(vector<const char *> *paths)
 
 void LLVM::createRuntimeTypes(void)
 {
-	//LLVMContext &ctx = getGlobalContext();
 	vector<Type *> fields;
 	void_type = llvm::Type::getVoidTy(ctx);
 	int_type = IntegerType::get(ctx, 64);
@@ -109,8 +108,6 @@ bool LLVM::linkModule(llvm::Module *dest, string file_name)
 
 const char *LLVM::gen(AST *ast)
 {
-	//fprintf(stdout, "gen!!\n");
-	//LLVMContext &ctx = getGlobalContext();
 	linkModule(module, runtime_api_path);
 	union_type = module->getTypeByName("union.UnionType");
 	union_ptr_type = PointerType::get(union_type, 0);
@@ -607,8 +604,6 @@ void LLVM::generateReturnCode(IRBuilder<> *builder, ReturnNode *node)
 
 void LLVM::generateWhileStmtCode(IRBuilder<> *builder, WhileStmtNode *node)
 {
-	//LLVMContext &ctx = getGlobalContext();
-
 	BasicBlock *loop_head = BasicBlock::Create(ctx, "loop_head", cur_func);
 	BasicBlock *true_block = BasicBlock::Create(ctx, "true_block", cur_func);
 	BasicBlock *after_block = BasicBlock::Create(ctx, "after_block", cur_func);
@@ -765,7 +760,7 @@ llvm::Value *LLVM::generateAssignCode(IRBuilder<> *builder, BranchNode *node)
 	llvm::Value *ret = NULL;
 	if (TYPE_match(node->left, ListNode)) {
 		assert(value_type == Enum::Runtime::Array && "not array type");
-		vector<CodeGenerator::Value *> *list = generateListDefinitionCode(builder, dynamic_cast<ListNode *>(node->left));
+		vector<CodeGenerator::Value *> *list = createList(builder, dynamic_cast<ListNode *>(node->left));
 		size_t size = list->size();
 		llvm::Value *array = generateCastCode(builder, value_type, value);
 		for (size_t i = 0; i < size; i++) {
@@ -1264,16 +1259,9 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 			if (node->left->tk->info.type == Class || node->left->tk->info.type == Key) {
 				const char *pkg_name = node->left->tk->data.c_str();
 				const char *mtd_name = node->right->tk->data.c_str();
-				llvm::Value *pkg = builder->CreateGlobalStringPtr(pkg_name);
+				llvm::Value *pkg = createString(builder, pkg_name);
 				FunctionCallNode *mtd_node = dynamic_cast<FunctionCallNode *>(node->right);
-				llvm::Value *vargs = createArgumentArray(builder, mtd_node);
-				vector<llvm::Type *> arg_types;
-				arg_types.push_back(array_ptr_type);
-				arg_types.push_back(void_ptr_type);
-				llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-				FunctionType *ftype = llvm::FunctionType::get(void_type, arg_types_ref, false);
-				llvm::Value *unshift = module->getOrInsertFunction("_unshift", ftype);
-				builder->CreateCall2(unshift, vargs, pkg);
+				llvm::Value *vargs = createArgumentArray(builder, pkg, mtd_node);
 				llvm::Value *func = fmgr.getFunction(pkg_name, mtd_name);
 				if (!func) {
 					vector<llvm::Type *> arg_types;
@@ -1302,15 +1290,7 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 				}
 				CallInst *mtd = builder->CreateCall2(get_method_by_name, left, mtd_name, "method");
 				FunctionCallNode *mtd_node = dynamic_cast<FunctionCallNode *>(node->right);
-				llvm::Value *vargs = createArgumentArray(builder, mtd_node);
-				vector<llvm::Type *> arg_types;
-				arg_types.push_back(array_ptr_type);
-				arg_types.push_back(blessed_object_ptr_type);
-				llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-				FunctionType *ftype = llvm::FunctionType::get(void_type, arg_types_ref, false);
-				llvm::Value *make_method_argument = module->getOrInsertFunction("_make_method_argument", ftype);
-				builder->CreateCall2(make_method_argument, vargs, left);
-
+				llvm::Value *vargs = createArgumentArray(builder, left_value, mtd_node);
 				CallInst *result = builder->CreateCall(mtd, vargs, "function_rvalue");
 				//result->setCallingConv(CallingConv::Fast);
 				//result->setTailCall(true);
@@ -1376,18 +1356,16 @@ llvm::Value *LLVM::generateOperatorCodeWithObject(IRBuilder<> *builder,
 	return ret;
 }
 
-vector<CodeGenerator::Value *> *LLVM::generateListDefinitionCode(IRBuilder<> *builder, ListNode *node)
+vector<CodeGenerator::Value *> *LLVM::createList(IRBuilder<> *builder, ListNode *node)
 {
 	Node *data = node->data;
 	vector<CodeGenerator::Value *> *list = new vector<CodeGenerator::Value *>();
-	if (data->tk->info.type == TokenType::Comma) {
+	if (data && (data->tk->info.type == TokenType::Comma || data->tk->info.type == TokenType::Arrow)) {
 		generateCommaCode(builder, dynamic_cast<BranchNode *>(data), list);
-	} else {
+	} else if (data) {
 		CodeGenerator::Value *v = new CodeGenerator::Value();
-		llvm::Value *value = generateValueCode(builder, data);
-		//llvm::Value *casted = generateCastCode(builder, Enum::Runtime::Object, value);
-		v->value = value;//casted;
-		v->type = Enum::Runtime::Value;
+		v->value = generateValueCode(builder, data);
+		v->type = (cur_type == Enum::Runtime::Object) ? Enum::Runtime::Value : cur_type;
 		v->tk = data->tk;
 		list->push_back(v);
 	}
@@ -1396,34 +1374,15 @@ vector<CodeGenerator::Value *> *LLVM::generateListDefinitionCode(IRBuilder<> *bu
 
 llvm::Value *LLVM::generateListCode(IRBuilder<> *builder, ListNode *node)
 {
-	Node *data = node->data;
-	vector<CodeGenerator::Value *> list;
-	if (data && (data->tk->info.type == TokenType::Comma || data->tk->info.type == TokenType::Arrow)) {
-		generateCommaCode(builder, dynamic_cast<BranchNode *>(data), &list);
-	} else if (data) {
-		CodeGenerator::Value *v = new CodeGenerator::Value();
-		v->value = generateValueCode(builder, data);
-		v->type = (cur_type == Enum::Runtime::Object) ? Enum::Runtime::Value : cur_type;
-		v->tk = data->tk;
-		list.push_back(v);
-	}
-	size_t size = list.size();
-	//llvm::Value *elems = builder->CreateAlloca(union_type, ConstantInt::get(int_type, size), "elems");
+	vector<CodeGenerator::Value *> *list = createList(builder, node);
+	size_t size = list->size();
 	llvm::Value *elems = builder->CreateAlloca(union_ptr_type, ConstantInt::get(int_type, size), "elems");
 	for (size_t i = 0; i < size; i++) {
-		CodeGenerator::Value *v = list.at(i);
+		CodeGenerator::Value *v = list->at(i);
 		llvm::Value *value = v->value;
 		Enum::Runtime::Type type = v->type;
 		llvm::Value *idx = ConstantInt::get(int_type, i);
-		if (type == Enum::Runtime::Object) {
-			Token *tk = v->tk;
-			llvm::Value *value = lookupVariable(tk->data, tk)->value;
-			builder->CreateStore(value, builder->CreateGEP(elems, idx, "load_elem"));
-			//builder->CreateStore(builder->CreateLoad(value, "load_value"), builder->CreateGEP(elems, idx, "load_elem"));
-		} else {
-			builder->CreateStore(value, builder->CreateGEP(elems, idx, "load_elem"));
-			//builder->CreateStore(builder->CreateLoad(value, "load_value"), builder->CreateGEP(elems, idx, "load_elem"));
-		}
+		builder->CreateStore(value, builder->CreateGEP(elems, idx, "load_elem"));
 	}
 	cur_type = Enum::Runtime::Array;
 	return createNaNBoxingArray(builder, createArray(builder, elems, size));
@@ -1617,14 +1576,7 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 		//fall through
 	case Key: case RawString: {
 		if (!s) s = tk->data.c_str();
-		vector<llvm::Type *> arg_types;
-		arg_types.push_back(void_ptr_type);
-		llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
-		FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
-		llvm::Constant *f = module->getOrInsertFunction("new_String", ftype);
-		llvm::Value *str = builder->CreateGlobalStringPtr(s);
-		CallInst *result = builder->CreateCall(f, str, "string");
-		ret = generateReceiveUnionValueCode(builder, result);
+		ret = createString(builder, s);
 		cur_type = Enum::Runtime::String;
 		break;
 	}
@@ -1651,7 +1603,6 @@ llvm::Value *LLVM::generateValueCode(IRBuilder<> *builder, Node *node)
 	}
 	case GlobalVar: case Var: {
 		CodeGenerator::Value *var = lookupVariable(tk->data, tk);
-		//if (tk->data == "$w") asm("int3");
 		if (!var) {
 			ret = builder->CreateAlloca(object_type, 0, tk->data.c_str());
 			CodeGenerator::Value *v = (CodeGenerator::Value *)malloc(sizeof(CodeGenerator::Value));
@@ -1726,61 +1677,17 @@ llvm::Value *LLVM::getArgumentArray(IRBuilder<> *)
 	return arg;
 }
 
-llvm::Value *LLVM::createArgument(IRBuilder<> *builder, Node *node)
+llvm::Value *LLVM::createArgumentArray(IRBuilder<> *builder, FunctionCallNode *node)
 {
-	llvm::Value *ret = NULL;
-	if (TYPE_match(node, ListNode)) {
-		ret = generateCastCode(builder, Enum::Runtime::Array, generateListCode(builder, dynamic_cast<ListNode *>(node)));
-	} else if (node->tk->info.type == TokenType::Comma) {
-		vector<CodeGenerator::Value *> list;
-		generateCommaCode(builder, dynamic_cast<BranchNode *>(node), &list);
-		size_t size = list.size();
-		llvm::Value *args = builder->CreateAlloca(union_ptr_type, ConstantInt::get(int_type, size), "args");
-		for (size_t i = 0; i < size; i++) {
-			CodeGenerator::Value *v = list.at(i);
-			llvm::Value *value = v->value;
-			Enum::Runtime::Type type = v->type;
-			Token *tk = v->tk;
-			llvm::Value *idx = ConstantInt::get(int_type, i);
-			if (type == Enum::Runtime::Object || type == Enum::Runtime::Array) {
-				if (tk->type == TokenType::Var || tk->type == TokenType::ArrayVar) {
-					llvm::Value *elem = lookupVariable(tk->data, tk)->value;
-					builder->CreateStore(elem, builder->CreateGEP(args, idx, "get_idx"));
-					//builder->CreateStore(builder->CreateLoad(elem, "elem"), builder->CreateGEP(args, idx, "get_idx"));
-				} else {
-					builder->CreateStore(value, builder->CreateGEP(args, idx, "get_idx"));
-					//builder->CreateStore(builder->CreateLoad(value, "elem"), builder->CreateGEP(args, idx, "get_idx"));
-				}
-			} else {
-				builder->CreateStore(value, builder->CreateGEP(args, idx, "get_idx"));
-				//builder->CreateStore(builder->CreateLoad(value, "elem"), builder->CreateGEP(args, idx, "get_idx"));
-			}
-		}
-		ret = createTemporaryArray(builder, args, size);
-	} else {
-		llvm::Value *args = builder->CreateAlloca(union_ptr_type, ConstantInt::get(int_type, 1), "args");
-		llvm::Value *value = generateValueCode(builder, node);
-		llvm::Value *idx = ConstantInt::get(int_type, 0);
-		if (cur_type == Enum::Runtime::Object || cur_type == Enum::Runtime::Array || cur_type == Enum::Runtime::Hash) {
-			Token *tk = node->tk;
-			if (tk->type == TokenType::Var || tk->type == TokenType::ArrayVar || tk->type == TokenType::HashVar) {
-				llvm::Value *elem = lookupVariable(tk->data, tk)->value;
-				builder->CreateStore(elem, builder->CreateGEP(args, idx, "get_idx"));
-				//builder->CreateStore(builder->CreateLoad(elem, "elem"), builder->CreateGEP(args, idx, "get_idx"));
-			} else {
-				builder->CreateStore(value, builder->CreateGEP(args, idx, "get_idx"));
-				//builder->CreateStore(builder->CreateLoad(value, "elem"), builder->CreateGEP(args, idx, "get_idx"));
-			}
-		} else {
-			builder->CreateStore(value, builder->CreateGEP(args, idx, "get_idx"));
-			//builder->CreateStore(builder->CreateLoad(value, "elem"), builder->CreateGEP(args, idx, "get_idx"));
-		}
-		ret = createTemporaryArray(builder, args, 1);
-	}
-	return ret;
+	return _createArgumentArray(builder, NULL, node);
 }
 
-llvm::Value *LLVM::createArgumentArray(IRBuilder<> *builder, FunctionCallNode *node)
+llvm::Value *LLVM::createArgumentArray(IRBuilder<> *builder, llvm::Value *self, FunctionCallNode *node)
+{
+	return _createArgumentArray(builder, self, node);
+}
+
+llvm::Value *LLVM::_createArgumentArray(IRBuilder<> *builder, llvm::Value *self, FunctionCallNode *node)
 {
 	llvm::Value *ret = NULL;
 	size_t size = node->args->size();
@@ -1789,21 +1696,84 @@ llvm::Value *LLVM::createArgumentArray(IRBuilder<> *builder, FunctionCallNode *n
 		llvm::Value *idx = ConstantInt::get(int_type, 0);
 		llvm::Value *value = generateCodeDereferenceCode(builder, dynamic_cast<DereferenceNode *>(node->args->at(0)), node->args->at(1));
 		builder->CreateStore(value, builder->CreateGEP(args, idx, "get_idx"));
-		//builder->CreateStore(builder->CreateLoad(value, "elem"), builder->CreateGEP(args, idx, "get_idx"));
 		ret = createTemporaryArray(builder, args, 1);
 	} else if (size == 2 && node->tk->data == "print") {
 		node->tk->data = "print_with_handler";
-		ret = createArgument(builder, node->args->at(1));
+		ret = createArgument(builder, self, node->args->at(1));
 	} else {
 		assert((size == 0 || size == 1) && "argument size error");
 	}
 	if (ret) return ret;
-	if (!size) {
+	if (!size && !self) {
 		llvm::Value *args = builder->CreateAlloca(union_ptr_type, ConstantInt::get(int_type, 1), "args");
-		return createTemporaryArray(builder, args, 0);
+		return createTemporaryArray(builder, args, 1);
+	} else if (self && node->args->size() == 0) {
+		llvm::Value *args = builder->CreateAlloca(union_ptr_type, ConstantInt::get(int_type, 1), "args");
+		builder->CreateStore(self, builder->CreateGEP(args, ConstantInt::get(int_type, 0), "store_self"));
+		return createTemporaryArray(builder, args, 1);
 	}
 	Node *arg = node->args->at(0);
-	return createArgument(builder, arg);
+	return createArgument(builder, self, arg);
+}
+
+llvm::Value *LLVM::createArgument(IRBuilder<> *builder, llvm::Value *self, Node *node)
+{
+	llvm::Value *ret = NULL;
+	if (TYPE_match(node, ListNode)) {
+		vector<CodeGenerator::Value *> *list = createList(builder, dynamic_cast<ListNode *>(node));
+		size_t size = list->size();
+		size_t array_size = (self) ? size + 1 : size;
+		llvm::Value *args = builder->CreateAlloca(union_ptr_type, ConstantInt::get(int_type, array_size), "args");
+		if (self) builder->CreateStore(self, builder->CreateGEP(args, ConstantInt::get(int_type, 0), "store_self"));
+		for (size_t i = 0; i < size; i++) {
+			CodeGenerator::Value *v = list->at(i);
+			size_t idx = (self) ? i + 1 : i;
+			builder->CreateStore(v->value, builder->CreateGEP(args, ConstantInt::get(int_type, idx), "load_arg"));
+		}
+		ret = createTemporaryArray(builder, args, array_size);
+	} else if (node->tk->info.type == TokenType::Comma) {
+		vector<CodeGenerator::Value *> list;
+		generateCommaCode(builder, dynamic_cast<BranchNode *>(node), &list);
+		size_t size = list.size();
+		size_t array_size = (self) ? size + 1 : size;
+		llvm::Value *args = builder->CreateAlloca(union_ptr_type, ConstantInt::get(int_type, array_size), "args");
+		if (self) builder->CreateStore(self, builder->CreateGEP(args, ConstantInt::get(int_type, 0), "store_self"));
+		for (size_t i = 0; i < size; i++) {
+			CodeGenerator::Value *v = list.at(i);
+			size_t idx = (self) ? i + 1 : i;
+			storeArgument(builder, v->tk, args, ConstantInt::get(int_type, idx), v->value);
+		}
+		ret = createTemporaryArray(builder, args, array_size);
+	} else {
+		size_t size = 1;
+		if (self) size++;
+		llvm::Value *args = builder->CreateAlloca(union_ptr_type, ConstantInt::get(int_type, size), "args");
+		if (self) builder->CreateStore(self, builder->CreateGEP(args, ConstantInt::get(int_type, 0), "store_self"));
+		size_t i = (self) ? 1 : 0;
+		llvm::Value *value = generateValueCode(builder, node);
+		llvm::Value *idx = ConstantInt::get(int_type, i);
+		storeArgument(builder, node->tk, args, idx, value);
+		ret = createTemporaryArray(builder, args, size);
+	}
+	return ret;
+}
+
+void LLVM::storeArgument(IRBuilder<> *builder, Token *tk, llvm::Value *args, llvm::Value *idx, llvm::Value *value)
+{
+	if (cur_type == Enum::Runtime::Object ||
+		cur_type == Enum::Runtime::Array  ||
+		cur_type == Enum::Runtime::Hash) {
+		if (tk->type == TokenType::Var ||
+			tk->type == TokenType::ArrayVar ||
+			tk->type == TokenType::HashVar) {
+			llvm::Value *elem = lookupVariable(tk->data, tk)->value;
+			builder->CreateStore(elem, builder->CreateGEP(args, idx, "get_idx"));
+		} else {
+			builder->CreateStore(value, builder->CreateGEP(args, idx, "get_idx"));
+		}
+	} else {
+		builder->CreateStore(value, builder->CreateGEP(args, idx, "get_idx"));
+	}
 }
 
 llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNode *node)
@@ -1999,6 +1969,12 @@ llvm::Value *LLVM::createNaNBoxingObject(IRBuilder<> *builder, llvm::Value *_val
 	return createNaNBoxingPtr(builder, _value, tag);
 }
 
+llvm::Value *LLVM::createNaNBoxingBlessedObject(IRBuilder<> *builder, llvm::Value *_value)
+{
+	uint64_t tag = (is_32bit) ? BLESSED_OBJECT_32_TAG : BLESSED_OBJECT_TAG;
+	return createNaNBoxingPtr(builder, _value, tag);
+}
+
 llvm::Value *LLVM::createNaNBoxingPtr(IRBuilder<> *builder, llvm::Value *_value, uint64_t ptr_tag)
 {
 	llvm::Value *union_ptr = builder->CreateAlloca(union_type, 0, "base_ptr");
@@ -2014,6 +1990,18 @@ llvm::Value *LLVM::createNaNBoxingPtr(IRBuilder<> *builder, llvm::Value *_value,
 	}
 	builder->CreateStore(nan_boxing_value, builder->CreateBitCast(union_ptr, int_ptr_type, "bitcast"));
 	return union_ptr;
+}
+
+llvm::Value *LLVM::createString(IRBuilder<> *builder, const char *s)
+{
+	vector<llvm::Type *> arg_types;
+	arg_types.push_back(void_ptr_type);
+	llvm::ArrayRef<llvm::Type*> arg_types_ref(arg_types);
+	FunctionType *ftype = llvm::FunctionType::get(int_type, arg_types_ref, false);
+	llvm::Constant *f = module->getOrInsertFunction("new_String", ftype);
+	llvm::Value *str = builder->CreateGlobalStringPtr(s);
+	CallInst *result = builder->CreateCall(f, str, "string");
+	return generateReceiveUnionValueCode(builder, result);
 }
 
 llvm::Value *LLVM::createArray(IRBuilder<> *builder, llvm::Value *list, size_t size)

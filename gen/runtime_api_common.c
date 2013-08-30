@@ -608,37 +608,6 @@ UnionType new_String(char *str)
 	return ret;
 }
 
-void _unshift(ArrayObject *base, char *pkg_name)
-{
-	UnionType **tmp;
-	if (!(tmp = malloc(sizeof(Value *) * (base->size + 1)))) {
-		fprintf(stderr, "ERROR!!: cannot allocated memory\n");
-	} else {
-		memcpy(tmp + 1, base->list, base->size * sizeof(Value *));
-		base->list = tmp;
-		UnionType *class_o = (UnionType *)fetch_object();
-		class_o->o = new_String(pkg_name).o;
-		base->list[0] = class_o;
-		base->size++;
-	}
-}
-
-void _make_method_argument(ArrayObject *base, BlessedObject *self)
-{
-	//fprintf(stderr, "call _make_method_argument\n");
-	UnionType **tmp;
-	if (!(tmp = malloc(sizeof(Value *) * (base->size + 1)))) {
-		fprintf(stderr, "ERROR!!: cannot allocated memory\n");
-	} else {
-		memcpy(tmp + 1, base->list, base->size * sizeof(Value *));
-		base->list = tmp;
-		UnionType *elem = (UnionType *)fetch_object();
-		elem->o = BLESSED_OBJECT_init(self);
-		base->list[0] = elem;
-		base->size++;
-	}
-}
-
 void Hash_add(HashObject *hash, StringObject *key, UnionType elem)
 {
 	size_t size = hash->size;

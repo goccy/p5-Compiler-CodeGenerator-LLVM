@@ -7,7 +7,7 @@ void print_object(FILE *fp, UnionType o)
 	//fprintf(stderr, "type = [%d]\n", TYPE(o));
 	switch (TYPE(o.o)) {
 	case Int:
-		fprintf(fp, "%d", to_Int(o.o));
+		fprintf(fp, "%d", (int)to_Int(o.o));
 		break;
 	case Double:
 		fprintf(fp, "%f", o.d);

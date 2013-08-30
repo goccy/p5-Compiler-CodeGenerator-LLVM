@@ -297,6 +297,7 @@ $plane = Plane->new(Vec->new(0.0, -0.5, 0.0), Vec->new(0.0, 1.0, 0.0));
 render(\@imgs, $WIDTH, $HEIGHT, $NSUBSAMPLES);
 say @imgs;
 
+=hoge
 my $fh;
 open($fh, ">", "ao.ppm");
 binmode($fh);
@@ -308,3 +309,4 @@ foreach my $img (@imgs) {
 }
 
 close($fh);
+=cut

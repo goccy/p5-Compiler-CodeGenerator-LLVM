@@ -10,3 +10,4 @@ MYMETA.yml
 Makefile
 Makefile.old
 src/Compiler-CodeGenerator-LLVM.cpp
+t/ir

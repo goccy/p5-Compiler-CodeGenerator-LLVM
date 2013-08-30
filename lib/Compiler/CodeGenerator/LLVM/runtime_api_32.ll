@@ -3505,209 +3505,6 @@ while.end:                                        ; preds = %while.cond
 declare i32 @strlen(i8*) #1
 
 ; Function Attrs: nounwind ssp
-define void @_unshift(%struct._Array* %base, i8* %pkg_name) #0 {
-entry:
-  %base.addr = alloca %struct._Array*, align 4
-  %pkg_name.addr = alloca i8*, align 4
-  %tmp = alloca %union.UnionType**, align 4
-  %class_o = alloca %union.UnionType*, align 4
-  %coerce = alloca %union.UnionType, align 4
-  store %struct._Array* %base, %struct._Array** %base.addr, align 4
-  store i8* %pkg_name, i8** %pkg_name.addr, align 4
-  %0 = load %struct._Array** %base.addr, align 4
-  %size = getelementptr inbounds %struct._Array* %0, i32 0, i32 2
-  %1 = load i32* %size, align 4
-  %add = add i32 %1, 1
-  %mul = mul i32 4, %add
-  %call = call i8* @malloc(i32 %mul)
-  %2 = bitcast i8* %call to %union.UnionType**
-  store %union.UnionType** %2, %union.UnionType*** %tmp, align 4
-  %tobool = icmp ne %union.UnionType** %2, null
-  br i1 %tobool, label %if.else, label %if.then
-
-if.then:                                          ; preds = %entry
-  %3 = load %struct.__sFILE** @__stderrp, align 4
-  %call1 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %3, i8* getelementptr inbounds ([34 x i8]* @.str30, i32 0, i32 0))
-  br label %if.end
-
-if.else:                                          ; preds = %entry
-  %4 = load %union.UnionType*** %tmp, align 4
-  %add.ptr = getelementptr inbounds %union.UnionType** %4, i32 1
-  %5 = bitcast %union.UnionType** %add.ptr to i8*
-  %6 = call i32 @llvm.objectsize.i32(i8* %5, i1 false)
-  %cmp = icmp ne i32 %6, -1
-  br i1 %cmp, label %cond.true, label %cond.false
-
-cond.true:                                        ; preds = %if.else
-  %7 = load %union.UnionType*** %tmp, align 4
-  %add.ptr2 = getelementptr inbounds %union.UnionType** %7, i32 1
-  %8 = bitcast %union.UnionType** %add.ptr2 to i8*
-  %9 = load %struct._Array** %base.addr, align 4
-  %list = getelementptr inbounds %struct._Array* %9, i32 0, i32 1
-  %10 = load %union.UnionType*** %list, align 4
-  %11 = bitcast %union.UnionType** %10 to i8*
-  %12 = load %struct._Array** %base.addr, align 4
-  %size3 = getelementptr inbounds %struct._Array* %12, i32 0, i32 2
-  %13 = load i32* %size3, align 4
-  %mul4 = mul i32 %13, 4
-  %14 = load %union.UnionType*** %tmp, align 4
-  %add.ptr5 = getelementptr inbounds %union.UnionType** %14, i32 1
-  %15 = bitcast %union.UnionType** %add.ptr5 to i8*
-  %16 = call i32 @llvm.objectsize.i32(i8* %15, i1 false)
-  %call6 = call i8* @__memcpy_chk(i8* %8, i8* %11, i32 %mul4, i32 %16) #3
-  br label %cond.end
-
-cond.false:                                       ; preds = %if.else
-  %17 = load %union.UnionType*** %tmp, align 4
-  %add.ptr7 = getelementptr inbounds %union.UnionType** %17, i32 1
-  %18 = bitcast %union.UnionType** %add.ptr7 to i8*
-  %19 = load %struct._Array** %base.addr, align 4
-  %list8 = getelementptr inbounds %struct._Array* %19, i32 0, i32 1
-  %20 = load %union.UnionType*** %list8, align 4
-  %21 = bitcast %union.UnionType** %20 to i8*
-  %22 = load %struct._Array** %base.addr, align 4
-  %size9 = getelementptr inbounds %struct._Array* %22, i32 0, i32 2
-  %23 = load i32* %size9, align 4
-  %mul10 = mul i32 %23, 4
-  %call11 = call i8* @__inline_memcpy_chk(i8* %18, i8* %21, i32 %mul10)
-  br label %cond.end
-
-cond.end:                                         ; preds = %cond.false, %cond.true
-  %cond = phi i8* [ %call6, %cond.true ], [ %call11, %cond.false ]
-  %24 = load %union.UnionType*** %tmp, align 4
-  %25 = load %struct._Array** %base.addr, align 4
-  %list12 = getelementptr inbounds %struct._Array* %25, i32 0, i32 1
-  store %union.UnionType** %24, %union.UnionType*** %list12, align 4
-  %call14 = call %struct._Object* @fetch_object()
-  %26 = bitcast %struct._Object* %call14 to %union.UnionType*
-  store %union.UnionType* %26, %union.UnionType** %class_o, align 4
-  %27 = load i8** %pkg_name.addr, align 4
-  %call15 = call i64 @new_String(i8* %27)
-  %coerce.dive = getelementptr %union.UnionType* %coerce, i32 0, i32 0
-  %28 = bitcast double* %coerce.dive to i64*
-  store i64 %call15, i64* %28, align 1
-  %o = bitcast %union.UnionType* %coerce to i64*
-  %29 = load i64* %o, align 4
-  %30 = load %union.UnionType** %class_o, align 4
-  %o16 = bitcast %union.UnionType* %30 to i64*
-  store i64 %29, i64* %o16, align 4
-  %31 = load %union.UnionType** %class_o, align 4
-  %32 = load %struct._Array** %base.addr, align 4
-  %list17 = getelementptr inbounds %struct._Array* %32, i32 0, i32 1
-  %33 = load %union.UnionType*** %list17, align 4
-  %arrayidx = getelementptr inbounds %union.UnionType** %33, i32 0
-  store %union.UnionType* %31, %union.UnionType** %arrayidx, align 4
-  %34 = load %struct._Array** %base.addr, align 4
-  %size18 = getelementptr inbounds %struct._Array* %34, i32 0, i32 2
-  %35 = load i32* %size18, align 4
-  %inc = add i32 %35, 1
-  store i32 %inc, i32* %size18, align 4
-  br label %if.end
-
-if.end:                                           ; preds = %cond.end, %if.then
-  ret void
-}
-
-; Function Attrs: nounwind ssp
-define void @_make_method_argument(%struct._Array* %base, %struct._BlessedObject* %self) #0 {
-entry:
-  %base.addr = alloca %struct._Array*, align 4
-  %self.addr = alloca %struct._BlessedObject*, align 4
-  %tmp = alloca %union.UnionType**, align 4
-  %elem = alloca %union.UnionType*, align 4
-  store %struct._Array* %base, %struct._Array** %base.addr, align 4
-  store %struct._BlessedObject* %self, %struct._BlessedObject** %self.addr, align 4
-  %0 = load %struct._Array** %base.addr, align 4
-  %size = getelementptr inbounds %struct._Array* %0, i32 0, i32 2
-  %1 = load i32* %size, align 4
-  %add = add i32 %1, 1
-  %mul = mul i32 4, %add
-  %call = call i8* @malloc(i32 %mul)
-  %2 = bitcast i8* %call to %union.UnionType**
-  store %union.UnionType** %2, %union.UnionType*** %tmp, align 4
-  %tobool = icmp ne %union.UnionType** %2, null
-  br i1 %tobool, label %if.else, label %if.then
-
-if.then:                                          ; preds = %entry
-  %3 = load %struct.__sFILE** @__stderrp, align 4
-  %call1 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %3, i8* getelementptr inbounds ([34 x i8]* @.str30, i32 0, i32 0))
-  br label %if.end
-
-if.else:                                          ; preds = %entry
-  %4 = load %union.UnionType*** %tmp, align 4
-  %add.ptr = getelementptr inbounds %union.UnionType** %4, i32 1
-  %5 = bitcast %union.UnionType** %add.ptr to i8*
-  %6 = call i32 @llvm.objectsize.i32(i8* %5, i1 false)
-  %cmp = icmp ne i32 %6, -1
-  br i1 %cmp, label %cond.true, label %cond.false
-
-cond.true:                                        ; preds = %if.else
-  %7 = load %union.UnionType*** %tmp, align 4
-  %add.ptr2 = getelementptr inbounds %union.UnionType** %7, i32 1
-  %8 = bitcast %union.UnionType** %add.ptr2 to i8*
-  %9 = load %struct._Array** %base.addr, align 4
-  %list = getelementptr inbounds %struct._Array* %9, i32 0, i32 1
-  %10 = load %union.UnionType*** %list, align 4
-  %11 = bitcast %union.UnionType** %10 to i8*
-  %12 = load %struct._Array** %base.addr, align 4
-  %size3 = getelementptr inbounds %struct._Array* %12, i32 0, i32 2
-  %13 = load i32* %size3, align 4
-  %mul4 = mul i32 %13, 4
-  %14 = load %union.UnionType*** %tmp, align 4
-  %add.ptr5 = getelementptr inbounds %union.UnionType** %14, i32 1
-  %15 = bitcast %union.UnionType** %add.ptr5 to i8*
-  %16 = call i32 @llvm.objectsize.i32(i8* %15, i1 false)
-  %call6 = call i8* @__memcpy_chk(i8* %8, i8* %11, i32 %mul4, i32 %16) #3
-  br label %cond.end
-
-cond.false:                                       ; preds = %if.else
-  %17 = load %union.UnionType*** %tmp, align 4
-  %add.ptr7 = getelementptr inbounds %union.UnionType** %17, i32 1
-  %18 = bitcast %union.UnionType** %add.ptr7 to i8*
-  %19 = load %struct._Array** %base.addr, align 4
-  %list8 = getelementptr inbounds %struct._Array* %19, i32 0, i32 1
-  %20 = load %union.UnionType*** %list8, align 4
-  %21 = bitcast %union.UnionType** %20 to i8*
-  %22 = load %struct._Array** %base.addr, align 4
-  %size9 = getelementptr inbounds %struct._Array* %22, i32 0, i32 2
-  %23 = load i32* %size9, align 4
-  %mul10 = mul i32 %23, 4
-  %call11 = call i8* @__inline_memcpy_chk(i8* %18, i8* %21, i32 %mul10)
-  br label %cond.end
-
-cond.end:                                         ; preds = %cond.false, %cond.true
-  %cond = phi i8* [ %call6, %cond.true ], [ %call11, %cond.false ]
-  %24 = load %union.UnionType*** %tmp, align 4
-  %25 = load %struct._Array** %base.addr, align 4
-  %list12 = getelementptr inbounds %struct._Array* %25, i32 0, i32 1
-  store %union.UnionType** %24, %union.UnionType*** %list12, align 4
-  %call14 = call %struct._Object* @fetch_object()
-  %26 = bitcast %struct._Object* %call14 to %union.UnionType*
-  store %union.UnionType* %26, %union.UnionType** %elem, align 4
-  %27 = load %struct._BlessedObject** %self.addr, align 4
-  %28 = ptrtoint %struct._BlessedObject* %27 to i64
-  %or = or i64 %28, -34359738368
-  %29 = load %union.UnionType** %elem, align 4
-  %o = bitcast %union.UnionType* %29 to i64*
-  store i64 %or, i64* %o, align 4
-  %30 = load %union.UnionType** %elem, align 4
-  %31 = load %struct._Array** %base.addr, align 4
-  %list15 = getelementptr inbounds %struct._Array* %31, i32 0, i32 1
-  %32 = load %union.UnionType*** %list15, align 4
-  %arrayidx = getelementptr inbounds %union.UnionType** %32, i32 0
-  store %union.UnionType* %30, %union.UnionType** %arrayidx, align 4
-  %33 = load %struct._Array** %base.addr, align 4
-  %size16 = getelementptr inbounds %struct._Array* %33, i32 0, i32 2
-  %34 = load i32* %size16, align 4
-  %inc = add i32 %34, 1
-  store i32 %inc, i32* %size16, align 4
-  br label %if.end
-
-if.end:                                           ; preds = %cond.end, %if.then
-  ret void
-}
-
-; Function Attrs: nounwind ssp
 define void @Hash_add(%struct._Hash* %hash, %struct._String* %key, %union.UnionType* byval align 4 %elem) #0 {
 entry:
   %hash.addr = alloca %struct._Hash*, align 4
@@ -3829,7 +3626,7 @@ if.then6:                                         ; preds = %do.body
   %16 = load i64* %o7, align 4
   %call8 = call i64 @TYPE(i64 %16)
   %call9 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %15, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %call8)
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 664, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 633, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end10:                                         ; preds = %do.body
@@ -3877,7 +3674,7 @@ if.then20:                                        ; preds = %do.body15
   %27 = load i64* %o21, align 4
   %call22 = call i64 @TYPE(i64 %27)
   %call23 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %26, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %call22)
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 666, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 635, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end24:                                         ; preds = %do.body15
@@ -3937,7 +3734,7 @@ land.end:                                         ; preds = %land.rhs, %do.end25
   br i1 %tobool38, label %cond.true39, label %cond.false40
 
 cond.true39:                                      ; preds = %land.end
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 677, i8* getelementptr inbounds ([30 x i8]* @.str35, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 646, i8* getelementptr inbounds ([30 x i8]* @.str35, i32 0, i32 0)) #8
   unreachable
                                                   ; No predecessors!
   br label %cond.end41
@@ -4290,7 +4087,7 @@ land.end:                                         ; preds = %land.rhs, %if.end28
   br i1 %tobool29, label %cond.true, label %cond.false
 
 cond.true:                                        ; preds = %land.end
-  call void @__assert_rtn(i8* getelementptr inbounds ([19 x i8]* @__func__.get_method_by_name, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 750, i8* getelementptr inbounds ([33 x i8]* @.str37, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([19 x i8]* @__func__.get_method_by_name, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 719, i8* getelementptr inbounds ([33 x i8]* @.str37, i32 0, i32 0)) #8
   unreachable
                                                   ; No predecessors!
   br label %cond.end
@@ -4365,7 +4162,7 @@ land.end:                                         ; preds = %land.rhs, %entry
   br i1 %tobool5, label %cond.true, label %cond.false
 
 cond.true:                                        ; preds = %land.end
-  call void @__assert_rtn(i8* getelementptr inbounds ([25 x i8]* @__func__.get_class_method_by_name, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 761, i8* getelementptr inbounds ([33 x i8]* @.str37, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([25 x i8]* @__func__.get_class_method_by_name, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 730, i8* getelementptr inbounds ([33 x i8]* @.str37, i32 0, i32 0)) #8
   unreachable
                                                   ; No predecessors!
   br label %cond.end
@@ -4564,7 +4361,7 @@ if.then:                                          ; preds = %do.body
   %10 = load i64* %o7, align 4
   %call8 = call i64 @TYPE(i64 %10)
   %call9 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %8, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %call8)
-  call void @__assert_rtn(i8* getelementptr inbounds ([33 x i8]* @__func__.dynamic_blessed_object_cast_code, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 892, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([33 x i8]* @__func__.dynamic_blessed_object_cast_code, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 861, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end:                                           ; preds = %do.body
