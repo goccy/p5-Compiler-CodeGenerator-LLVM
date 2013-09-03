@@ -1256,7 +1256,7 @@ llvm::Value *LLVM::generateOperatorCode(IRBuilder<> *builder, BranchNode *node)
 			ret = generateHashRefAccessCode(builder, left_value, right);
 			cur_type = Enum::Runtime::Value;
 		} else if (node->right->tk->info.type == Method) {
-			if (node->left->tk->info.type == Class || node->left->tk->info.type == Key) {
+			if (node->left->tk->info.type == Class || node->left->tk->info.type == Key || node->left->tk->info.type == Namespace) {
 				const char *pkg_name = node->left->tk->data.c_str();
 				const char *mtd_name = node->right->tk->data.c_str();
 				llvm::Value *pkg = createString(builder, pkg_name);
