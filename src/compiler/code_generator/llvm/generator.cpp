@@ -240,6 +240,7 @@ void LLVM::generatePackageCode(IRBuilder<> *, PackageNode *node)
 
 void LLVM::generateModuleCode(IRBuilder<> *builder, ModuleNode *node)
 {
+	string pkg_name = cur_pkg_name;
 	if (node->tk->data == "base") {
 		string base_name = node->args->tk->data;
 		vector<llvm::Type *> arg_types;
@@ -253,6 +254,7 @@ void LLVM::generateModuleCode(IRBuilder<> *builder, ModuleNode *node)
 		builder->CreateCall2(f, pkg, base);
 	}
 	traverse(builder, node->ast);
+	cur_pkg_name = pkg_name;
 }
 
 string LLVM::stringReplace(string str, string from, string to) {

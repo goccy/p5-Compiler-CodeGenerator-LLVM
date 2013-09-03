@@ -9,6 +9,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 %struct._Hash = type { i32, %union.UnionType*, %struct._String**, i64 }
 %struct._String = type { i32, i8*, i64, i64 }
 %struct._Object = type { i32, %union.UnionType, i8*, i8*, i8*, i8*, i8*, i8* }
+%struct._opaque_pthread_mutex_t = type { i64, [56 x i8] }
 %struct._Array = type { i32, %union.UnionType**, i64 }
 %struct._IOHandlerObject = type { i32, %struct.__sFILE*, i8*, i8* }
 %struct._Undef = type { i32 }
@@ -76,6 +77,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 @.str34 = private unnamed_addr constant [21 x i8] c"unknown package name\00", align 1
 @.str35 = private unnamed_addr constant [30 x i8] c"pkg && \22unknown package name\22\00", align 1
 @object_pool = common global %struct._Object** null, align 8
+@mutex = common global %struct._opaque_pthread_mutex_t zeroinitializer, align 8
 @.str36 = private unnamed_addr constant [19 x i8] c"cannot find method\00", align 1
 @__func__.get_method_by_name = private unnamed_addr constant [19 x i8] c"get_method_by_name\00", align 1
 @.str37 = private unnamed_addr constant [33 x i8] c"code_ref && \22cannot find method\22\00", align 1
@@ -172,7 +174,7 @@ if.then12:                                        ; preds = %do.body
   %shr20 = lshr i64 %and19, 48
   %mul21 = mul i64 %conv17, %shr20
   %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %18, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul21)
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__._open, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 16, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__._open, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 17, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end:                                           ; preds = %do.body
@@ -218,7 +220,7 @@ if.then34:                                        ; preds = %do.body22
   %shr42 = lshr i64 %and41, 48
   %mul43 = mul i64 %conv39, %shr42
   %call44 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %31, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul43)
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__._open, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 17, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__._open, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 18, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end45:                                         ; preds = %do.body22
@@ -303,7 +305,7 @@ if.else67:                                        ; preds = %entry
   %62 = load %struct.__sFILE** @__stderrp, align 8
   %63 = load i64* %size, align 8
   %call68 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %62, i8* getelementptr inbounds ([23 x i8]* @.str9, i32 0, i32 0), i64 %63)
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__._open, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 34, i8* getelementptr inbounds ([34 x i8]* @.str10, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__._open, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 35, i8* getelementptr inbounds ([34 x i8]* @.str10, i32 0, i32 0)) #8
   unreachable
 
 if.end69:                                         ; preds = %if.end63
@@ -464,7 +466,7 @@ if.then:                                          ; preds = %do.body
   %shr25 = lshr i64 %and24, 48
   %mul26 = mul i64 %conv22, %shr25
   %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %20, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul26)
-  call void @__assert_rtn(i8* getelementptr inbounds ([9 x i8]* @__func__._binmode, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 45, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([9 x i8]* @__func__._binmode, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 46, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end:                                           ; preds = %do.body
@@ -633,7 +635,7 @@ if.then:                                          ; preds = %do.body
   %shr25 = lshr i64 %and24, 48
   %mul26 = mul i64 %conv22, %shr25
   %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %20, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul26)
-  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__._chr, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 66, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__._chr, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 67, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end:                                           ; preds = %do.body
@@ -677,8 +679,8 @@ entry:
   %ret = alloca %union.UnionType, align 8
   %o = alloca %struct._String*, align 8
   store i8* %str, i8** %str.addr, align 8
-  %call = call i8* @calloc(i64 32, i64 1)
-  %0 = bitcast i8* %call to %struct._String*
+  %call = call %struct._Object* @fetch_object()
+  %0 = bitcast %struct._Object* %call to %struct._String*
   store %struct._String* %0, %struct._String** %o, align 8
   %1 = load %struct._String** %o, align 8
   %header = getelementptr inbounds %struct._String* %1, i32 0, i32 0
@@ -843,7 +845,7 @@ if.then:                                          ; preds = %do.body
   %shr25 = lshr i64 %and24, 48
   %mul26 = mul i64 %conv22, %shr25
   %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %20, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul26)
-  call void @__assert_rtn(i8* getelementptr inbounds ([7 x i8]* @__func__._close, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 79, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([7 x i8]* @__func__._close, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 80, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end:                                           ; preds = %do.body
@@ -1004,7 +1006,7 @@ sw.bb9:                                           ; preds = %entry
   br label %sw.epilog
 
 sw.default:                                       ; preds = %entry
-  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__._abs, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 106, i8* getelementptr inbounds ([36 x i8]* @.str15, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__._abs, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 107, i8* getelementptr inbounds ([36 x i8]* @.str15, i32 0, i32 0)) #8
   unreachable
 
 sw.epilog:                                        ; preds = %sw.bb9, %sw.bb
@@ -1079,7 +1081,7 @@ sw.bb6:                                           ; preds = %entry
   br label %sw.epilog
 
 sw.default:                                       ; preds = %entry
-  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__._int, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 124, i8* getelementptr inbounds ([36 x i8]* @.str15, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__._int, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 125, i8* getelementptr inbounds ([36 x i8]* @.str15, i32 0, i32 0)) #8
   unreachable
 
 sw.epilog:                                        ; preds = %sw.bb6, %sw.bb
@@ -1173,7 +1175,7 @@ sw.bb6:                                           ; preds = %entry
   br label %sw.epilog
 
 sw.default:                                       ; preds = %entry
-  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__._sin, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 150, i8* getelementptr inbounds ([36 x i8]* @.str15, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__._sin, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 151, i8* getelementptr inbounds ([36 x i8]* @.str15, i32 0, i32 0)) #8
   unreachable
 
 sw.epilog:                                        ; preds = %sw.bb6, %sw.bb
@@ -1244,7 +1246,7 @@ sw.bb6:                                           ; preds = %entry
   br label %sw.epilog
 
 sw.default:                                       ; preds = %entry
-  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__._cos, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 168, i8* getelementptr inbounds ([36 x i8]* @.str15, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__._cos, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 169, i8* getelementptr inbounds ([36 x i8]* @.str15, i32 0, i32 0)) #8
   unreachable
 
 sw.epilog:                                        ; preds = %sw.bb6, %sw.bb
@@ -2279,7 +2281,7 @@ if.then11:                                        ; preds = %do.body
   %shr19 = lshr i64 %and18, 48
   %mul20 = mul i64 %conv16, %shr19
   %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %15, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul20)
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.shift, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 362, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.shift, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 363, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end21:                                         ; preds = %do.body
@@ -2632,7 +2634,7 @@ if.then10:                                        ; preds = %do.body
   %shr18 = lshr i64 %and17, 48
   %mul19 = mul i64 %conv15, %shr18
   %call20 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %16, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul19)
-  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__.push, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 402, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @__func__.push, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 403, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end:                                           ; preds = %do.body
@@ -2917,7 +2919,7 @@ sw.default:                                       ; preds = %entry
   %shr44 = lshr i64 %and43, 48
   %mul45 = mul i64 %conv41, %shr44
   %call46 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %48, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul45)
-  call void @__assert_rtn(i8* getelementptr inbounds ([12 x i8]* @__func__.HashRef_get, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 473, i8* getelementptr inbounds ([33 x i8]* @.str32, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([12 x i8]* @__func__.HashRef_get, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 474, i8* getelementptr inbounds ([33 x i8]* @.str32, i32 0, i32 0)) #8
   unreachable
 
 sw.epilog:                                        ; preds = %sw.bb18, %sw.bb9, %sw.bb
@@ -3453,7 +3455,7 @@ sw.default:                                       ; preds = %entry
   %shr32 = lshr i64 %and31, 48
   %mul33 = mul i64 %conv29, %shr32
   %call34 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %35, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul33)
-  call void @__assert_rtn(i8* getelementptr inbounds ([13 x i8]* @__func__.ArrayRef_get, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 530, i8* getelementptr inbounds ([33 x i8]* @.str32, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([13 x i8]* @__func__.ArrayRef_get, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 531, i8* getelementptr inbounds ([33 x i8]* @.str32, i32 0, i32 0)) #8
   unreachable
 
 sw.epilog:                                        ; preds = %sw.bb16, %sw.bb8, %sw.bb
@@ -3945,7 +3947,7 @@ if.then10:                                        ; preds = %do.body
   %shr18 = lshr i64 %and17, 48
   %mul19 = mul i64 %conv15, %shr18
   %call20 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %18, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul19)
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 633, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 634, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end21:                                         ; preds = %do.body
@@ -4022,7 +4024,7 @@ if.then46:                                        ; preds = %do.body34
   %shr54 = lshr i64 %and53, 48
   %mul55 = mul i64 %conv51, %shr54
   %call56 = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %38, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul55)
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 635, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 636, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end57:                                         ; preds = %do.body34
@@ -4080,7 +4082,7 @@ land.end:                                         ; preds = %land.rhs, %do.end58
   br i1 %tobool69, label %cond.true70, label %cond.false71
 
 cond.true70:                                      ; preds = %land.end
-  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 646, i8* getelementptr inbounds ([30 x i8]* @.str35, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([6 x i8]* @__func__.bless, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 647, i8* getelementptr inbounds ([30 x i8]* @.str35, i32 0, i32 0)) #8
   unreachable
                                                   ; No predecessors!
   br label %cond.end72
@@ -4122,12 +4124,13 @@ entry:
   %coerce = alloca %union.UnionType, align 8
   %value = alloca %union.UnionType, align 8
   store i8* %pkg_name, i8** %pkg_name.addr, align 8
+  %call = call i32 @pthread_mutex_lock(%struct._opaque_pthread_mutex_t* @mutex)
   store %struct._Package* null, %struct._Package** %ret, align 8
   %0 = load i8** %pkg_name.addr, align 8
-  %call = call i64 @new_String(i8* %0)
+  %call1 = call i64 @new_String(i8* %0)
   %coerce.dive = getelementptr %union.UnionType* %_key, i32 0, i32 0
   %1 = bitcast double* %coerce.dive to i64*
-  store i64 %call, i64* %1, align 1
+  store i64 %call1, i64* %1, align 1
   %o = bitcast %union.UnionType* %_key to i8**
   %2 = load i8** %o, align 8
   %3 = ptrtoint i8* %2 to i64
@@ -4136,93 +4139,93 @@ entry:
   store %struct._String* %4, %struct._String** %key, align 8
   %5 = load %struct._Hash** @pkg_map, align 8
   %6 = load %struct._String** %key, align 8
-  %call1 = call i64 @Hash_get(%struct._Hash* %5, %struct._String* %6)
-  %coerce.dive2 = getelementptr %union.UnionType* %_pkg, i32 0, i32 0
-  %7 = bitcast double* %coerce.dive2 to i64*
-  store i64 %call1, i64* %7, align 1
-  %o3 = bitcast %union.UnionType* %_pkg to i8**
-  %8 = load i8** %o3, align 8
+  %call2 = call i64 @Hash_get(%struct._Hash* %5, %struct._String* %6)
+  %coerce.dive3 = getelementptr %union.UnionType* %_pkg, i32 0, i32 0
+  %7 = bitcast double* %coerce.dive3 to i64*
+  store i64 %call2, i64* %7, align 1
+  %o4 = bitcast %union.UnionType* %_pkg to i8**
+  %8 = load i8** %o4, align 8
   %9 = ptrtoint i8* %8 to i64
   %and = and i64 %9, -4503599627370496
   %cmp = icmp eq i64 %and, -4503599627370496
   %conv = zext i1 %cmp to i32
-  %conv4 = sext i32 %conv to i64
-  %o5 = bitcast %union.UnionType* %_pkg to i8**
-  %10 = load i8** %o5, align 8
+  %conv5 = sext i32 %conv to i64
+  %o6 = bitcast %union.UnionType* %_pkg to i8**
+  %10 = load i8** %o6, align 8
   %11 = ptrtoint i8* %10 to i64
-  %and6 = and i64 %11, 4222124650659840
-  %shr = lshr i64 %and6, 48
-  %mul = mul i64 %conv4, %shr
-  %cmp7 = icmp eq i64 %mul, 11
-  br i1 %cmp7, label %if.then, label %if.end
+  %and7 = and i64 %11, 4222124650659840
+  %shr = lshr i64 %and7, 48
+  %mul = mul i64 %conv5, %shr
+  %cmp8 = icmp eq i64 %mul, 11
+  br i1 %cmp8, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  %o9 = bitcast %union.UnionType* %_pkg to i8**
-  %12 = load i8** %o9, align 8
+  %o10 = bitcast %union.UnionType* %_pkg to i8**
+  %12 = load i8** %o10, align 8
   %13 = ptrtoint i8* %12 to i64
-  %xor10 = xor i64 %13, -1407374883553280
-  %14 = inttoptr i64 %xor10 to %struct._Package*
+  %xor11 = xor i64 %13, -1407374883553280
+  %14 = inttoptr i64 %xor11 to %struct._Package*
   store %struct._Package* %14, %struct._Package** %retval
   br label %return
 
 if.end:                                           ; preds = %entry
-  %call11 = call i8* @calloc(i64 48, i64 1)
-  %15 = bitcast i8* %call11 to %struct._Package*
+  %call12 = call i8* @calloc(i64 48, i64 1)
+  %15 = bitcast i8* %call12 to %struct._Package*
   store %struct._Package* %15, %struct._Package** %pkg, align 8
-  %call12 = call i8* @calloc(i64 8, i64 512)
-  %16 = bitcast i8* %call12 to %union.UnionType*
+  %call13 = call i8* @calloc(i64 8, i64 512)
+  %16 = bitcast i8* %call13 to %union.UnionType*
   %17 = load %struct._Package** %pkg, align 8
   %table = getelementptr inbounds %struct._Package* %17, i32 0, i32 1
   store %union.UnionType* %16, %union.UnionType** %table, align 8
   %18 = load %struct._Package** %pkg, align 8
-  %table13 = getelementptr inbounds %struct._Package* %18, i32 0, i32 1
-  %19 = load %union.UnionType** %table13, align 8
+  %table14 = getelementptr inbounds %struct._Package* %18, i32 0, i32 1
+  %19 = load %union.UnionType** %table14, align 8
   %20 = bitcast %union.UnionType* %19 to i8*
   %21 = call i64 @llvm.objectsize.i64(i8* %20, i1 false)
-  %cmp14 = icmp ne i64 %21, -1
-  br i1 %cmp14, label %cond.true, label %cond.false
+  %cmp15 = icmp ne i64 %21, -1
+  br i1 %cmp15, label %cond.true, label %cond.false
 
 cond.true:                                        ; preds = %if.end
   %22 = load %struct._Package** %pkg, align 8
-  %table16 = getelementptr inbounds %struct._Package* %22, i32 0, i32 1
-  %23 = load %union.UnionType** %table16, align 8
+  %table17 = getelementptr inbounds %struct._Package* %22, i32 0, i32 1
+  %23 = load %union.UnionType** %table17, align 8
   %24 = bitcast %union.UnionType* %23 to i8*
   %25 = load %union.UnionType** @base_hash_table, align 8
   %26 = bitcast %union.UnionType* %25 to i8*
   %27 = load %struct._Package** %pkg, align 8
-  %table17 = getelementptr inbounds %struct._Package* %27, i32 0, i32 1
-  %28 = load %union.UnionType** %table17, align 8
+  %table18 = getelementptr inbounds %struct._Package* %27, i32 0, i32 1
+  %28 = load %union.UnionType** %table18, align 8
   %29 = bitcast %union.UnionType* %28 to i8*
   %30 = call i64 @llvm.objectsize.i64(i8* %29, i1 false)
-  %call18 = call i8* @__memcpy_chk(i8* %24, i8* %26, i64 4096, i64 %30) #3
+  %call19 = call i8* @__memcpy_chk(i8* %24, i8* %26, i64 4096, i64 %30) #3
   br label %cond.end
 
 cond.false:                                       ; preds = %if.end
   %31 = load %struct._Package** %pkg, align 8
-  %table19 = getelementptr inbounds %struct._Package* %31, i32 0, i32 1
-  %32 = load %union.UnionType** %table19, align 8
+  %table20 = getelementptr inbounds %struct._Package* %31, i32 0, i32 1
+  %32 = load %union.UnionType** %table20, align 8
   %33 = bitcast %union.UnionType* %32 to i8*
   %34 = load %union.UnionType** @base_hash_table, align 8
   %35 = bitcast %union.UnionType* %34 to i8*
-  %call20 = call i8* @__inline_memcpy_chk(i8* %33, i8* %35, i64 4096)
+  %call21 = call i8* @__inline_memcpy_chk(i8* %33, i8* %35, i64 4096)
   br label %cond.end
 
 cond.end:                                         ; preds = %cond.false, %cond.true
-  %cond = phi i8* [ %call18, %cond.true ], [ %call20, %cond.false ]
-  %call21 = call i8* @calloc(i64 8, i64 512)
-  %36 = bitcast i8* %call21 to %struct._String**
+  %cond = phi i8* [ %call19, %cond.true ], [ %call21, %cond.false ]
+  %call22 = call i8* @calloc(i64 8, i64 512)
+  %36 = bitcast i8* %call22 to %struct._String**
   %37 = load %struct._Package** %pkg, align 8
   %keys = getelementptr inbounds %struct._Package* %37, i32 0, i32 2
   store %struct._String** %36, %struct._String*** %keys, align 8
-  %call22 = call i64 @new_Array(%union.UnionType** null, i64 0)
-  %coerce.dive23 = getelementptr %union.UnionType* %coerce, i32 0, i32 0
-  %38 = bitcast double* %coerce.dive23 to i64*
-  store i64 %call22, i64* %38, align 1
-  %o24 = bitcast %union.UnionType* %coerce to i8**
-  %39 = load i8** %o24, align 8
+  %call23 = call i64 @new_Array(%union.UnionType** null, i64 0)
+  %coerce.dive24 = getelementptr %union.UnionType* %coerce, i32 0, i32 0
+  %38 = bitcast double* %coerce.dive24 to i64*
+  store i64 %call23, i64* %38, align 1
+  %o25 = bitcast %union.UnionType* %coerce to i8**
+  %39 = load i8** %o25, align 8
   %40 = ptrtoint i8* %39 to i64
-  %xor25 = xor i64 %40, -3659174697238528
-  %41 = inttoptr i64 %xor25 to %struct._Array*
+  %xor26 = xor i64 %40, -3659174697238528
+  %41 = inttoptr i64 %xor26 to %struct._Array*
   %42 = load %struct._Package** %pkg, align 8
   %isa = getelementptr inbounds %struct._Package* %42, i32 0, i32 4
   store %struct._Array* %41, %struct._Array** %isa, align 8
@@ -4233,16 +4236,17 @@ cond.end:                                         ; preds = %cond.false, %cond.t
   %45 = load %struct._Package** %pkg, align 8
   %46 = ptrtoint %struct._Package* %45 to i64
   %or = or i64 %46, -4503599627370496
-  %or26 = or i64 %or, 3096224743817216
-  %47 = inttoptr i64 %or26 to i8*
-  %o27 = bitcast %union.UnionType* %value to i8**
-  store i8* %47, i8** %o27, align 8
+  %or27 = or i64 %or, 3096224743817216
+  %47 = inttoptr i64 %or27 to i8*
+  %o28 = bitcast %union.UnionType* %value to i8**
+  store i8* %47, i8** %o28, align 8
   %48 = load %struct._Hash** @pkg_map, align 8
   %49 = load %struct._String** %key, align 8
-  %coerce.dive28 = getelementptr %union.UnionType* %value, i32 0, i32 0
-  %50 = bitcast double* %coerce.dive28 to i64*
+  %coerce.dive29 = getelementptr %union.UnionType* %value, i32 0, i32 0
+  %50 = bitcast double* %coerce.dive29 to i64*
   %51 = load i64* %50, align 1
   call void @Hash_add(%struct._Hash* %48, %struct._String* %49, i64 %51)
+  %call30 = call i32 @pthread_mutex_unlock(%struct._opaque_pthread_mutex_t* @mutex)
   %52 = load %struct._Package** %pkg, align 8
   store %struct._Package* %52, %struct._Package** %retval
   br label %return
@@ -4255,6 +4259,10 @@ return:                                           ; preds = %cond.end, %if.then
 ; Function Attrs: nounwind readnone
 declare i64 @llvm.expect.i64(i64, i64) #5
 
+declare i32 @pthread_mutex_lock(%struct._opaque_pthread_mutex_t*) #1
+
+declare i32 @pthread_mutex_unlock(%struct._opaque_pthread_mutex_t*) #1
+
 ; Function Attrs: nounwind ssp uwtable
 define void @store_method_by_pkg_name(i8* %pkg_name, i8* %mtd_name, i64 (%struct._Array*)* %code) #0 {
 entry:
@@ -4265,6 +4273,7 @@ entry:
   %_mtd_name = alloca %union.UnionType, align 8
   %o = alloca %struct._CodeRef*, align 8
   %code_ref = alloca %union.UnionType, align 8
+  %s = alloca %struct._String*, align 8
   store i8* %pkg_name, i8** %pkg_name.addr, align 8
   store i8* %mtd_name, i8** %mtd_name.addr, align 8
   store i64 (%struct._Array*)* %code, i64 (%struct._Array*)** %code.addr, align 8
@@ -4290,17 +4299,23 @@ entry:
   %8 = inttoptr i64 %or4 to i8*
   %o5 = bitcast %union.UnionType* %code_ref to i8**
   store i8* %8, i8** %o5, align 8
-  %9 = load %struct._Package** %pkg, align 8
-  %10 = bitcast %struct._Package* %9 to %struct._Hash*
   %o6 = bitcast %union.UnionType* %_mtd_name to i8**
-  %11 = load i8** %o6, align 8
-  %12 = ptrtoint i8* %11 to i64
-  %xor = xor i64 %12, -3940649673949184
-  %13 = inttoptr i64 %xor to %struct._String*
-  %coerce.dive7 = getelementptr %union.UnionType* %code_ref, i32 0, i32 0
-  %14 = bitcast double* %coerce.dive7 to i64*
-  %15 = load i64* %14, align 1
-  call void @Hash_add(%struct._Hash* %10, %struct._String* %13, i64 %15)
+  %9 = load i8** %o6, align 8
+  %10 = ptrtoint i8* %9 to i64
+  %xor = xor i64 %10, -3940649673949184
+  %11 = inttoptr i64 %xor to %struct._String*
+  store %struct._String* %11, %struct._String** %s, align 8
+  %12 = load %struct._Package** %pkg, align 8
+  %13 = bitcast %struct._Package* %12 to %struct._Hash*
+  %o7 = bitcast %union.UnionType* %_mtd_name to i8**
+  %14 = load i8** %o7, align 8
+  %15 = ptrtoint i8* %14 to i64
+  %xor8 = xor i64 %15, -3940649673949184
+  %16 = inttoptr i64 %xor8 to %struct._String*
+  %coerce.dive9 = getelementptr %union.UnionType* %code_ref, i32 0, i32 0
+  %17 = bitcast double* %coerce.dive9 to i64*
+  %18 = load i64* %17, align 1
+  call void @Hash_add(%struct._Hash* %13, %struct._String* %16, i64 %18)
   ret void
 }
 
@@ -4468,7 +4483,7 @@ land.end:                                         ; preds = %land.rhs, %if.end35
   br i1 %tobool37, label %cond.true, label %cond.false
 
 cond.true:                                        ; preds = %land.end
-  call void @__assert_rtn(i8* getelementptr inbounds ([19 x i8]* @__func__.get_method_by_name, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 719, i8* getelementptr inbounds ([33 x i8]* @.str37, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([19 x i8]* @__func__.get_method_by_name, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 731, i8* getelementptr inbounds ([33 x i8]* @.str37, i32 0, i32 0)) #8
   unreachable
                                                   ; No predecessors!
   br label %cond.end
@@ -4493,6 +4508,11 @@ entry:
   %s = alloca %struct._String*, align 8
   %mtd = alloca %union.UnionType, align 8
   %code_ref = alloca %struct._CodeRef*, align 8
+  %isa = alloca %struct._Array*, align 8
+  %size = alloca i64, align 8
+  %i = alloca i64, align 8
+  %base = alloca %struct._Package*, align 8
+  %mtd17 = alloca %union.UnionType, align 8
   store i8* %pkg_name, i8** %pkg_name.addr, align 8
   store i8* %mtd_name, i8** %mtd_name.addr, align 8
   %0 = load i8** %pkg_name.addr, align 8
@@ -4519,30 +4539,129 @@ entry:
   %10 = bitcast %union.UnionType* %mtd to i8*
   %11 = bitcast %union.UnionType* %arrayidx to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %10, i8* %11, i64 8, i32 8, i1 false)
+  store %struct._CodeRef* null, %struct._CodeRef** %code_ref, align 8
   %o2 = bitcast %union.UnionType* %mtd to i8**
   %12 = load i8** %o2, align 8
   %13 = ptrtoint i8* %12 to i64
-  %xor3 = xor i64 %13, -1970324836974592
-  %14 = inttoptr i64 %xor3 to %struct._CodeRef*
-  store %struct._CodeRef* %14, %struct._CodeRef** %code_ref, align 8
-  %15 = load %struct._CodeRef** %code_ref, align 8
-  %tobool = icmp ne %struct._CodeRef* %15, null
+  %and = and i64 %13, -4503599627370496
+  %cmp = icmp eq i64 %and, -4503599627370496
+  %conv = zext i1 %cmp to i32
+  %conv3 = sext i32 %conv to i64
+  %o4 = bitcast %union.UnionType* %mtd to i8**
+  %14 = load i8** %o4, align 8
+  %15 = ptrtoint i8* %14 to i64
+  %and5 = and i64 %15, 4222124650659840
+  %shr = lshr i64 %and5, 48
+  %mul = mul i64 %conv3, %shr
+  %cmp6 = icmp eq i64 %mul, 9
+  br i1 %cmp6, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  %o8 = bitcast %union.UnionType* %mtd to i8**
+  %16 = load i8** %o8, align 8
+  %17 = ptrtoint i8* %16 to i64
+  %xor9 = xor i64 %17, -1970324836974592
+  %18 = inttoptr i64 %xor9 to %struct._CodeRef*
+  store %struct._CodeRef* %18, %struct._CodeRef** %code_ref, align 8
+  br label %if.end35
+
+if.else:                                          ; preds = %entry
+  %19 = load %struct._Package** %pkg, align 8
+  %isa10 = getelementptr inbounds %struct._Package* %19, i32 0, i32 4
+  %20 = load %struct._Array** %isa10, align 8
+  store %struct._Array* %20, %struct._Array** %isa, align 8
+  %21 = load %struct._Array** %isa, align 8
+  %size11 = getelementptr inbounds %struct._Array* %21, i32 0, i32 2
+  %22 = load i64* %size11, align 8
+  store i64 %22, i64* %size, align 8
+  store i64 0, i64* %i, align 8
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %if.else
+  %23 = load i64* %i, align 8
+  %24 = load i64* %size, align 8
+  %cmp12 = icmp ult i64 %23, %24
+  br i1 %cmp12, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %25 = load i64* %i, align 8
+  %26 = load %struct._Array** %isa, align 8
+  %list = getelementptr inbounds %struct._Array* %26, i32 0, i32 1
+  %27 = load %union.UnionType*** %list, align 8
+  %arrayidx14 = getelementptr inbounds %union.UnionType** %27, i64 %25
+  %28 = load %union.UnionType** %arrayidx14, align 8
+  %o15 = bitcast %union.UnionType* %28 to i8**
+  %29 = load i8** %o15, align 8
+  %30 = ptrtoint i8* %29 to i64
+  %xor16 = xor i64 %30, -1407374883553280
+  %31 = inttoptr i64 %xor16 to %struct._Package*
+  store %struct._Package* %31, %struct._Package** %base, align 8
+  %32 = load %struct._String** %s, align 8
+  %hash18 = getelementptr inbounds %struct._String* %32, i32 0, i32 3
+  %33 = load i64* %hash18, align 8
+  %34 = load %struct._Package** %base, align 8
+  %table19 = getelementptr inbounds %struct._Package* %34, i32 0, i32 1
+  %35 = load %union.UnionType** %table19, align 8
+  %arrayidx20 = getelementptr inbounds %union.UnionType* %35, i64 %33
+  %36 = bitcast %union.UnionType* %mtd17 to i8*
+  %37 = bitcast %union.UnionType* %arrayidx20 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %36, i8* %37, i64 8, i32 8, i1 false)
+  %o21 = bitcast %union.UnionType* %mtd17 to i8**
+  %38 = load i8** %o21, align 8
+  %39 = ptrtoint i8* %38 to i64
+  %and22 = and i64 %39, -4503599627370496
+  %cmp23 = icmp eq i64 %and22, -4503599627370496
+  %conv24 = zext i1 %cmp23 to i32
+  %conv25 = sext i32 %conv24 to i64
+  %o26 = bitcast %union.UnionType* %mtd17 to i8**
+  %40 = load i8** %o26, align 8
+  %41 = ptrtoint i8* %40 to i64
+  %and27 = and i64 %41, 4222124650659840
+  %shr28 = lshr i64 %and27, 48
+  %mul29 = mul i64 %conv25, %shr28
+  %cmp30 = icmp eq i64 %mul29, 9
+  br i1 %cmp30, label %if.then32, label %if.end
+
+if.then32:                                        ; preds = %for.body
+  %o33 = bitcast %union.UnionType* %mtd17 to i8**
+  %42 = load i8** %o33, align 8
+  %43 = ptrtoint i8* %42 to i64
+  %xor34 = xor i64 %43, -1970324836974592
+  %44 = inttoptr i64 %xor34 to %struct._CodeRef*
+  store %struct._CodeRef* %44, %struct._CodeRef** %code_ref, align 8
+  br label %for.end
+
+if.end:                                           ; preds = %for.body
+  br label %for.inc
+
+for.inc:                                          ; preds = %if.end
+  %45 = load i64* %i, align 8
+  %inc = add i64 %45, 1
+  store i64 %inc, i64* %i, align 8
+  br label %for.cond
+
+for.end:                                          ; preds = %if.then32, %for.cond
+  br label %if.end35
+
+if.end35:                                         ; preds = %for.end, %if.then
+  %46 = load %struct._CodeRef** %code_ref, align 8
+  %tobool = icmp ne %struct._CodeRef* %46, null
   br i1 %tobool, label %land.rhs, label %land.end
 
-land.rhs:                                         ; preds = %entry
+land.rhs:                                         ; preds = %if.end35
   br label %land.end
 
-land.end:                                         ; preds = %land.rhs, %entry
-  %16 = phi i1 [ false, %entry ], [ true, %land.rhs ]
-  %lnot = xor i1 %16, true
+land.end:                                         ; preds = %land.rhs, %if.end35
+  %47 = phi i1 [ false, %if.end35 ], [ true, %land.rhs ]
+  %lnot = xor i1 %47, true
   %lnot.ext = zext i1 %lnot to i32
-  %conv = sext i32 %lnot.ext to i64
-  %expval = call i64 @llvm.expect.i64(i64 %conv, i64 0)
-  %tobool4 = icmp ne i64 %expval, 0
-  br i1 %tobool4, label %cond.true, label %cond.false
+  %conv36 = sext i32 %lnot.ext to i64
+  %expval = call i64 @llvm.expect.i64(i64 %conv36, i64 0)
+  %tobool37 = icmp ne i64 %expval, 0
+  br i1 %tobool37, label %cond.true, label %cond.false
 
 cond.true:                                        ; preds = %land.end
-  call void @__assert_rtn(i8* getelementptr inbounds ([25 x i8]* @__func__.get_class_method_by_name, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 730, i8* getelementptr inbounds ([33 x i8]* @.str37, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([25 x i8]* @__func__.get_class_method_by_name, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 762, i8* getelementptr inbounds ([33 x i8]* @.str37, i32 0, i32 0)) #8
   unreachable
                                                   ; No predecessors!
   br label %cond.end
@@ -4550,11 +4669,11 @@ cond.true:                                        ; preds = %land.end
 cond.false:                                       ; preds = %land.end
   br label %cond.end
 
-cond.end:                                         ; preds = %cond.false, %17
-  %18 = load %struct._CodeRef** %code_ref, align 8
-  %code = getelementptr inbounds %struct._CodeRef* %18, i32 0, i32 1
-  %19 = load i64 (%struct._Array*)** %code, align 8
-  ret i64 (%struct._Array*)* %19
+cond.end:                                         ; preds = %cond.false, %48
+  %49 = load %struct._CodeRef** %code_ref, align 8
+  %code = getelementptr inbounds %struct._CodeRef* %49, i32 0, i32 1
+  %50 = load i64 (%struct._Array*)** %code, align 8
+  ret i64 (%struct._Array*)* %50
 }
 
 ; Function Attrs: nounwind ssp uwtable
@@ -4781,7 +4900,7 @@ if.then:                                          ; preds = %do.body
   %shr27 = lshr i64 %and26, 48
   %mul28 = mul i64 %conv23, %shr27
   %call = call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %16, i8* getelementptr inbounds ([15 x i8]* @.str, i32 0, i32 0), i64 %mul28)
-  call void @__assert_rtn(i8* getelementptr inbounds ([33 x i8]* @__func__.dynamic_blessed_object_cast_code, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 861, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
+  call void @__assert_rtn(i8* getelementptr inbounds ([33 x i8]* @__func__.dynamic_blessed_object_cast_code, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0), i32 893, i8* getelementptr inbounds ([21 x i8]* @.str2, i32 0, i32 0)) #8
   unreachable
 
 if.end:                                           ; preds = %do.body

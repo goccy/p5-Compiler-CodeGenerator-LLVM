@@ -3,6 +3,7 @@ UnionType *base_hash_table;
 HashObject *pkg_map;
 int count = 0;
 Object **object_pool;
+pthread_mutex_t mutex;
 
 UnionType _open(ArrayObject *args)
 {
@@ -597,7 +598,7 @@ UnionType new_String(char *str)
 {
 	UnionType ret;
 	//fprintf(stderr, "str = [%s]\n", str);
-	StringObject *o = (StringObject *)calloc(sizeof(StringObject), 1);
+	StringObject *o = (StringObject *)fetch_object();//calloc(sizeof(StringObject), 1);
 	o->header = String;
 	o->len = strlen(str) + 1;
 	//o->s = str;
@@ -666,6 +667,9 @@ Object *fetch_object(void)
 
 PackageObject *get_pkg(char *pkg_name)
 {
+	pthread_mutex_lock(&mutex);
+	//fprintf(stderr, "called get_pkg\n");
+	//fprintf(stderr, "pkg_name = [%s]\n", pkg_name);
 	PackageObject *ret = NULL;
 	UnionType _key = new_String(pkg_name);
 	StringObject *key = to_String(_key.o);
@@ -680,6 +684,7 @@ PackageObject *get_pkg(char *pkg_name)
 	UnionType value;
 	value.o = PACKAGE_init(pkg);
 	Hash_add(pkg_map, key, value);
+	pthread_mutex_unlock(&mutex);
 	return pkg;
 }
 
@@ -691,6 +696,8 @@ void store_method_by_pkg_name(char *pkg_name, char *mtd_name, Code code)
 	o->code = code;
 	UnionType code_ref;
 	code_ref.o = CODE_REF_init(o);
+	StringObject *s = to_String(_mtd_name.o);
+	//fprintf(stderr, "s->s = [%s], s->hash = [%d]\n", s->s, s->hash);
 	Hash_add((HashObject *)pkg, to_String(_mtd_name.o), code_ref);
 }
 
@@ -700,6 +707,8 @@ Code get_method_by_name(BlessedObject *self, char *mtd_name)
 	PackageObject *mtds = self->mtds;
 	UnionType str = new_String(mtd_name);
 	StringObject *s = to_String(str.o);
+	//fprintf(stderr, "s->s = [%s]\n", s->s);
+	//fprintf(stderr, "s->hash = [%d]\n", s->hash);
 	UnionType mtd = mtds->table[s->hash];
 	CodeRefObject *code_ref = NULL;
 	if (TYPE(mtd.o) == CodeRef) {
@@ -707,15 +716,18 @@ Code get_method_by_name(BlessedObject *self, char *mtd_name)
 	} else {
 		ArrayObject *isa = mtds->isa;
 		size_t size = isa->size;
+		//fprintf(stderr, "isa->size = [%lu]\n", size);
 		for (size_t i = 0; i < size; i++) {
 			PackageObject *base = to_Package(isa->list[i]->o);
 			UnionType mtd = base->table[s->hash];
+			//fprintf(stderr, "mtd.o = [%llu]\n", mtd.o);
 			if (TYPE(mtd.o) == CodeRef) {
 				code_ref = to_CodeRef(mtd.o);
 				break;
 			}
 		}
 	}
+	//fprintf(stderr, "mtd_name = [%s]\n", mtd_name);
 	assert(code_ref && "cannot find method");
 	return code_ref->code;
 }
@@ -725,8 +737,28 @@ Code get_class_method_by_name(char *pkg_name, char *mtd_name)
 	PackageObject *pkg = get_pkg(pkg_name);
 	UnionType str = new_String(mtd_name);
 	StringObject *s = to_String(str.o);
+	//fprintf(stderr, "s->s = [%s]\n", s->s);
+	//fprintf(stderr, "s->hash = [%d]\n", s->hash);
 	UnionType mtd = pkg->table[s->hash];
-	CodeRefObject *code_ref = to_CodeRef(mtd.o);
+	CodeRefObject *code_ref = NULL;
+	if (TYPE(mtd.o) == CodeRef) {
+		code_ref = to_CodeRef(mtd.o);
+	} else {
+		ArrayObject *isa = pkg->isa;
+		size_t size = isa->size;
+		//fprintf(stderr, "isa->size = [%lu]\n", size);
+		for (size_t i = 0; i < size; i++) {
+			PackageObject *base = to_Package(isa->list[i]->o);
+			UnionType mtd = base->table[s->hash];
+			//fprintf(stderr, "mtd.o = [%llu]\n", mtd.o);
+			if (TYPE(mtd.o) == CodeRef) {
+				code_ref = to_CodeRef(mtd.o);
+				break;
+			}
+		}
+	}
+	//fprintf(stderr, "pkg_name = [%s]\n", pkg_name);
+	//fprintf(stderr, "mtd_name = [%s]\n", mtd_name);
 	assert(code_ref && "cannot find method");
 	return code_ref->code;
 }

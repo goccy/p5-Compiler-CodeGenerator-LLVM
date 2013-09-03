@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <math.h>
+#include <pthread.h>
 
 typedef enum {
 	Double,

@@ -91,3 +91,4 @@ extern UnionType *base_hash_table;
 extern HashObject *pkg_map;
 extern int count;
 extern Object **object_pool;
+extern pthread_mutex_t mutex;
