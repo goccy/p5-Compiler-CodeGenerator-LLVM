@@ -17,6 +17,7 @@ void Array_add(ArrayObject *array, UnionType *elem);
 UnionType Hash_get(HashObject *hash, StringObject *key);
 UnionType new_FFI(const char *name, void *ptr);
 void store_method_by_pkg_name(char *pkg_name, char *mtd_name, Code code);
+void add_base_name(char *pkg_name, char *base_name);
 
 #define SET(ret, a, b, op) do {					\
 		switch (TYPE(b->o)) {					\
