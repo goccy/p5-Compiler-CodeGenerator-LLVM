@@ -1,18 +1,25 @@
 #define LLVM_ATTRIBUTE_READONLY
 
-//#include "llvm/IRBuilder.h"
-//#include "llvm/Module.h"
-//#include "llvm/LLVMContext.h"
-//#include "llvm/ValueSymbolTable.h"
+#ifdef LLVM_VERSION_3_2
+
+#include "llvm/IRBuilder.h"
+#include "llvm/Module.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/ValueSymbolTable.h"
+
+#else
+
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/IR/DerivedTypes.h"
+
+#endif
+
 #include "llvm/PassManager.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
-
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"

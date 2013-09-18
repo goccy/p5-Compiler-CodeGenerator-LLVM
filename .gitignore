@@ -11,3 +11,5 @@ Makefile
 Makefile.old
 src/Compiler-CodeGenerator-LLVM.cpp
 *.ll
+local
+LLVM.bs

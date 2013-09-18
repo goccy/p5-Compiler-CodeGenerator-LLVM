@@ -33,8 +33,11 @@ chomp(my $llvm_cflags = `llvm-config --cxxflags`);
 $llvm_cflags =~ s/-fno-rtti//;
 chomp(my $llvm_ldflags = `llvm-config --ldflags`);
 chomp(my $llvm_libs = `llvm-config --libs`);
+chomp(my  $llvm_version = `llvm-config --version`);
+my ($captured_version) = $llvm_version =~ /([0-9.]+)/;
+$captured_version =~ s/\./_/g;
 
-makemaker_args->{CCFLAGS} .= " $llvm_cflags";
+makemaker_args->{CCFLAGS} .= " $llvm_cflags -DLLVM_VERSION_$captured_version";
 makemaker_args->{LDLOADLIBS} = "$llvm_ldflags $llvm_libs -lLLVMIRReader";
 
 WriteAll(check_nmake => 0);
