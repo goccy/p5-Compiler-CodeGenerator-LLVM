@@ -876,6 +876,10 @@ llvm::Value *LLVM::generateDereferenceCode(IRBuilder<> *builder, DereferenceNode
 		}
 		ret = generateHashRefToHashCode(builder, boxed_hash_ref);
 		cur_type = Enum::Runtime::Hash;
+	} else if (node->tk->info.type == TokenType::ShortCodeDereference) {
+		llvm::Value *args = builder->CreateAlloca(union_ptr_type, ConstantInt::get(int_type, 1), "args");
+		llvm::Value *idx = ConstantInt::get(int_type, 0);
+		ret = generateCodeDereferenceCode(builder, dynamic_cast<DereferenceNode *>(node), node->expr);
 	}
 	return ret;
 }
