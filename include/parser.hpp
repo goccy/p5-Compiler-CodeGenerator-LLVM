@@ -1,6 +1,7 @@
 #include <common.hpp>
+#include <setjmp.h>
+#include <unistd.h>
 
-class AST;
 class Node {
 public:
 	Token *tk;
@@ -10,6 +11,13 @@ public:
 	virtual void dump(size_t depth);
 	Node *getRoot(void);
 	virtual ~Node(void){};
+};
+
+class AST {
+public:
+	Node *root;
+	AST(Node *root);
+	void dump(void);
 };
 
 class Nodes : public std::vector<Node *> {
@@ -98,7 +106,44 @@ public:
 class RegPrefixNode : public Node {
 public:
 	Node *exp;
+	Node *option;
 	RegPrefixNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class RegReplaceNode : public Node {
+public:
+	Node *prefix;
+	Node *from;
+	Node *to;
+	Node *option;
+	RegReplaceNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class RegexpNode : public Node {
+public:
+	Node *option;
+	RegexpNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class LabelNode : public Node {
+public:
+	LabelNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class HandleNode : public Node {
+public:
+	Node *expr;
+	HandleNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class HandleReadNode : public Node {
+public:
+	HandleReadNode(Token *tk);
 	void dump(size_t depth);
 };
 
@@ -136,6 +181,15 @@ public:
 	DoubleTermOperatorNode(Token *op);
 };
 
+class ThreeTermOperatorNode : public Node {
+public:
+	Node *cond;
+	Node *true_expr;
+	Node *false_expr;
+	ThreeTermOperatorNode(Token *op);
+	void dump(size_t depth);
+};
+
 class OtherTermOperatorNode : public Node {
 public:
 	OtherTermOperatorNode(Token *op);
@@ -159,6 +213,13 @@ class ElseStmtNode : public Node {
 public:
 	Node *stmt;
 	ElseStmtNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class DoStmtNode : public Node {
+public:
+	Node *stmt;
+	DoStmtNode(Token *tk);
 	void dump(size_t depth);
 };
 
@@ -198,13 +259,6 @@ public:
 	Module(const char *name, const char *args);
 };
 
-class AST {
-public:
-	Node *root;
-	AST(Node *root);
-	void dump(void);
-};
-
 class ParseContext {
 public:
 	Token *tk;
@@ -216,6 +270,7 @@ public:
 	ParseContext(Token *tk);
 	Token *token(void);
 	Token *token(Token *base, int offset);
+	Token *nullableToken(Token *base, int offset);
 	Token *nextToken(void);
 	Node *lastNode(void);
 	void pushNode(Node *node);
@@ -233,8 +288,9 @@ public:
 	Enum::Parser::Syntax::Type cur_stype;
 
 	Parser(void);
+	const char *deparse(AST *ast);
 	void grouping(Tokens *tokens);
-	void prepare(Tokens *tokens);
+	void replaceHereDocument(Tokens *tokens);
 	Token *parseSyntax(Token *start_token, Tokens *tokens);
 	void parseSpecificStmt(Token *root);
 	void setIndent(Token *tk, int indent);
@@ -246,8 +302,14 @@ public:
 	AST *parse(Tokens *tks);
 	Node *_parse(Token *root);
 	void link(ParseContext *pctx, Node *from, Node *to);
+	bool isForeach(ParseContext *pctx, Token *tk);
+	bool isForStmtPattern(Token *tk, Token *expr);
 	bool isSingleTermOperator(ParseContext *pctx, Token *tk);
 	bool isIrregularFunction(ParseContext *pctx, Token *tk);
+	bool isMissingSemicolon(Enum::Token::Type::Type prev_type, Enum::Token::Type::Type type, Tokens *tokens);
+	bool isMissingSemicolon(Tokens *tokens);
+	bool canGrouping(Token *tk, Token *next_tk);
+	Token *replaceToStmt(Tokens *tokens, Token *cur_tk, size_t offset);
 	void parseStmt(ParseContext *pctx, Node *stmt);
 	void parseExpr(ParseContext *pctx, Node *expr);
 	void parseToken(ParseContext *pctx, Token *tk);
@@ -255,6 +317,7 @@ public:
 	void parseTerm(ParseContext *pctx, Token *term);
 	void parseSymbol(ParseContext *pctx, Token *symbol);
 	void parseSingleTermOperator(ParseContext *pctx, Token *op);
+	void parseThreeTermOperator(ParseContext *pctx, Token *op);
 	void parseBranchType(ParseContext *pctx, Token *branch);
 	void parseSpecificKeyword(ParseContext *pctx, Token *stmt);
 	void parseSpecificStmt(ParseContext *pctx, Token *stmt);
@@ -262,12 +325,14 @@ public:
 	void parseModule(ParseContext *pctx, Token *mod);
 	void parseModuleArgument(ParseContext *pctx, Token *args);
 	void parseRegPrefix(ParseContext *pctx, Token *reg);
+	void parseRegReplace(ParseContext *pctx, Token *reg);
 	void parseFunction(ParseContext *pctx, Token *func);
 	void parseFunctionCall(ParseContext *pctx, Token *func);
 	void parseIrregularFunction(ParseContext *pctx, Token *func);
 private:
 	bool isExpr(Token *tk, Token *prev_tk, Enum::Token::Type::Type type, Enum::Token::Kind::Kind kind);
 	void insertStmt(Token *tk, int idx, size_t grouping_num);
+	void insertExpr(Token *syntax, int idx, size_t grouping_num);
 	void insertParenthesis(Tokens *tokens);
 };
 
@@ -285,7 +350,7 @@ public:
 	void completeExprFromRight(Token *root, Enum::Token::Type::Type type);
 	void completeExprFromRight(Token *root, Enum::Token::Kind::Kind kind);
 	void completePointerExpr(Token *root);
-	void completeIncDecExpr(Token *root);
+	void completeIncDecGlobExpr(Token *root);
 	void completePowerExpr(Token *root);
 	void completeSingleTermOperatorExpr(Token *root);
 	void completeRegexpMatchExpr(Token *root);
@@ -297,6 +362,7 @@ public:
 	void completeNamedUnaryOperators(Token *root);
 	void completeBitOperatorExpr(Token *root);
 	void completeAndOrOperatorExpr(Token *root);
+	void completeThreeTermOperatorExpr(Token *root);
 	void completeAssignExpr(Token *root);
 	void completeCommaArrowExpr(Token *root);
 	void completeFunctionListExpr(Token *root);

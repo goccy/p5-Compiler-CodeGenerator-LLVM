@@ -149,11 +149,16 @@ const char *LLVM::gen(AST *ast)
 	pm.add(createFunctionInliningPass());
 	pm.run(*module);
 
-	AssemblyAnnotationWriter writer;
-	ostringstream os;
-	raw_os_ostream raw_stream(os);
-	module->print(raw_stream, &writer);
-	return os.str().c_str();
+	std::string string;
+	llvm::raw_string_ostream rss(string);
+	rss << *module;
+	rss.flush();
+	const char *llvm_ir = string.c_str();
+	size_t ir_size = strlen(llvm_ir) + 1;
+	char *ret = (char *)malloc(ir_size);
+	memset(ret, 0, ir_size);
+	strncpy(ret, llvm_ir, ir_size);
+	return ret;
 }
 
 void LLVM::write(void)
@@ -1814,7 +1819,7 @@ llvm::Value *LLVM::generateFunctionCallCode(IRBuilder<> *builder, FunctionCallNo
 			name == "abs"   || name == "int"   || name == "rand" ||
 			name == "sin"   || name == "cos"   || name == "atan2" ||
 			name == "open"  || name == "chr"   || name == "binmode" || name == "close" ||
-			name == "print_with_handler" || name == "Data::Dumper" | name == "IOS::init" || name == "IOS::store_ios_native_library") {
+			name == "print_with_handler" || name == "Data::Dumper" || name == "IOS::init" || name == "IOS::store_ios_native_library") {
 			ret = generateReceiveUnionValueCode(builder, result);
 		} else {
 			ret = result;

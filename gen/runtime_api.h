@@ -60,7 +60,7 @@ typedef union {
 
 #define TYPE_CHECK(o, T) do {					\
 		if (TYPE(o) != T) {						\
-			fprintf(stderr, "type = [%llu]\n", TYPE(o));	\
+			fprintf(stderr, "type = [%lu]\n", TYPE(o));	\
 			assert(0 && "Type Error!\n");		\
 		}										\
 	} while (0)

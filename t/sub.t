@@ -145,6 +145,10 @@ sub h {
     $_[0] + 2;
 }
 
+sub h {
+    $_[0] + 2;
+}
+
 sub g {
     h($_[0] + 1);
 }
@@ -170,3 +174,4 @@ sub function_argument_shift_sample {
 }
 
 function_argument_shift_sample(1, 2, 3, 4);
+

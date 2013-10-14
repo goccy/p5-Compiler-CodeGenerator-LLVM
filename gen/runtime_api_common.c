@@ -3,7 +3,7 @@ UnionType *base_hash_table;
 HashObject *pkg_map;
 int count = 0;
 Object **object_pool;
-pthread_mutex_t mutex;
+//pthread_mutex_t mutex;
 
 UnionType _open(ArrayObject *args)
 {
@@ -470,7 +470,7 @@ UnionType *HashRef_get(UnionType *o, StringObject *key)
 		break;
 	}
 	default:
-		fprintf(stderr, "type = [%llu]\n", TYPE(o->o));
+		//fprintf(stderr, "type = [%lu]\n", TYPE(o->o));
 		assert(0 && "Type Error!: Unknown Type");
 		break;
 	}
@@ -527,7 +527,7 @@ UnionType *ArrayRef_get(UnionType *o, int idx)
 		break;
 	}
 	default:
-		fprintf(stderr, "type = [%llu]\n", TYPE(o->o));
+		//fprintf(stderr, "type = [%lu]\n", TYPE(o->o));
 		assert(0 && "Type Error!: Unknown Type");
 		break;
 	}
@@ -667,7 +667,7 @@ Object *fetch_object(void)
 
 PackageObject *get_pkg(char *pkg_name)
 {
-	pthread_mutex_lock(&mutex);
+	//pthread_mutex_lock(&mutex);
 	//fprintf(stderr, "called get_pkg\n");
 	//fprintf(stderr, "pkg_name = [%s]\n", pkg_name);
 	PackageObject *ret = NULL;
@@ -684,12 +684,13 @@ PackageObject *get_pkg(char *pkg_name)
 	UnionType value;
 	value.o = PACKAGE_init(pkg);
 	Hash_add(pkg_map, key, value);
-	pthread_mutex_unlock(&mutex);
+	//pthread_mutex_unlock(&mutex);
 	return pkg;
 }
 
 void store_method_by_pkg_name(char *pkg_name, char *mtd_name, Code code)
 {
+	//fprintf(stderr, "pkg_name = [%s], mtd_name = [%s]\n", pkg_name, mtd_name);
 	PackageObject *pkg = get_pkg(pkg_name);
 	UnionType _mtd_name = new_String(mtd_name);
 	CodeRefObject *o = (CodeRefObject *)calloc(sizeof(CodeRefObject), 1);
@@ -857,7 +858,7 @@ HashRefObject *dynamic_hash_ref_cast_code(UnionType *o)
 		break;
 	}
 	default:
-		fprintf(stderr, "type = [%llu]\n", TYPE(o->o));
+		//fprintf(stderr, "type = [%lu]\n", TYPE(o->o));
 		break;
 	}
 	return ret;
@@ -877,7 +878,7 @@ ArrayRefObject *dynamic_array_ref_cast_code(UnionType *o)
 		break;
 	}
 	default:
-		fprintf(stderr, "type = [%llu]\n", TYPE(o->o));
+		//fprintf(stderr, "type = [%lu]\n", TYPE(o->o));
 		break;
 	}
 	return ret;
@@ -899,7 +900,7 @@ BlessedObject *dynamic_blessed_object_cast_code(UnionType *o)
 		break;
 	}
 	default:
-		fprintf(stderr, "type = [%llu]\n", TYPE(o->o));
+		//fprintf(stderr, "type = [%lu]\n", TYPE(o->o));
 		break;
 	}
 	return ret;
